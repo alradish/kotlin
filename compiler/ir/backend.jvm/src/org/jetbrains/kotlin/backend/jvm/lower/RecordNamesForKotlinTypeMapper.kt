@@ -31,8 +31,6 @@ class RecordNamesForKotlinTypeMapper(private val context: JvmBackendContext) : F
     override fun visitClass(declaration: IrClass) {
         val internalName = context.getLocalClassInfo(declaration)?.internalName
         if (internalName != null) {
-            // If this line fails, it means that the name invented by the JVM IR backend in InventNamesForLocalClasses is not equal
-            // to the name invented by the old backend in CodegenAnnotatingVisitor. The former should likely be fixed.
             context.state.bindingTrace.record(CodegenBinding.ASM_TYPE, declaration.symbol.descriptor, Type.getObjectType(internalName))
         }
         super.visitClass(declaration)

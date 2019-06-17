@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.codegen.JvmCodegenUtil;
 import org.jetbrains.kotlin.codegen.SamType;
 import org.jetbrains.kotlin.codegen.state.GenerationState;
 import org.jetbrains.kotlin.codegen.when.WhenByEnumsMapping;
+import org.jetbrains.kotlin.config.JVMConfigurationKeys;
 import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor;
 import org.jetbrains.kotlin.name.FqName;
@@ -92,6 +93,8 @@ public class CodegenBinding {
     }
 
     public static void initTrace(@NotNull GenerationState state) {
+        if (state.getConfiguration().getBoolean(JVMConfigurationKeys.IR)) return;
+
         CodegenAnnotatingVisitor visitor = new CodegenAnnotatingVisitor(state);
         for (KtFile file : allFilesInPackages(state.getBindingContext(), state.getFiles())) {
             file.accept(visitor);
