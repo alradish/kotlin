@@ -55,14 +55,14 @@ FILE fqName:<root> fileName:/memberExtension.kt
           CONSTRUCTOR_CALL 'public constructor <init> (s: kotlin.String) [primary] declared in <root>.Host.StringDelegate' type=<root>.Host.StringDelegate origin=null
             s: ERROR_CALL 'Unresolved reference: this#' type=kotlin.String
     PROPERTY name:plusK visibility:public modality:FINAL [delegated,val]
-      FIELD PROPERTY_BACKING_FIELD name:plusK type:IrErrorType visibility:public [final] 
-      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-plusK> visibility:public modality:FINAL <> ($this:<root>.Host) returnType:IrErrorType 
+      FUN name:<get-plusK> visibility:public modality:FINAL <> ($this:<root>.Host) returnType:IrErrorType
         correspondingProperty: PROPERTY name:plusK visibility:public modality:FINAL [delegated,val] 
         $this: VALUE_PARAMETER name:<this> type:<root>.Host 
         BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public final fun <get-plusK> (): IrErrorType declared in <root>.Host'
-            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:plusK type:IrErrorType visibility:public [final] ' type=IrErrorType origin=null
-              receiver: GET_VAR '<this>: <root>.Host declared in <root>.Host.<get-plusK>' type=<root>.Host origin=null
+          ERROR_CALL 'Unresolved reference: <Unresolved name: getValue>#' type=IrErrorType
+            CONST Null type=kotlin.Nothing? value=null
+            THROW type=kotlin.Nothing
+              CONST Null type=kotlin.Nothing? value=null
     PROPERTY name:ok visibility:public modality:FINAL [val] 
       FIELD PROPERTY_BACKING_FIELD name:ok type:IrErrorType visibility:public [final] 
         EXPRESSION_BODY
