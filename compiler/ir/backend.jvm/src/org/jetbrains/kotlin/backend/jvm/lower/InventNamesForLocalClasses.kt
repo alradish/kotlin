@@ -57,7 +57,8 @@ class InventNamesForLocalClasses(private val context: JvmBackendContext) : FileL
                     JvmClassName.byFqNameWithoutInnerClasses(file.fqName.child(declaration.name)).internalName
                 }
 
-                declaration.acceptChildren(this, data.withName(internalName))
+                val newData = data.withName(JvmCodegenUtil.sanitizeNameIfNeeded(internalName, context.state.languageVersionSettings))
+                declaration.acceptChildren(this, newData)
 
                 return
             }
