@@ -62,6 +62,7 @@ dependencies {
     compile(project(":idea:jvm-debugger:jvm-debugger-evaluation"))
     compile(project(":idea:jvm-debugger:jvm-debugger-sequence"))
     compile(project(":idea:jvm-debugger:jvm-debugger-coroutine"))
+    compile(project(":g2kts"))
     compile(project(":j2k"))
     compile(project(":idea:idea-j2k"))
     compile(project(":idea:formatter"))
@@ -105,6 +106,8 @@ dependencies {
     compileOnly(intellijPluginDep("properties"))
     compileOnly(intellijPluginDep("java-i18n"))
     compileOnly(intellijPluginDep("gradle"))
+
+    compileOnly(intellijPluginDep("Groovy"))
 
     testCompileOnly(toolsJar())
     testCompileOnly(project(":kotlin-reflect-api")) // TODO: fix import (workaround for jps build)

@@ -20,6 +20,13 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
     </group>
+    <group id="GroovyToKtsGroup">
+      <action class="org.jetbrains.kotlin.idea.actions.G2KtsAction"
+              id="g2kts"
+              text="g2kts"
+      />
+      <add-to-group group-id="CodeMenu"/>
+    </group>
 
     <group id="KotlinToolsGroup" popup="true" icon="/org/jetbrains/kotlin/idea/icons/kotlin13.png"
            class="org.jetbrains.kotlin.idea.actions.KotlinActionGroup">
