@@ -186,7 +186,8 @@ private object TestOutputHandler : ScratchOutputHandlerAdapter() {
                 ?: error(
                     "PsiFile cannot be found for scratch to render inlays in tests:\n" +
                             "project.isDisposed = ${file.project.isDisposed}\n" +
-                            "inlays = ${inlays.joinToString { it.second }}"
+                            "inlays = ${inlays.joinToString { it.second }}\n" +
+                            "errors = ${errors.joinToString()}"
                 )
             if (inlays.isNotEmpty()) {
                 testPrint(psiFile, inlays.map { (expression, text) ->

@@ -22,6 +22,8 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.Key
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.repl.replInputAsXml
 import org.jetbrains.kotlin.cli.common.repl.replNormalizeLineBreaks
 import org.jetbrains.kotlin.cli.common.repl.replRemoveLineBreaksInTheEnd
@@ -64,17 +66,26 @@ class KtScratchReplExecutor(file: ScratchFile) : SequentialScratchExecutor(file)
             }
             sendCommandToProcess(":quit")
         } catch (e: Exception) {
-            errorOccurs("Couldn't stop REPL process", e, false)
+            errorOccurs("Couldn't stop REPL process", e, true)
 
             osProcessHandler.destroyProcess()
+            clearState()
+            handler.onFinish(file)
+        }
+    }
+
+    override fun errorOccurs(message: String, e: Throwable?, isFatal: Boolean) {
+        super.errorOccurs(message, e, isFatal)
+
+        if (isFatal) {
             clearState()
         }
     }
 
+
     private fun clearState() {
         history.clear()
         osProcessHandler = null
-        handler.onFinish(file)
     }
 
     override fun executeStatement(expression: ScratchExpression) {
@@ -154,6 +165,11 @@ class KtScratchReplExecutor(file: ScratchFile) : SequentialScratchExecutor(file)
             super.notifyProcessTerminated(exitCode)
 
             clearState()
+
+            if (exitCode != ExitCode.OK.code) {
+                // In case of successful exit code onFinish should be called after last processed entry
+                handler.onFinish(file)
+            }
         }
 
         private fun strToSource(s: String, encoding: Charset = Charsets.UTF_8) = InputSource(ByteArrayInputStream(s.toByteArray(encoding)))

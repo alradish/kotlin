@@ -54,6 +54,14 @@ class KtCompilingExecutor(file: ScratchFile) : ScratchExecutor(file) {
         }
     }
 
+    override fun errorOccurs(message: String, e: Throwable?, isFatal: Boolean) {
+        super.errorOccurs(message, e, isFatal)
+
+        if (isFatal) {
+            session = null
+        }
+    }
+
     fun checkForErrors(psiFile: KtFile, expressions: List<ScratchExpression>): Boolean {
         return runReadAction {
             try {
