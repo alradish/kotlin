@@ -19,6 +19,7 @@ package org.jetbrains.kotlin.psi2ir.generators
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter.Companion.DISPATCH_RECEIVER_INDEX
 import org.jetbrains.kotlin.ir.descriptors.IrImplementingDelegateDescriptorImpl
 import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.expressions.mapValueParameters
@@ -70,6 +71,7 @@ class ClassGenerator(
                 startOffset, endOffset,
                 IrDeclarationOrigin.INSTANCE_RECEIVER,
                 classDescriptor.thisAsReceiverParameter,
+                DISPATCH_RECEIVER_INDEX,
                 classDescriptor.thisAsReceiverParameter.type.toIrType()
             )
 

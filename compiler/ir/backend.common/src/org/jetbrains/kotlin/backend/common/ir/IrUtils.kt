@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.Scope
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter.Companion.DISPATCH_RECEIVER_INDEX
 import org.jetbrains.kotlin.ir.declarations.impl.IrConstructorImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrFunctionImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrTypeParameterImpl
@@ -184,7 +185,15 @@ fun IrTypeParameter.copyToWithoutSuperTypes(
 fun IrFunction.copyValueParametersFrom(from: IrFunction) {
     // TODO: should dispatch receiver be copied?
     dispatchReceiverParameter = from.dispatchReceiverParameter?.let {
-        IrValueParameterImpl(it.startOffset, it.endOffset, it.origin, it.descriptor, it.type, it.varargElementType).also {
+        IrValueParameterImpl(
+            it.startOffset,
+            it.endOffset,
+            it.origin,
+            it.descriptor,
+            it.type,
+            it.varargElementType,
+            DISPATCH_RECEIVER_INDEX
+        ).also {
             it.parent = this
         }
     }

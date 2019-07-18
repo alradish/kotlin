@@ -20,6 +20,8 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter.Companion.DISPATCH_RECEIVER_INDEX
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter.Companion.EXTENSION_RECEIVER_INDEX
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
@@ -281,11 +283,11 @@ class FunctionGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
         val functionDescriptor = irFunction.descriptor
 
         irFunction.dispatchReceiverParameter = functionDescriptor.dispatchReceiverParameter?.let {
-            generateReceiverParameterDeclaration(it, ktParameterOwner, irFunction)
+            generateReceiverParameterDeclaration(it, ktParameterOwner, irFunction, DISPATCH_RECEIVER_INDEX)
         }
 
         irFunction.extensionReceiverParameter = functionDescriptor.extensionReceiverParameter?.let {
-            generateReceiverParameterDeclaration(it, ktReceiverParameterElement ?: ktParameterOwner, irFunction)
+            generateReceiverParameterDeclaration(it, ktReceiverParameterElement ?: ktParameterOwner, irFunction, EXTENSION_RECEIVER_INDEX)
         }
 
         val bodyGenerator = createBodyGenerator(irFunction.symbol)
@@ -302,7 +304,7 @@ class FunctionGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
         withDefaultValues: Boolean,
         irOwnerElement: IrElement
     ): IrValueParameter =
-        declareParameter(valueParameterDescriptor, ktParameter, irOwnerElement).also { irValueParameter ->
+        declareParameter(valueParameterDescriptor, ktParameter, irOwnerElement, valueParameterDescriptor.index).also { irValueParameter ->
             if (withDefaultValues) {
                 irValueParameter.defaultValue = ktParameter?.defaultValue?.let { defaultValue ->
                     val inAnnotation =
@@ -318,16 +320,23 @@ class FunctionGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
     private fun generateReceiverParameterDeclaration(
         receiverParameterDescriptor: ReceiverParameterDescriptor,
         ktElement: KtPureElement?,
-        irOwnerElement: IrElement
+        irOwnerElement: IrElement,
+        index: Int
     ): IrValueParameter =
-        declareParameter(receiverParameterDescriptor, ktElement, irOwnerElement)
+        declareParameter(receiverParameterDescriptor, ktElement, irOwnerElement, index)
 
-    private fun declareParameter(descriptor: ParameterDescriptor, ktElement: KtPureElement?, irOwnerElement: IrElement) =
+    private fun declareParameter(
+        descriptor: ParameterDescriptor,
+        ktElement: KtPureElement?,
+        irOwnerElement: IrElement,
+        index: Int
+    ) =
         context.symbolTable.declareValueParameter(
             ktElement?.pureStartOffset ?: irOwnerElement.startOffset,
             ktElement?.pureEndOffset ?: irOwnerElement.endOffset,
             IrDeclarationOrigin.DEFINED,
-            descriptor, descriptor.type.toIrType(),
+            descriptor, index,
+            descriptor.type.toIrType(),
             (descriptor as? ValueParameterDescriptor)?.varargElementType?.toIrType()
         )
 

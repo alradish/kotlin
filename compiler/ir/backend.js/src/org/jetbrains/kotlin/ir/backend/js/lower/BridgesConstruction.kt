@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.ir.backend.js.utils.functionSignature
 import org.jetbrains.kotlin.ir.backend.js.utils.getJsName
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter.Companion.DISPATCH_RECEIVER_INDEX
 import org.jetbrains.kotlin.ir.declarations.impl.IrValueParameterImpl
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.types.IrType
@@ -134,7 +135,7 @@ class BridgesConstruction(val context: JsIrBackendContext) : ClassLoweringPass {
             copyTypeParametersFrom(bridge)
             // TODO: should dispatch receiver be copied?
             dispatchReceiverParameter = bridge.dispatchReceiverParameter?.run {
-                IrValueParameterImpl(startOffset, endOffset, origin, descriptor, type, varargElementType).also { it.parent = this@apply }
+                IrValueParameterImpl(startOffset, endOffset, origin, descriptor, type, varargElementType, DISPATCH_RECEIVER_INDEX).also { it.parent = this@apply }
             }
             extensionReceiverParameter = bridge.extensionReceiverParameter?.copyTo(this)
             valueParameters += bridge.valueParameters.map { p -> p.copyTo(this) }

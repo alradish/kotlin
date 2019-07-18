@@ -26,10 +26,10 @@ abstract class IrLazyDeclarationBase(
 
     protected fun KotlinType.toIrType() = typeTranslator.translateType(this)
 
-    protected fun ReceiverParameterDescriptor.generateReceiverParameterStub(): IrValueParameter =
+    protected fun ReceiverParameterDescriptor.generateReceiverParameterStub(index: Int): IrValueParameter =
         IrValueParameterImpl(
             UNDEFINED_OFFSET, UNDEFINED_OFFSET, origin, this,
-            type.toIrType(), null
+            type.toIrType(), null, index
         )
 
     protected fun generateMemberStubs(memberScope: MemberScope, container: MutableList<IrDeclaration>) {

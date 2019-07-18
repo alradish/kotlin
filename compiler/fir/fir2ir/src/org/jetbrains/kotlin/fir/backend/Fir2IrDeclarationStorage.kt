@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.fir.resolve.getOrPut
 import org.jetbrains.kotlin.fir.service
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter.Companion.DISPATCH_RECEIVER_INDEX
 import org.jetbrains.kotlin.ir.declarations.impl.*
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.symbols.*
@@ -86,7 +87,7 @@ class Fir2IrDeclarationStorage(
         val thisType = IrSimpleTypeImpl(symbol, false, emptyList(), emptyList())
         val parent = this
         thisReceiver = irSymbolTable.declareValueParameter(
-            startOffset, endOffset, thisOrigin, WrappedReceiverParameterDescriptor(), thisType
+            startOffset, endOffset, thisOrigin, WrappedReceiverParameterDescriptor(), DISPATCH_RECEIVER_INDEX, thisType
         ) { symbol ->
             IrValueParameterImpl(
                 startOffset, endOffset, thisOrigin, symbol,
@@ -236,6 +237,7 @@ class Fir2IrDeclarationStorage(
             val thisType = containingClass.thisReceiver!!.type
             dispatchReceiverParameter = irSymbolTable.declareValueParameter(
                 startOffset, endOffset, thisOrigin, WrappedReceiverParameterDescriptor(),
+                DISPATCH_RECEIVER_INDEX,
                 thisType
             ) { symbol ->
                 IrValueParameterImpl(
@@ -404,13 +406,13 @@ class Fir2IrDeclarationStorage(
         }
     }
 
-    private fun createAndSaveIrParameter(valueParameter: FirValueParameter, index: Int = -1): IrValueParameter {
+    private fun createAndSaveIrParameter(valueParameter: FirValueParameter, index: Int): IrValueParameter {
         val descriptor = WrappedValueParameterDescriptor()
         val origin = IrDeclarationOrigin.DEFINED
         val type = valueParameter.returnTypeRef.toIrType(session, this)
         val irParameter = valueParameter.convertWithOffsets { startOffset, endOffset ->
             irSymbolTable.declareValueParameter(
-                startOffset, endOffset, origin, descriptor, type
+                startOffset, endOffset, origin, descriptor, index, type
             ) { symbol ->
                 IrValueParameterImpl(
                     startOffset, endOffset, origin, symbol,

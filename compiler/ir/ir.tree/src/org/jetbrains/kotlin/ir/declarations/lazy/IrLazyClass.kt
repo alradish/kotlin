@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter.Companion.DISPATCH_RECEIVER_INDEX
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.DeclarationStubGenerator
@@ -69,7 +70,7 @@ class IrLazyClass(
 
     override var thisReceiver: IrValueParameter? by lazyVar {
         typeTranslator.buildWithScope(this) {
-            descriptor.thisAsReceiverParameter.generateReceiverParameterStub().apply { parent = this@IrLazyClass }
+            descriptor.thisAsReceiverParameter.generateReceiverParameterStub(DISPATCH_RECEIVER_INDEX).apply { parent = this@IrLazyClass }
         }
     }
 

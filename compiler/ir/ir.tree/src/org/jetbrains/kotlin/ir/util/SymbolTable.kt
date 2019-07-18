@@ -403,10 +403,11 @@ open class SymbolTable : ReferenceSymbolTable {
         endOffset: Int,
         origin: IrDeclarationOrigin,
         descriptor: ParameterDescriptor,
+        index: Int,
         type: IrType,
         varargElementType: IrType? = null,
         valueParameterFactory: (IrValueParameterSymbol) -> IrValueParameter = {
-            IrValueParameterImpl(startOffset, endOffset, origin, it, type, varargElementType)
+            IrValueParameterImpl(startOffset, endOffset, origin, it, type, varargElementType, index)
         }
     ): IrValueParameter =
         valueParameterSymbolTable.declareLocal(

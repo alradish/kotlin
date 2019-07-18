@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter.Companion.DISPATCH_RECEIVER_INDEX
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter.Companion.EXTENSION_RECEIVER_INDEX
 import org.jetbrains.kotlin.ir.declarations.impl.IrPropertyImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrTypeParameterImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrValueParameterImpl
@@ -357,24 +359,25 @@ interface IrBuilderExtension {
     }
 
     fun IrFunction.createParameterDeclarations(receiver: IrValueParameter?, overwriteValueParameters: Boolean = false) {
-        fun ParameterDescriptor.irValueParameter() = IrValueParameterImpl(
+        fun ParameterDescriptor.irValueParameter(index: Int) = IrValueParameterImpl(
             this@createParameterDeclarations.startOffset, this@createParameterDeclarations.endOffset,
             SERIALIZABLE_PLUGIN_ORIGIN,
             this,
             type.toIrType(),
-            null
+            null,
+            index
         ).also {
             it.parent = this@createParameterDeclarations
         }
 
-        dispatchReceiverParameter = descriptor.dispatchReceiverParameter?.irValueParameter()
-        extensionReceiverParameter = descriptor.extensionReceiverParameter?.irValueParameter()
+        dispatchReceiverParameter = descriptor.dispatchReceiverParameter?.irValueParameter(DISPATCH_RECEIVER_INDEX)
+        extensionReceiverParameter = descriptor.extensionReceiverParameter?.irValueParameter(EXTENSION_RECEIVER_INDEX)
 
         if (!overwriteValueParameters)
             assert(valueParameters.isEmpty())
         else
             valueParameters.clear()
-        valueParameters.addAll(descriptor.valueParameters.map { it.irValueParameter() })
+        valueParameters.addAll(descriptor.valueParameters.map { it.irValueParameter(it.index) })
 
         assert(typeParameters.isEmpty())
         copyTypeParamsFromDescriptor()

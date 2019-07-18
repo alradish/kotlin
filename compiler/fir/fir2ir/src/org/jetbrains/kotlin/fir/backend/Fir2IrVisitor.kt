@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.primitiveOp1
 import org.jetbrains.kotlin.ir.builders.primitiveOp2
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter.Companion.DISPATCH_RECEIVER_INDEX
 import org.jetbrains.kotlin.ir.declarations.impl.*
 import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
 import org.jetbrains.kotlin.ir.expressions.*
@@ -306,11 +307,12 @@ internal class Fir2IrVisitor(
                 val thisType = containingClass.thisReceiver!!.type
                 dispatchReceiverParameter = symbolTable.declareValueParameter(
                     startOffset, endOffset, thisOrigin, WrappedValueParameterDescriptor(),
+                    DISPATCH_RECEIVER_INDEX,
                     thisType
                 ) { symbol ->
                     IrValueParameterImpl(
                         startOffset, endOffset, thisOrigin, symbol,
-                        Name.special("<this>"), -1, thisType,
+                        Name.special("<this>"), DISPATCH_RECEIVER_INDEX, thisType,
                         varargElementType = null, isCrossinline = false, isNoinline = false
                     ).setParentByParentStack()
                 }
@@ -553,7 +555,7 @@ internal class Fir2IrVisitor(
                             val backingField = correspondingProperty.backingField
                             if (isSetter) {
                                 valueParameters += symbolTable.declareValueParameter(
-                                    startOffset, endOffset, origin, WrappedValueParameterDescriptor(), propertyType
+                                    startOffset, endOffset, origin, WrappedValueParameterDescriptor(), 0, propertyType
                                 ) { symbol ->
                                     IrValueParameterImpl(
                                         startOffset, endOffset, IrDeclarationOrigin.DEFINED, symbol,

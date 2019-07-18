@@ -33,4 +33,9 @@ interface IrValueParameter : IrValueDeclaration, IrSymbolDeclaration<IrValuePara
     var defaultValue: IrExpressionBody?
 
     override fun <D> transform(transformer: IrElementTransformer<D>, data: D): IrValueParameter
+
+    companion object {
+        const val DISPATCH_RECEIVER_INDEX = -1
+        const val EXTENSION_RECEIVER_INDEX = -1
+    }
 }

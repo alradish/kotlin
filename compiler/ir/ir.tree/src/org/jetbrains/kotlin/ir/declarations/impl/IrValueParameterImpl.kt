@@ -50,13 +50,14 @@ class IrValueParameterImpl(
         origin: IrDeclarationOrigin,
         symbol: IrValueParameterSymbol,
         type: IrType,
-        varargElementType: IrType?
+        varargElementType: IrType?,
+        index: Int
     ) :
             this(
                 startOffset, endOffset, origin,
                 symbol,
                 symbol.descriptor.name,
-                symbol.descriptor.safeAs<ValueParameterDescriptor>()?.index ?: -1,
+                index,
                 type,
                 varargElementType,
                 symbol.descriptor.safeAs<ValueParameterDescriptor>()?.isCrossinline ?: false,
@@ -69,9 +70,10 @@ class IrValueParameterImpl(
         origin: IrDeclarationOrigin,
         descriptor: ParameterDescriptor,
         type: IrType,
-        varargElementType: IrType?
+        varargElementType: IrType?,
+        index: Int
     ) :
-            this(startOffset, endOffset, origin, IrValueParameterSymbolImpl(descriptor), type, varargElementType)
+            this(startOffset, endOffset, origin, IrValueParameterSymbolImpl(descriptor), type, varargElementType, index)
 
     override val descriptor: ParameterDescriptor = symbol.descriptor
 

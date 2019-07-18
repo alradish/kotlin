@@ -400,7 +400,8 @@ fun IrValueParameter.copy(newDescriptor: ParameterDescriptor): IrValueParameter 
         IrDeclarationOrigin.DEFINED,
         newDescriptor,
         type,
-        varargElementType
+        varargElementType,
+        index
     )
 }
 

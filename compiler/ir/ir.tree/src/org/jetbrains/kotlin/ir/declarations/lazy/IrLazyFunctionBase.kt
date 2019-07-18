@@ -9,6 +9,8 @@ import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter.Companion.DISPATCH_RECEIVER_INDEX
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter.Companion.EXTENSION_RECEIVER_INDEX
 import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.DeclarationStubGenerator
@@ -34,12 +36,14 @@ abstract class IrLazyFunctionBase(
 
     override var dispatchReceiverParameter: IrValueParameter? by lazyVar {
         typeTranslator.buildWithScope(this) {
-            descriptor.dispatchReceiverParameter?.generateReceiverParameterStub()?.also { it.parent = this@IrLazyFunctionBase }
+            descriptor.dispatchReceiverParameter?.generateReceiverParameterStub(DISPATCH_RECEIVER_INDEX)
+                ?.also { it.parent = this@IrLazyFunctionBase }
         }
     }
     override var extensionReceiverParameter: IrValueParameter? by lazyVar {
         typeTranslator.buildWithScope(this) {
-            descriptor.extensionReceiverParameter?.generateReceiverParameterStub()?.also { it.parent = this@IrLazyFunctionBase }
+            descriptor.extensionReceiverParameter?.generateReceiverParameterStub(EXTENSION_RECEIVER_INDEX)
+                ?.also { it.parent = this@IrLazyFunctionBase }
         }
     }
 
