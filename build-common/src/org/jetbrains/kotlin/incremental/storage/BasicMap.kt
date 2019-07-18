@@ -28,7 +28,16 @@ abstract class BasicMap<K : Comparable<K>, V>(
         keyDescriptor: KeyDescriptor<K>,
         valueExternalizer: DataExternalizer<V>
 ) {
-    protected val storage = LazyStorage(storageFile, keyDescriptor, valueExternalizer)
+    protected val storage: LazyStorage<K, V>
+    private val nonCacheableStorage = System.getProperty("kotlin.jps.non.cacheable.storage")?.toBoolean() ?: false
+
+    init {
+        storage = if (nonCacheableStorage) {
+            NonCacheableLazyStorage(storageFile, keyDescriptor, valueExternalizer)
+        } else {
+            CacheableLazyStorage(storageFile, keyDescriptor, valueExternalizer)
+        }
+    }
 
     fun clean() {
         storage.clean()
