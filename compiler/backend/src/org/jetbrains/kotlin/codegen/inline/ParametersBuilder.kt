@@ -31,7 +31,7 @@ class ParametersBuilder private constructor() {
         return addParameter(
             ParameterInfo(
                 type, skipped, nextParameterOffset, remapValue,
-                if (parameterIndex == -1) nextValueParameterIndex else parameterIndex + valueParamFirstIndex
+                if (parameterIndex < 0) nextValueParameterIndex else parameterIndex + valueParamFirstIndex
             )
         )
     }
