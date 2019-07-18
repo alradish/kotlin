@@ -86,6 +86,7 @@ val projectsToShadow by extra(listOf(
         ":idea:idea-git",
         ":idea:idea-jps-common",
         ":plugins:android-extensions-compiler",
+        ":g2kts",
         *if (Ide.IJ())
             arrayOf(":idea:idea-maven")
         else
