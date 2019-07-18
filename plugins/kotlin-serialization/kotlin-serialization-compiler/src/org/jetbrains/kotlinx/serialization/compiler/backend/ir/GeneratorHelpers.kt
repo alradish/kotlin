@@ -363,9 +363,9 @@ interface IrBuilderExtension {
             this@createParameterDeclarations.startOffset, this@createParameterDeclarations.endOffset,
             SERIALIZABLE_PLUGIN_ORIGIN,
             this,
+            index,
             type.toIrType(),
-            null,
-            index
+            null
         ).also {
             it.parent = this@createParameterDeclarations
         }

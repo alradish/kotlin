@@ -407,7 +407,7 @@ open class SymbolTable : ReferenceSymbolTable {
         type: IrType,
         varargElementType: IrType? = null,
         valueParameterFactory: (IrValueParameterSymbol) -> IrValueParameter = {
-            IrValueParameterImpl(startOffset, endOffset, origin, it, type, varargElementType, index)
+            IrValueParameterImpl(startOffset, endOffset, origin, it, index, type, varargElementType)
         }
     ): IrValueParameter =
         valueParameterSymbolTable.declareLocal(

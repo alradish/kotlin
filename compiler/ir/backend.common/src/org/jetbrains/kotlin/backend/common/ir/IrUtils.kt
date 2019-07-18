@@ -190,9 +190,9 @@ fun IrFunction.copyValueParametersFrom(from: IrFunction) {
             it.endOffset,
             it.origin,
             it.descriptor,
+            DISPATCH_RECEIVER_INDEX,
             it.type,
-            it.varargElementType,
-            DISPATCH_RECEIVER_INDEX
+            it.varargElementType
         ).also {
             it.parent = this
         }

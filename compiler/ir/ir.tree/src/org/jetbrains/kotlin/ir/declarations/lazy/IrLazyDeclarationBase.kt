@@ -29,7 +29,7 @@ abstract class IrLazyDeclarationBase(
     protected fun ReceiverParameterDescriptor.generateReceiverParameterStub(index: Int): IrValueParameter =
         IrValueParameterImpl(
             UNDEFINED_OFFSET, UNDEFINED_OFFSET, origin, this,
-            type.toIrType(), null, index
+            index, type.toIrType(), null
         )
 
     protected fun generateMemberStubs(memberScope: MemberScope, container: MutableList<IrDeclaration>) {

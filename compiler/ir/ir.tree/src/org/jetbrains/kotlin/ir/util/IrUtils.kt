@@ -399,9 +399,9 @@ fun IrValueParameter.copy(newDescriptor: ParameterDescriptor): IrValueParameter 
         endOffset,
         IrDeclarationOrigin.DEFINED,
         newDescriptor,
+        index,
         type,
-        varargElementType,
-        index
+        varargElementType
     )
 }
 

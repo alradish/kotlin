@@ -49,9 +49,9 @@ class IrValueParameterImpl(
         endOffset: Int,
         origin: IrDeclarationOrigin,
         symbol: IrValueParameterSymbol,
+        index: Int,
         type: IrType,
-        varargElementType: IrType?,
-        index: Int
+        varargElementType: IrType?
     ) :
             this(
                 startOffset, endOffset, origin,
@@ -69,11 +69,11 @@ class IrValueParameterImpl(
         endOffset: Int,
         origin: IrDeclarationOrigin,
         descriptor: ParameterDescriptor,
+        index: Int,
         type: IrType,
-        varargElementType: IrType?,
-        index: Int
+        varargElementType: IrType?
     ) :
-            this(startOffset, endOffset, origin, IrValueParameterSymbolImpl(descriptor), type, varargElementType, index)
+            this(startOffset, endOffset, origin, IrValueParameterSymbolImpl(descriptor), index, type, varargElementType)
 
     override val descriptor: ParameterDescriptor = symbol.descriptor
 

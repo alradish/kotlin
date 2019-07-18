@@ -182,7 +182,7 @@ class DeclarationStubGenerator(
     internal fun generateValueParameterStub(descriptor: ValueParameterDescriptor): IrValueParameter {
         return IrValueParameterImpl(
             UNDEFINED_OFFSET, UNDEFINED_OFFSET, computeOrigin(descriptor),
-            descriptor, descriptor.type.toIrType(), descriptor.varargElementType?.toIrType(), descriptor.index
+            descriptor, descriptor.index, descriptor.type.toIrType(), descriptor.varargElementType?.toIrType()
         ).also { irValueParameter ->
             if (descriptor.declaresDefaultValue()) {
                 irValueParameter.defaultValue =
