@@ -19,7 +19,7 @@ class G2KtsAction : AnAction() {
         val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
         val manager = PsiManager.getInstance(e.project!!)
         virtualFiles?.forEach { file ->
-            manager.findFile(file)?.acceptChildren(visitor)
+            manager.findFile(file)?.accept(visitor)
         }
     }
 }
