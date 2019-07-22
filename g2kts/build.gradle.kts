@@ -17,6 +17,15 @@ dependencies {
     compile(project(":idea:idea-core"))
     compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
     compileOnly(intellijPluginDep("Groovy"))
+
+    testCompile(kotlinStdlib())
+    testCompile(project(":idea:idea-core"))
+    testCompileOnly(intellijCoreDep()) { includeJars("intellij-core") }
+    testCompile(project(":kotlin-test:kotlin-test-junit"))
+    testCompileOnly(intellijPluginDep("Groovy"))
+    testCompile(commonDep("junit:junit"))
+
+    testCompileOnly(intellijDep())
 }
 
 sourceSets {
