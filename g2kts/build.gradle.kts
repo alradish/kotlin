@@ -15,8 +15,16 @@ repositories {
 dependencies {
     compile(kotlinStdlib())
     compile(project(":idea:idea-core"))
+    compile(commonDep("com.github.cretz.kastree", "kastree-ast-jvm"))
+    /*\// https://mvnrepository.com/artifact/org.codehaus.groovy/groovy-all
+compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.5.7', ext: 'pom'
+
+*/
+    compile(commonDep("org.codehaus.groovy", "groovy-all"))
+    compileOnly(intellijPluginDep("gradle"))
     compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
     compileOnly(intellijPluginDep("Groovy"))
+
 
     testCompile(kotlinStdlib())
     testCompile(project(":idea:idea-core"))

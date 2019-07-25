@@ -6,7 +6,9 @@
 package org.jetbrains.kotlin.g2kts
 
 import com.intellij.openapi.diagnostic.Logger
-import org.apache.log4j.Level
+import com.intellij.psi.PsiElement
+import kastree.ast.Node
+import org.gradle.tooling.model.GradleProject
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
@@ -52,20 +54,101 @@ class G2KtsVisitor : GroovyElementVisitor() {
     companion object {
         private val LOG = Logger.getInstance(this::class.java)
     }
-    
+
+    val simpleField: Int = 3
+    val propertieWithGet: Int
+        get() = 2
+
+    var propertieWithSet: Int = 2
+        set(a) {
+            field = a - 2
+        }
+    var complexPropertie: Int = 1
+        get() = field + 2
+        set(a) {
+            field = a - 3
+        }
+
+    init {
+//        G2KtsVisitor::class.members.forEach {
+//            println(
+//                "${it.toString()}|name=${it.name}|parameters=${it.parameters}"
+//            )
+//        }
+    }
+
+    fun convert(element: GroovyPsiElement): Node {
+        println("G2KtsVisitor.convert(element = [${element.text}])")
+        accept(element)
+        return pop()
+    }
+
+    fun accept(element: GroovyPsiElement) {
+        println("G2KtsVisitor.accept(element = [${element.text}])")
+        element.accept(this)
+    }
+
+    var result: Node? = null
+
+    fun pop(): Node {
+        println("G2KtsVisitor.pop()")
+        val node = result!!
+        result = null
+        println("\treturn $node")
+        return node
+    }
+
+    fun push(node: Node) {
+        println("G2KtsVisitor.push(node = [${node}])")
+        require(result == null)
+        result = node
+    }
+
+    fun convertAll(elements: Iterable<PsiElement>): List<Node> {
+        println("G2KtsVisitor.convertAll(elements = [${elements}])")
+        return elements.map {
+            when (it) {
+                is GroovyPsiElement -> convert(it)
+                else -> Node.Extra.BlankLines(it.text.count { c -> c == '\n' }) // GTODO БОЖЕ ЗА ЧТО
+            }
+        }
+    }
+
+
     override fun visitElement(element: GroovyPsiElement) {
         println("G2KtsVisitor.visitElement(element = [${element.text}])")
-        element.acceptChildren(this)
     }
 
     override fun visitFile(file: GroovyFileBase) {
         println("G2KtsVisitor.visitFile(file = [${file.text}])")
-        file.children.forEach {
-            println("****************************************")
-            println(it.text)
-            (it as? GroovyPsiElement)?.accept(this)
-        }
-        super.visitFile(file)
+        push(Node.Script(
+            emptyList(),
+            null,
+            emptyList(),
+            convertAll(file.children.asIterable()).map { it as Node.Expr }
+        ))
+    }
+
+    override fun visitMethodCallExpression(methodCallExpression: GrMethodCallExpression) {
+        println("G2KtsVisitor.visitMethodCallExpression(methodCallExpression = [${methodCallExpression.text}])")
+        push(
+            Node.Expr.Call(
+                Node.Expr.Name(
+                    (methodCallExpression.firstChild as? GrReferenceExpression)?.referenceName ?: error("Null method call name")
+                ),
+                emptyList(), // GTODO Здесь точно должно быть что-то типо Tasks or Copy
+                convertAll(methodCallExpression.argumentList.allArguments.asIterable()).map { it as Node.ValueArg },
+//            null
+                Node.Expr.Call.TrailLambda(emptyList(), null, Node.Expr.Brace(emptyList(), null))
+            )
+        )
+
+//        super.visitMethodCallExpression(methodCallExpression)
+    }
+
+    override fun visitApplicationStatement(applicationStatement: GrApplicationStatement) {
+        println("G2KtsVisitor.visitApplicationStatement(applicationStatement = [${applicationStatement.text}])")
+//        super.visitApplicationStatement(applicationStatement)
     }
 
     override fun visitThrowsClause(throwsClause: GrThrowsClause) {
@@ -248,11 +331,6 @@ class G2KtsVisitor : GroovyElementVisitor() {
         super.visitCaseLabel(caseLabel)
     }
 
-    override fun visitApplicationStatement(applicationStatement: GrApplicationStatement) {
-        println("G2KtsVisitor.visitApplicationStatement(applicationStatement = [${applicationStatement.text}])")
-        super.visitApplicationStatement(applicationStatement)
-    }
-
     override fun visitClassDefinition(classDefinition: GrClassDefinition) {
         println("G2KtsVisitor.visitClassDefinition(classDefinition = [${classDefinition.text}])")
         super.visitClassDefinition(classDefinition)
@@ -266,11 +344,6 @@ class G2KtsVisitor : GroovyElementVisitor() {
     override fun visitInstanceofExpression(expression: GrInstanceOfExpression) {
         println("G2KtsVisitor.visitInstanceofExpression(expression = [${expression.text}])")
         super.visitInstanceofExpression(expression)
-    }
-
-    override fun visitMethodCallExpression(methodCallExpression: GrMethodCallExpression) {
-        println("G2KtsVisitor.visitMethodCallExpression(methodCallExpression = [${methodCallExpression.text}])")
-        super.visitMethodCallExpression(methodCallExpression)
     }
 
     override fun visitDocMethodParameter(parameter: GrDocMethodParameter) {
