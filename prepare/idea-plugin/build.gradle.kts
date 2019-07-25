@@ -159,6 +159,7 @@ dependencies {
     libraries(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8"))
     libraries(commonDep("org.jetbrains", "markdown"))
     libraries(commonDep("io.javaslang", "javaslang"))
+    libraries(commonDep("com.github.cretz.kastree", "kastree-ast-jvm"))
 
     libraries(kotlinStdlib("jdk8"))
 
