@@ -159,8 +159,9 @@ dependencies {
     libraries(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8"))
     libraries(commonDep("org.jetbrains", "markdown"))
     libraries(commonDep("io.javaslang", "javaslang"))
-    libraries(commonDep("com.github.cretz.kastree", "kastree-ast-jvm"))
-
+    libraries(commonDep("com.github.cretz.kastree", "kastree-ast-jvm")) // GTODO наследил
+//    libraries(commonDep("org.codehaus.groovy", "groovy-all"))
+    
     libraries(kotlinStdlib("jdk8"))
 
     Platform[193].orHigher {
