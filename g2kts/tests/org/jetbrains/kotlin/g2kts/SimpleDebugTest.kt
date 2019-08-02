@@ -5,18 +5,31 @@
 
 package org.jetbrains.kotlin.g2kts
 
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
-import junit.framework.TestCase
+import kastree.ast.Node
+import kastree.ast.Writer
+import org.codehaus.groovy.ast.stmt.Statement
+import org.codehaus.groovy.control.CompilationUnit
+import org.codehaus.groovy.control.CompilerConfiguration
+import org.gradle.api.Project
+import org.gradle.api.internal.project.ProjectScript
+import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper
 
 class SimpleDebugTest : UsefulTestCase("debugG2KtsVisitor") {
     fun test() {
-        val buildGradle = """
-plugins {
-    id 'java'
+        val build = """
+//plugins {
+//    id 'java'
+//}
+//
+//task someTask(dependsOn: test) {
+//    doLast {
+//        println 'someTask'
+//    }
+//}
+
+test.doLast {
+    println 'test'
 }
 
 group 'test'
@@ -32,7 +45,10 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
         """.trimIndent()
-        G2KtsVisitor()
-
+        val code = build.canonicalization()
+        val converted = (G2KtsConverter().apply { debug = true }.convert(code) as Node.Block).stmts
+        println("res:\n${converted.text()}")
+        val transformed = converted.transform()
+        println("transform:\n${transformed.text()}")
     }
 }
