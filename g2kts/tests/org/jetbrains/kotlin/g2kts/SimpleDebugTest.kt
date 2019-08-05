@@ -5,17 +5,17 @@
 
 package org.jetbrains.kotlin.g2kts
 
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiManager
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import junit.framework.TestCase
 import kastree.ast.Node
-import kastree.ast.Writer
-import org.codehaus.groovy.ast.stmt.Statement
-import org.codehaus.groovy.control.CompilationUnit
-import org.codehaus.groovy.control.CompilerConfiguration
-import org.gradle.api.Project
-import org.gradle.api.internal.project.ProjectScript
-import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 
-class SimpleDebugTest : UsefulTestCase("debugG2KtsVisitor") {
+class SimpleDebugTest : TestCase("debug") {
+
+
     fun test() {
         val build = """
 //plugins {
