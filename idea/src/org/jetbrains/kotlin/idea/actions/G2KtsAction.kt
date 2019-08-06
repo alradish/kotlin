@@ -11,17 +11,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.psi.PsiManager
 import kastree.ast.Node
 import kastree.ast.Writer
-import org.codehaus.groovy.ast.AstToTextHelper
-import org.codehaus.groovy.ast.stmt.BlockStatement
-import org.codehaus.groovy.ast.stmt.Statement
-import org.codehaus.groovy.control.CompilationUnit
-import org.codehaus.groovy.control.CompilerConfiguration
-import org.codehaus.groovy.control.Phases
-import org.gradle.api.internal.project.ProjectScript
-import org.gradle.groovy.scripts.internal.TaskDefinitionScriptTransformer
-import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper
-import org.jetbrains.kotlin.g2kts.*
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.kotlin.g2kts.G2KtsConverter
+import org.jetbrains.kotlin.g2kts.canonicalization
+import org.jetbrains.kotlin.g2kts.toGNode
+import org.jetbrains.kotlin.g2kts.transform
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 
 
@@ -33,9 +26,10 @@ class G2KtsAction : AnAction() {
         virtualFiles?.forEach { file ->
             val groovyFileBase = manager.findFile(file) as? GroovyFileBase ?: return
             val canon = groovyFileBase.text.canonicalization()
-            val converted = converter.convert(canon) as Node.Block
-            println("res:\n${converted.stmts.joinToString(separator = "\n") { Writer.write(it) }}")
-            println("transform:\n${Writer.write(transform(converted))}")
+            canon.toGNode()
+//            val converted = converter.convert(canon) as Node.Block
+//            println("res:\n${converted.stmts.joinToString(separator = "\n") { Writer.write(it) }}")
+//            println("transform:\n${Writer.write(transform(converted))}")
         }
     }
 }

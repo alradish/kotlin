@@ -18,19 +18,19 @@ import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper
 class SimpleDebugTest : UsefulTestCase("debugG2KtsVisitor") {
     fun test() {
         val build = """
-//plugins {
-//    id 'java'
-//}
-//
+plugins {
+    id 'java'
+}
+
 //task someTask(dependsOn: test) {
 //    doLast {
 //        println 'someTask'
 //    }
 //}
-
-test.doLast {
-    println 'test'
-}
+//
+//test.doLast {
+//    println 'test'
+//}
 
 group 'test'
 version '1.0-SNAPSHOT'
@@ -46,9 +46,10 @@ dependencies {
 }
         """.trimIndent()
         val code = build.canonicalization()
-        val converted = (G2KtsConverter().apply { debug = true }.convert(code) as Node.Block).stmts
-        println("res:\n${converted.text()}")
-        val transformed = converted.transform()
-        println("transform:\n${transformed.text()}")
+        buildProject(code)
+//        val converted = (G2KtsConverter().apply { debug = true }.convert(code) as Node.Block).stmts
+//        println("res:\n${converted.text()}")
+//        val transformed = converted.transform()
+//        println("transform:\n${transformed.text()}")
     }
 }
