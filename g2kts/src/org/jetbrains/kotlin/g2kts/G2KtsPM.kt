@@ -12,11 +12,10 @@ import org.codehaus.groovy.ast.stmt.Statement
 import org.codehaus.groovy.transform.sc.transformers.CompareIdentityExpression
 import org.codehaus.groovy.transform.sc.transformers.CompareToNullExpression
 import org.jetbrains.kotlin.utils.addToStdlib.cast
-import org.jetbrains.kotlin.g2kts.GArgumentsList.GArgument
 
 fun buildProject(statement: Statement): GProject {
     if (statement !is BlockStatement) TODO()
-    return GProject(statement.statements.map { it.toGNode() }).also { println(it) }
+    return GProject(statement.statements.map { it.toGNode() })
 }
 
 fun Statement.toGNode(): GStatement = when (this) {
@@ -31,7 +30,18 @@ fun Expression.toGNode(): GExpression = when (this) {
     is VariableExpression -> toGNode()
     is ClosureExpression -> GClosure(emptyList(), code.toGNode().cast())
     is BinaryExpression -> toGNode()
+    is PropertyExpression -> toGNode()
     else -> TODO(this::class.toString())
+}
+
+fun PropertyExpression.toGNode(): GExpression {
+    val obj = objectExpression.toGNode()
+    val property = property.toGNode()
+    return if (obj is GName && obj.name == "this" && property is GName && property.name in extensions) {
+        GExtensionAccess(obj, property)
+    } else {
+        GSimplePropertyAccess(obj, property)
+    }
 }
 
 fun NamedArgumentListExpression.toGNode(): GArgumentsList =
@@ -43,7 +53,7 @@ fun BinaryExpression.toGNode(): GExpression = when (this) {
     is DeclarationExpression -> TODO()
     else -> GBinaryExpression(
         leftExpression.toGNode(),
-        operation.text,
+        GOperator.byValue(operation.text),
         rightExpression.toGNode()
     )
 }
@@ -57,14 +67,26 @@ fun VariableExpression.toGNode(): GExpression = when (this) {
 fun ConstantExpression.toGNode(): GExpression {
     return when (val value = value) {
         is String -> GString(value)
-        else -> GConst(value.toString())
+        //BOOLEAN, CHAR, INT, FLOAT, NULL
+
+        is Char -> TODO()
+        else -> GConst(
+            value.toString(),
+            when (value) {
+                is Boolean -> GConst.Type.BOOLEAN
+                is Char -> GConst.Type.CHAR
+                is Int -> GConst.Type.INT
+                is Float -> GConst.Type.FLOAT
+                else -> GConst.Type.NULL
+            }
+        )
     }
 }
 
 fun TupleExpression.toGArgumentList(): GArgumentsList = GArgumentsList(
     expressions.flatMap { expr ->
         when (expr) {
-            is NamedArgumentListExpression -> expr.mapEntryExpressions.map {
+            is MapExpression -> expr.mapEntryExpressions.map {
                 GArgument(it.keyExpression.text, it.valueExpression.toGNode())
             }
             else -> listOf(GArgument(null, expr.toGNode()))
@@ -72,7 +94,15 @@ fun TupleExpression.toGArgumentList(): GArgumentsList = GArgumentsList(
     }
 )
 
-fun MethodCallExpression.toGNode(): GMethodCall {
+fun createTask(task: GConfigurationBlock): GTaskCreating {
+    return GTaskCreating(
+        (task.method as GName).name,
+        "",
+        task.configuration
+    )
+}
+
+fun MethodCallExpression.toGNode(): GExpression {
     val obj = objectExpression.toGNode()
     val m = when (method) {
         is ConstantExpression -> GName((method as ConstantExpression).text)
@@ -83,7 +113,13 @@ fun MethodCallExpression.toGNode(): GMethodCall {
         else -> error("cant parse arguments")
     }
     return when {
-        m is GName && m.name == "tasks" -> TODO("create task")
+        m is GName && m.name in vars && args.args.size == 1 -> GBinaryExpression(
+            m,
+            GOperator.Common(GOperator.Token.ASSN),
+            args.args.first().expr
+        )
+        m is GName && m.name == "task" && args.args.size == 1 && args.args.first().expr is GConfigurationBlock ->
+            createTask(args.args.first().expr.cast())
         args.args.lastOrNull()?.expr is GClosure -> GConfigurationBlock(
             obj,
             m,

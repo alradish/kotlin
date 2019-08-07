@@ -5,33 +5,136 @@
 
 package org.jetbrains.kotlin.g2kts
 
-import com.intellij.testFramework.UsefulTestCase
-import kastree.ast.Node
+import junit.framework.TestCase
 import kastree.ast.Writer
-import org.codehaus.groovy.ast.stmt.Statement
-import org.codehaus.groovy.control.CompilationUnit
-import org.codehaus.groovy.control.CompilerConfiguration
-import org.gradle.api.Project
-import org.gradle.api.internal.project.ProjectScript
-import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
 
-class SimpleDebugTest : UsefulTestCase("debugG2KtsVisitor") {
-    fun test() {
+class SimpleDebugTest {
+//    @Test
+//    fun extensionAccess() {
+//        val build = "ext.test = 2"
+//        val code = build.canonicalization()
+//        assertEquals(
+//            GProject(
+//                listOf(
+//                    GStatement.GExpr(GBinaryExpression(GExtensionAccess("test"), "=", GConst("2")))
+//                )
+//            ),
+//            buildProject(code)
+//        )
+//    }
+
+    @Test
+    fun methodCall() {
+        val build = "println 'test'"
+        val code = build.canonicalization()
+
+        TestCase.assertEquals(
+            GProject(
+                listOf(
+                    GStatement.GExpr(
+                        GSimpleMethodCall(
+                            GName("this"), GName("println"), GArgumentsList(
+                                listOf(
+                                    GArgument(null, GString("test"))
+                                )
+                            )
+                        )
+
+                    )
+                )
+            ),
+            buildProject(code)
+        )
+    }
+
+    @Test
+    fun taskCreating() {
+        val build = """
+tasks simpleTask {
+    println 'test'
+}
+        """.trimIndent()
+        val code = build.canonicalization()
+        assertEquals(
+            GProject(
+                listOf(
+                    GStatement.GExpr(
+                        GTaskCreating(
+                            "simpleTask",
+                            "",
+                            GClosure(
+                                emptyList(),
+                                GBlock(
+                                    listOf(
+                                        GStatement.GExpr(
+                                            GSimpleMethodCall(
+                                                GName("this"), GName("println"), GArgumentsList(
+                                                    listOf(
+                                                        GArgument(null, GString("test"))
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            ),
+            buildProject(code)
+        )
+    }
+
+    @Test
+    fun projectPropertySet() {
+        val build = """
+version '1.3'
+group 'test'
+status 3
+println '23'
+        """.trimIndent()
+        val code = build.canonicalization()
+        assertEquals(
+            GProject(
+                listOf(
+                    GStatement.GExpr(GBinaryExpression(GName("version"), GOperator.byValue("="), GString("1.3"))),
+                    GStatement.GExpr(GBinaryExpression(GName("group"),  GOperator.byValue("="), GString("test"))),
+                    GStatement.GExpr(GBinaryExpression(GName("status"),  GOperator.byValue("="), GConst("3", GConst.Type.INT))),
+                    GStatement.GExpr(
+                        GSimpleMethodCall(
+                            GName("this"),
+                            GName("println"),
+                            GArgumentsList(listOf(GArgument(null, GString("23"))))
+                        )
+                    )
+
+                )
+            ),
+            buildProject(code)
+        )
+
+    }
+
+    @Test
+    fun debug() {
         val build = """
 plugins {
     id 'java'
 }
 
-//task someTask(dependsOn: test) {
-//    doLast {
-//        println 'someTask'
-//    }
-//}
+task someTask(dependsOn: test) {
+    doLast {
+        println 'someTask'
+    }
+}
 //
 //test.doLast {
 //    println 'test'
 //}
-
+//
 group 'test'
 version '1.0-SNAPSHOT'
 
@@ -46,7 +149,9 @@ dependencies {
 }
         """.trimIndent()
         val code = build.canonicalization()
-        buildProject(code)
+        val gProject = buildProject(code)
+        val kotlin = gProject.toKotlin()
+        println(Writer.write(kotlin))
 //        val converted = (G2KtsConverter().apply { debug = true }.convert(code) as Node.Block).stmts
 //        println("res:\n${converted.text()}")
 //        val transformed = converted.transform()

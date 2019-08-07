@@ -16,16 +16,40 @@ data class GBlock(
     var statements: List<GStatement>
 ) : GStatement()
 
+data class GArgument(
+    var name: String?,
+    var expr: GExpression
+) : GNode()
+
 data class GArgumentsList(
     var args: List<GArgument>
-) : GNode() {
-    data class GArgument(
-        var name: String?,
-        var expr: GExpression
-    )
+) : GNode()
 
-    constructor(vararg args: Pair<String?, GExpression>) : this(args.map { GArgument(it.first, it.second) })
+sealed class GOperator : GNode() {
+    data class Common(val token: Token) : GOperator()
+    data class Uncommon(val text: String) : GOperator()
+    enum class Token(val text: String) {
+        MUL("*"), DIV("/"), MOD("%"), ADD("+"), SUB("-"),
+        IN("in"), NOT_IN("!in"),
+        GT(">"), GTE(">="), LT("<"), LTE("<="),
+        EQ("=="), NEQ("!="),
+        ASSN("="), MUL_ASSN("*="), DIV_ASSN("/="), MOD_ASSN("%="), ADD_ASSN("+="), SUB_ASSN("-="),
+        OR("||"), AND("&&"), ELVIS("?:"), RANGE(".."),
+        DOT("."), DOT_SAFE("?."), SAFE("?")
+    }
+
+    companion object {
+        fun isCommon(text: String): Boolean =
+            text in Token.values().map(Token::text)
+
+        fun byValue(text: String): GOperator {
+            return Token.values().find { it.text == text }?.let {
+                GOperator.Common(it)
+            } ?: GOperator.Uncommon(text)
+        }
+    }
 }
+
 
 // ********** EXPRESSION **********
 sealed class GExpression : GNode() {
@@ -37,58 +61,76 @@ data class GName(
 ) : GExpression()
 
 sealed class GMethodCall : GExpression() {
-    abstract var obj: GExpression?
-    abstract var method: GExpression
-    abstract var arguments: GArgumentsList
+    abstract val obj: GExpression
+    abstract val method: GExpression
+    abstract val arguments: GArgumentsList
 }
 
 data class GSimpleMethodCall(
-    override var obj: GExpression?,
-    override var method: GExpression,
-    override var arguments: GArgumentsList
+    override val obj: GExpression,
+    override val method: GExpression,
+    override val arguments: GArgumentsList
 ) : GMethodCall()
 
 data class GConfigurationBlock(
-    override var obj: GExpression?,
-    override var method: GExpression,
-    override var arguments: GArgumentsList,
-    var configuration: GClosure
+    override val obj: GExpression,
+    override val method: GExpression,
+    override val arguments: GArgumentsList,
+    val configuration: GClosure
 ) : GMethodCall()
 
 data class GClosure( // GTODO arguments
-    var parameters: List<GExpression>, // GTODO make GParameter
-    var statements: GBlock
+    val parameters: List<GExpression>, // GTODO make GParameter
+    val statements: GBlock
 ) : GExpression()
 
 data class GTaskCreating(
-    var buf: String
+    val name: String,
+    val type: String, // GTODO make something like GType
+    val body: GClosure
 ) : GExpression()
 
 data class GConst(
-    var text: String
-) : GExpression()
+    val text: String,
+    val type: Type
+) : GExpression() {
+    enum class Type { BOOLEAN, CHAR, INT, FLOAT, NULL }
+}
 
 data class GString(
-    var str: String // GTODO template
+    val str: String // GTODO template
 ) : GExpression()
 
 data class GBinaryExpression(
-    var left: GExpression,
-    var operator: String,
-    var right: GExpression
+    val left: GExpression,
+    val operator: GOperator,
+    val right: GExpression
 ) : GExpression()
 
+
+sealed class GPropertyAccess : GExpression() {
+    abstract val obj: GExpression
+    abstract val property: GExpression
+}
+
+data class GSimplePropertyAccess(
+    override val obj: GExpression,
+    override val property: GExpression
+) : GPropertyAccess()
+
 data class GExtensionAccess(
-    var ext: String
-) : GExpression() {
+    override val obj: GExpression,
+    override val property: GExpression
+) : GPropertyAccess() {
     companion object {
         val EXT: String = "ext"
     }
 }
 
 data class GTaskAccess(
-    var task: String
-) : GExpression() {
+    override val obj: GExpression,
+    override val property: GExpression
+) : GPropertyAccess() {
     companion object {
         val TASKS: String = "tasks"
     }
@@ -103,5 +145,5 @@ sealed class GDeclaration : GNode() {
 
 
 data class GProject(
-    var statements: List<GStatement>
+    val statements: List<GStatement>
 ) : GNode()
