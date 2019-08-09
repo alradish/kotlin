@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.g2kts
 
 import junit.framework.TestCase
-import kastree.ast.Writer
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
@@ -35,7 +34,7 @@ class SimpleDebugTest {
                 listOf(
                     GStatement.GExpr(
                         GSimpleMethodCall(
-                            GName("this"), GName("println"), GArgumentsList(
+                            GIdentifier("this"), GIdentifier("println"), GArgumentsList(
                                 listOf(
                                     GArgument(null, GString("test"))
                                 )
@@ -70,7 +69,7 @@ tasks simpleTask {
                                     listOf(
                                         GStatement.GExpr(
                                             GSimpleMethodCall(
-                                                GName("this"), GName("println"), GArgumentsList(
+                                                GIdentifier("this"), GIdentifier("println"), GArgumentsList(
                                                     listOf(
                                                         GArgument(null, GString("test"))
                                                     )
@@ -100,13 +99,13 @@ println '23'
         assertEquals(
             GProject(
                 listOf(
-                    GStatement.GExpr(GBinaryExpression(GName("version"), GOperator.byValue("="), GString("1.3"))),
-                    GStatement.GExpr(GBinaryExpression(GName("group"),  GOperator.byValue("="), GString("test"))),
-                    GStatement.GExpr(GBinaryExpression(GName("status"),  GOperator.byValue("="), GConst("3", GConst.Type.INT))),
+                    GStatement.GExpr(GBinaryExpression(GIdentifier("version"), GOperator.byValue("="), GString("1.3"))),
+                    GStatement.GExpr(GBinaryExpression(GIdentifier("group"), GOperator.byValue("="), GString("test"))),
+                    GStatement.GExpr(GBinaryExpression(GIdentifier("status"), GOperator.byValue("="), GConst("3", GConst.Type.INT))),
                     GStatement.GExpr(
                         GSimpleMethodCall(
-                            GName("this"),
-                            GName("println"),
+                            GIdentifier("this"),
+                            GIdentifier("println"),
                             GArgumentsList(listOf(GArgument(null, GString("23"))))
                         )
                     )
@@ -121,37 +120,37 @@ println '23'
     @Test
     fun debug() {
         val build = """
-plugins {
-    id 'java'
-}
-
-task someTask(dependsOn: test) {
-    doLast {
-        println 'someTask'
-    }
-}
+//plugins {
+//    id 'java'
+//}
+//
+//task someTask(dependsOn: test) {
+//    doLast {
+//        println 'someTask'
+//    }
+//}
 //
 //test.doLast {
 //    println 'test'
 //}
 //
 group 'test'
-version '1.0-SNAPSHOT'
-
-sourceCompatibility = 1.8
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-}
+//version '1.0-SNAPSHOT'
+//
+//sourceCompatibility = 1.8
+//
+//repositories {
+//    mavenCentral()
+//}
+//
+//dependencies {
+//    testCompile group: 'junit', name: 'junit', version: '4.12'
+//}
         """.trimIndent()
-        val code = build.canonicalization()
+        /*val code = build.canonicalization()
         val gProject = buildProject(code)
         val kotlin = gProject.toKotlin()
-        println(Writer.write(kotlin))
+        println(Writer.write(kotlin))*/
 //        val converted = (G2KtsConverter().apply { debug = true }.convert(code) as Node.Block).stmts
 //        println("res:\n${converted.text()}")
 //        val transformed = converted.transform()

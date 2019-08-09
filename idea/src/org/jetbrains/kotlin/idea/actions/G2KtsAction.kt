@@ -11,10 +11,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.psi.PsiManager
 import kastree.ast.Node
 import kastree.ast.Writer
-import org.jetbrains.kotlin.g2kts.G2KtsConverter
-import org.jetbrains.kotlin.g2kts.canonicalization
-import org.jetbrains.kotlin.g2kts.toGNode
-import org.jetbrains.kotlin.g2kts.transform
+import org.jetbrains.kotlin.g2kts.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 
 
@@ -25,8 +22,9 @@ class G2KtsAction : AnAction() {
         val manager = PsiManager.getInstance(e.project!!)
         virtualFiles?.forEach { file ->
             val groovyFileBase = manager.findFile(file) as? GroovyFileBase ?: return
-            val canon = groovyFileBase.text.canonicalization()
-            canon.toGNode()
+            println(Writer.write(buildTree(groovyFileBase).toKotlin()))
+//            val canon = groovyFileBase.text.canonicalization()
+//            canon.toGNode()
 //            val converted = converter.convert(canon) as Node.Block
 //            println("res:\n${converted.stmts.joinToString(separator = "\n") { Writer.write(it) }}")
 //            println("transform:\n${Writer.write(transform(converted))}")

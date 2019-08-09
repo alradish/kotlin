@@ -26,25 +26,29 @@ fun GNode.toKotlin(): Node = when (this) {
         }
     }
     is GArgumentsList -> TODO()
-    is GName -> Node.Expr.Name(name)
+    is GIdentifier -> Node.Expr.Name(name)
     is GSimpleMethodCall -> {
-        val expr: Node.Expr = if (obj is GName && obj.name == "this")
-            method.toKotlin().cast()
-        else Node.Expr.BinaryOp(
-            obj.toKotlin().cast(),
-            Node.Expr.BinaryOp.Oper.Token(Node.Expr.BinaryOp.Token.DOT),
-            method.toKotlin().cast()
-        )
+        val expr: Node.Expr = when {
+            obj == null -> method.toKotlin().cast()
+            //obj is GIdentifier && obj.name == "this" -> TODO()
+            else -> Node.Expr.BinaryOp(
+                obj.toKotlin().cast(),
+                Node.Expr.BinaryOp.Oper.Token(Node.Expr.BinaryOp.Token.DOT),
+                method.toKotlin().cast()
+            )
+        }
         Node.Expr.Call(expr, emptyList(), arguments.args.map { it.toKotlin() as Node.ValueArg }, null)
     }
     is GConfigurationBlock -> {
-        val expr: Node.Expr = if (obj is GName && obj.name == "this")
-            method.toKotlin().cast()
-        else Node.Expr.BinaryOp(
-            obj.toKotlin().cast(),
-            Node.Expr.BinaryOp.Oper.Token(Node.Expr.BinaryOp.Token.DOT),
-            method.toKotlin().cast()
-        )
+        val expr: Node.Expr = when {
+            obj == null -> method.toKotlin().cast()
+            //obj is GIdentifier && obj.name == "this" -> TODO()
+            else -> Node.Expr.BinaryOp(
+                obj.toKotlin().cast(),
+                Node.Expr.BinaryOp.Oper.Token(Node.Expr.BinaryOp.Token.DOT),
+                method.toKotlin().cast()
+            )
+        }
         Node.Expr.Call(
             expr,
             emptyList(),
@@ -77,10 +81,32 @@ fun GNode.toKotlin(): Node = when (this) {
     is GConst -> Node.Expr.Const(text, Node.Expr.Const.Form.valueOf(type.toString()))
     is GString -> Node.Expr.StringTmpl(listOf(Node.Expr.StringTmpl.Elem.Regular(str)), false)
     is GBinaryExpression -> Node.Expr.BinaryOp(left.toKotlin().cast(), operator.toKotlin().cast(), right.toKotlin().cast())
-    is GSimplePropertyAccess -> TODO()
+    is GSimplePropertyAccess ->
+        if (obj != null) {
+            obj.toKotlin().cast<Node.Expr>() dot property.toKotlin().cast()
+        } else {
+            property.toKotlin()
+        }
     is GExtensionAccess -> TODO()
-    is GTaskAccess -> TODO()
+    is GTaskAccess -> Node.Expr.ArrayAccess(
+        Node.Expr.Name("tasks"), listOf(
+            Node.Expr.StringTmpl(
+                listOf(
+                    Node.Expr.StringTmpl.Elem.Regular(
+                        task
+                    )
+                ),
+                false
+            )
+        )
+    )
     is GOperator.Common -> Node.Expr.BinaryOp.Oper.Token(Node.Expr.BinaryOp.Token.values().find { it.str == token.text } ?: error(""))
     is GOperator.Uncommon -> Node.Expr.BinaryOp.Oper.Infix(text)
     is GArgument -> Node.ValueArg(name, false, expr.toKotlin().cast())
+    is GList -> Node.Expr.Call(
+        Node.Expr.Name("listOf"),
+        emptyList(),
+        initializers.map { Node.ValueArg(null, false, it.toKotlin() as Node.Expr) },
+        null
+    )
 }

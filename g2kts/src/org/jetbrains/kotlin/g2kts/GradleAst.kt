@@ -56,24 +56,28 @@ sealed class GExpression : GNode() {
     fun toStatement(): GStatement = GStatement.GExpr(this)
 }
 
-data class GName(
+data class GIdentifier(
     var name: String
 ) : GExpression()
 
+data class GList(
+    val initializers: List<GExpression>
+) : GExpression()
+
 sealed class GMethodCall : GExpression() {
-    abstract val obj: GExpression
+    abstract val obj: GExpression?
     abstract val method: GExpression
     abstract val arguments: GArgumentsList
 }
 
 data class GSimpleMethodCall(
-    override val obj: GExpression,
+    override val obj: GExpression?,
     override val method: GExpression,
     override val arguments: GArgumentsList
 ) : GMethodCall()
 
 data class GConfigurationBlock(
-    override val obj: GExpression,
+    override val obj: GExpression?,
     override val method: GExpression,
     override val arguments: GArgumentsList,
     val configuration: GClosure
@@ -109,17 +113,17 @@ data class GBinaryExpression(
 
 
 sealed class GPropertyAccess : GExpression() {
-    abstract val obj: GExpression
+    abstract val obj: GExpression?
     abstract val property: GExpression
 }
 
 data class GSimplePropertyAccess(
-    override val obj: GExpression,
+    override val obj: GExpression?,
     override val property: GExpression
 ) : GPropertyAccess()
 
 data class GExtensionAccess(
-    override val obj: GExpression,
+    override val obj: GExpression?,
     override val property: GExpression
 ) : GPropertyAccess() {
     companion object {
@@ -128,13 +132,13 @@ data class GExtensionAccess(
 }
 
 data class GTaskAccess(
-    override val obj: GExpression,
-    override val property: GExpression
-) : GPropertyAccess() {
-    companion object {
-        val TASKS: String = "tasks"
-    }
-}
+    val task: String
+) : GExpression()
+
+data class GMemberAccess(
+    val obj: GExpression,
+    val member: GExpression
+)
 
 // ********** EXPRESSION END **********
 
