@@ -37,7 +37,7 @@ fun Expression.toGNode(): GExpression = when (this) {
 fun PropertyExpression.toGNode(): GExpression {
     val obj = objectExpression.toGNode()
     val property = property.toGNode()
-    return if (obj is GName && obj.name == "this" && property is GName && property.name in extensions) {
+    return if (obj is GIdentifier && obj.name == "this" && property is GIdentifier && property.name in extensions) {
         GExtensionAccess(obj, property)
     } else {
         GSimplePropertyAccess(obj, property)
@@ -59,9 +59,9 @@ fun BinaryExpression.toGNode(): GExpression = when (this) {
 }
 
 fun VariableExpression.toGNode(): GExpression = when (this) {
-    VariableExpression.THIS_EXPRESSION -> GName("this")
-    VariableExpression.SUPER_EXPRESSION -> GName("super")
-    else -> GName(this.text) // GTODO create GPropertyAccess or something
+    VariableExpression.THIS_EXPRESSION -> GIdentifier("this")
+    VariableExpression.SUPER_EXPRESSION -> GIdentifier("super")
+    else -> GIdentifier(this.text) // GTODO create GPropertyAccess or something
 }
 
 fun ConstantExpression.toGNode(): GExpression {
@@ -96,7 +96,7 @@ fun TupleExpression.toGArgumentList(): GArgumentsList = GArgumentsList(
 
 fun createTask(task: GConfigurationBlock): GTaskCreating {
     return GTaskCreating(
-        (task.method as GName).name,
+        (task.method as GIdentifier).name,
         "",
         task.configuration
     )
@@ -105,7 +105,7 @@ fun createTask(task: GConfigurationBlock): GTaskCreating {
 fun MethodCallExpression.toGNode(): GExpression {
     val obj = objectExpression.toGNode()
     val m = when (method) {
-        is ConstantExpression -> GName((method as ConstantExpression).text)
+        is ConstantExpression -> GIdentifier((method as ConstantExpression).text)
         else -> method.toGNode()
     }
     val args: GArgumentsList = when (val a = arguments) {
@@ -113,12 +113,12 @@ fun MethodCallExpression.toGNode(): GExpression {
         else -> error("cant parse arguments")
     }
     return when {
-        m is GName && m.name in vars && args.args.size == 1 -> GBinaryExpression(
+        m is GIdentifier && m.name in vars && args.args.size == 1 -> GBinaryExpression(
             m,
             GOperator.Common(GOperator.Token.ASSN),
             args.args.first().expr
         )
-        m is GName && m.name == "task" && args.args.size == 1 && args.args.first().expr is GConfigurationBlock ->
+        m is GIdentifier && m.name == "task" && args.args.size == 1 && args.args.first().expr is GConfigurationBlock ->
             createTask(args.args.first().expr.cast())
         args.args.lastOrNull()?.expr is GClosure -> GConfigurationBlock(
             obj,
