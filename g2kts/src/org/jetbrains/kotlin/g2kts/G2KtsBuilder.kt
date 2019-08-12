@@ -135,7 +135,7 @@ fun GrReferenceExpression.toGradleAst(): GExpression {
 }
 
 
-fun GrOperatorExpression.toGradleAst(): GExpression { // GTODO intreface Ope
+fun GrOperatorExpression.toGradleAst(): GBinaryExpression {
     return when (this) {
         is GrBinaryExpression -> GBinaryExpression(
             leftOperand.toGradleAst(),
@@ -154,16 +154,15 @@ fun GrCallExpression.toGradleAst(): GExpression = when (this) {
 }
 
 fun GrMethodCall.toGradleAst(): GExpression {
-    var (obj, method) = parseInvokedExpression()
+    val (obj, method) = parseInvokedExpression()
     var gobj = obj?.toGradleAst()
-    var gmethod = method!!.toGradleAst()
+    val gmethod = method!!.toGradleAst()
     if (gobj is GIdentifier && gobj.name in tasks) {
         gobj = GTaskAccess(gobj.name)
     }
 
-
     return when {
-        gmethod is GIdentifier && gmethod.name == "task" -> toTaskCreate()
+        gmethod.name == "task" -> toTaskCreate()
         resolveMethod()?.containingClass?.qualifiedName == "org.gradle.api.Project" && invokedExpression.text in vars -> {
             val args = argumentList.toGradleAst()
             GBinaryExpression(GSimplePropertyAccess(gobj, gmethod), GOperator.byValue("="), args.args.first().expr)
