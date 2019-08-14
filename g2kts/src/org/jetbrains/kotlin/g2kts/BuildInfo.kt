@@ -5,6 +5,10 @@
 
 package org.jetbrains.kotlin.g2kts
 
+val taskException: List<String> = listOf(
+    "dependencies"
+)
+
 val tasks = listOf(
     "assemble" to org.gradle.api.DefaultTask::class,
     "build" to org.gradle.api.DefaultTask::class,
@@ -35,7 +39,8 @@ val tasks = listOf(
     "test" to org.gradle.api.tasks.testing.Test::class,
     "testClasses" to org.gradle.api.DefaultTask::class,
     "wrapper" to org.gradle.api.tasks.wrapper.Wrapper::class
-).toMap()
+).toMap().minus(taskException)
+
 val extensions = listOf(
     "ext",
     "defaultArtifacts",

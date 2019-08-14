@@ -176,6 +176,9 @@ fun GrMethodCall.toGradleAst(): GExpression {
             val args = argumentList.toGradleAst()
             GBinaryExpression(GSimplePropertyAccess(gobj, gmethod), GOperator.byValue("="), args.args.first().expr)
         }
+        gobj == null && gmethod.name in tasks.keys && hasClosureArguments() && argumentList.isEmpty -> {
+            GTaskConfigure(gmethod.name, tasks.getValue(gmethod.name), closureArguments.last().toGradleAst())
+        }
         else -> when (this) {
             is GrMethodCallExpression -> {
                 if (hasClosureArguments()) {
