@@ -121,7 +121,7 @@ fun GNode.toKotlin(): Node = when (this) {
             Node.Expr.Name("named"),
             listOf(Node.Type(emptyList(), Node.TypeRef.Simple(listOf(Node.TypeRef.Simple.Piece(type.simpleName!!, emptyList()))))),
             listOf(Node.ValueArg(null, false, Node.Expr.StringTmpl(listOf(Node.Expr.StringTmpl.Elem.Regular(task)), false))),
-            if (this is GTaskConfigure) configure.toKotlin().cast<Node.Expr.Call.TrailLambda>() else null
+            if (this is GTaskConfigure) Node.Expr.Call.TrailLambda(emptyList(), null, configure.toKotlin().cast()) else null
         )
     )
 }
