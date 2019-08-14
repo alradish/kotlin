@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import org.gradle.api.NamedDomainObjectCollection
 import org.jetbrains.kotlin.utils.addToStdlib.cast
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression
@@ -242,9 +243,58 @@ fun GrMethod.toGradleAst(): GMethodCall {
     TODO(this.toString())
 }
 
-fun buildTree(psi: PsiElement): GNode = when (psi) {
-    is GroovyFileBase -> psi.toGradleAst()
-    else -> TODO()
+fun buildTree(psi: PsiElement): GNode {
+    val project = when (psi) {
+        is GroovyFileBase -> psi.toGradleAst()
+        else -> TODO()
+    }
+    return convertApplyToPluginsBlock(project)
+}
+
+fun convertApplyToPluginsBlock(project: GProject): GProject {
+    val plugins = mutableListOf<GStatement>()
+    val other = mutableListOf<GStatement>()
+    for (statement in project.statements) {
+        if (statement.isApplyPlugin()) {
+            val call = statement.cast<GStatement.GExpr>().expr.cast<GMethodCall>()
+            plugins.add(
+                GSimpleMethodCall(
+                    null,
+                    GIdentifier("id"),
+                    GArgumentsList(listOf(GArgument(null, call.arguments.args.first().expr.cast<GString>())))
+                ).toStatement()
+            )
+        } else {
+            other.add(statement)
+        }
+    }
+
+    val newStatements = if (plugins.isNotEmpty()) {
+        val first = other.firstOrNull().safeAs<GStatement.GExpr>()?.expr
+
+        if (first is GConfigurationBlock && first.method == GIdentifier("plugins")) {
+            plugins.addAll(first.configuration.statements.statements)
+            other.removeAt(0)
+        }
+        other.apply {
+            val configuration = GClosure(
+                emptyList(),
+                GBlock(plugins)
+            )
+            add(
+                0,
+                GConfigurationBlock(
+                    null,
+                    GIdentifier("plugins"),
+                    GArgumentsList(emptyList()),
+                    configuration
+                ).toStatement()
+            )
+        }
+    } else
+        other
+
+    return GProject(newStatements)
 }
 
 fun PsiElement.toGradleAst(): GIdentifier {
