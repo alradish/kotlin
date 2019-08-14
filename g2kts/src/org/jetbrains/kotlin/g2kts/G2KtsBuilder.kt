@@ -120,17 +120,29 @@ fun GrLiteral.toGradleAst(): GExpression {
 
 fun GrReferenceExpression.toGradleAst(): GExpression {
     val q = qualifierExpression
-    return if(q != null) {
-        q.type?.let {
-            val qName = NamedDomainObjectCollection::class.qualifiedName ?: return@let
-            val type = PsiType.getTypeByName(qName, q.project, q.resolveScope)
-            if (it.equals(type) || it.superTypes.contains(type)) {
-                println("***************************${q.text}")
+    return if (q != null) {
+        val qualifier = q.toGradleAst()
+        if (qualifier is GIdentifier && qualifier.name in extensions) {
+            GExtensionAccess(
+                qualifier,
+                GString(referenceName!!)
+            )
+        } else {
+            q.type?.let {
+                val qName = NamedDomainObjectCollection::class.qualifiedName ?: return@let
+                val type = PsiType.getTypeByName(qName, q.project, q.resolveScope)
+                if (it.equals(type) || it.superTypes.contains(type)) {
+                    println("***************************${q.text}")
+                }
             }
+            GSimplePropertyAccess(q.toGradleAst(), referenceNameElement!!.toGradleAst())
         }
-        GSimplePropertyAccess(q.toGradleAst(), referenceNameElement!!.toGradleAst())
     } else {
-        GIdentifier(referenceName!!)
+        if (referenceName in tasks.keys) {
+            GSimpleTaskAccess(referenceName!!, tasks.getValue(referenceName!!))
+        } else {
+            GIdentifier(referenceName!!)
+        }
     }
 }
 
@@ -157,9 +169,6 @@ fun GrMethodCall.toGradleAst(): GExpression {
     val (obj, method) = parseInvokedExpression()
     var gobj = obj?.toGradleAst()
     val gmethod = method!!.toGradleAst()
-    if (gobj is GIdentifier && gobj.name in tasks) {
-        gobj = GTaskAccess(gobj.name)
-    }
 
     return when {
         gmethod.name == "task" -> toTaskCreate()
@@ -189,7 +198,7 @@ fun GrMethodCall.toTaskCreate(): GTaskCreating {
     val task = argumentList.allArguments.first().cast<GrMethodCall>()
     val (_, name) = task.parseInvokedExpression()
     return GTaskCreating(
-        name.cast<GIdentifier>().name,
+        name?.toGradleAst().cast<GIdentifier>().name,
         "",
         task.closureArguments.first().toGradleAst()
     )

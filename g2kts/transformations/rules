@@ -1,0 +1,13 @@
+apply plugin: "kotlin-multiplatform" -> plugins {\n\tid("org.jetbrains.kotlin.multiplatform")\n} (add id to existing plugins block)
+apply plugin: "maven-publish" -> plugins {\n\tid("maven-publish")\n} (add id to existing plugins block)
+
+url(String) -> setUrl(String)
+namedDomain.prop -> nameDomain["prop"] (for all class with supertypes NamedDomainObjectContainer<*>)
+targetFromPreset(preset.wasm32) {Closure} -> wasm32() {Closure} (for multiplatform)
+fromPreset(presets.linuxX64, "linux64") {Closure} -> linuxX64("linux64") {Closure}
+
+sourceSets { name {Closure} } -> sourceSets { named("name") {Closure} }
+
+
+obj {Closure} -> obj.run {CLosure} (if function invoke()  is not found)
+*.each {Closure} -> *.onEach {Closure}

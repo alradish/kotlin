@@ -27,6 +27,8 @@ dependencies {
     testCompile(commonDep("junit:junit"))
     testCompile(project(":kotlin-test:kotlin-test-junit"))
 
+//    testCompile(project(":idea:idea-gradle").dependencyProject.testSourceSet.output)
+
     testCompileOnly(intellijCoreDep()) { includeJars("intellij-core") }
     testCompileOnly(intellijPluginDep("Groovy"))
     testCompileOnly(intellijPluginDep("gradle"))
@@ -34,6 +36,9 @@ dependencies {
     testImplementation("org.jetbrains.kotlin", "kotlin-reflect")
 
     testCompileOnly(intellijDep())
+
+    testRuntime(intellijPluginDep("gradle"))
+    testRuntime(intellijPluginDep("Groovy"))
 }
 
 sourceSets {
