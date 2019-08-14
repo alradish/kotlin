@@ -87,19 +87,24 @@ fun GNode.toKotlin(): Node = when (this) {
         } else {
             property.toKotlin()
         }
-    is GExtensionAccess -> TODO()
-    is GTaskAccess -> Node.Expr.ArrayAccess(
-        Node.Expr.Name("tasks"), listOf(
-            Node.Expr.StringTmpl(
-                listOf(
-                    Node.Expr.StringTmpl.Elem.Regular(
-                        task
-                    )
-                ),
-                false
-            )
-        )
-    )
+    is GExtensionAccess -> Node.Expr.ArrayAccess(obj.toKotlin().cast(), listOf(property.toKotlin().cast()))
+//    is GTaskAccess -> Node.Expr.BinaryOp(
+//        Node.Expr.Name("tasks"),
+//        Node.Expr.BinaryOp.Oper.Token(Node.Expr.BinaryOp.Token.DOT),
+//        Node.Expr.Name(task)
+//    )
+//    is GTaskAccess -> Node.Expr.ArrayAccess(
+//        Node.Expr.Name("tasks"), listOf(
+//            Node.Expr.StringTmpl(
+//                listOf(
+//                    Node.Expr.StringTmpl.Elem.Regular(
+//                        task
+//                    )
+//                ),
+//                false
+//            )
+//        )
+//    )
     is GOperator.Common -> Node.Expr.BinaryOp.Oper.Token(Node.Expr.BinaryOp.Token.values().find { it.str == token.text } ?: error(""))
     is GOperator.Uncommon -> Node.Expr.BinaryOp.Oper.Infix(text)
     is GArgument -> Node.ValueArg(name, false, expr.toKotlin().cast())
@@ -108,5 +113,15 @@ fun GNode.toKotlin(): Node = when (this) {
         emptyList(),
         initializers.map { Node.ValueArg(null, false, it.toKotlin() as Node.Expr) },
         null
+    )
+    is GTaskAccess -> Node.Expr.BinaryOp(
+        Node.Expr.Name("tasks"),
+        Node.Expr.BinaryOp.Oper.Token(Node.Expr.BinaryOp.Token.DOT),
+        Node.Expr.Call(
+            Node.Expr.Name("named"),
+            listOf(Node.Type(emptyList(), Node.TypeRef.Simple(listOf(Node.TypeRef.Simple.Piece(type.simpleName!!, emptyList()))))),
+            listOf(Node.ValueArg(null, false, Node.Expr.StringTmpl(listOf(Node.Expr.StringTmpl.Elem.Regular(task)), false))),
+            if (this is GTaskConfigure) configure.toKotlin().cast<Node.Expr.Call.TrailLambda>() else null
+        )
     )
 }

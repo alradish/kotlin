@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.g2kts
 
+import kotlin.reflect.KClass
+
 sealed class GNode
 
 sealed class GStatement : GNode() {
@@ -123,7 +125,7 @@ data class GSimplePropertyAccess(
 ) : GPropertyAccess()
 
 data class GExtensionAccess(
-    override val obj: GExpression?,
+    override val obj: GExpression,
     override val property: GExpression
 ) : GPropertyAccess() {
     companion object {
@@ -131,14 +133,26 @@ data class GExtensionAccess(
     }
 }
 
-data class GTaskAccess(
-    val task: String
-) : GExpression()
+sealed class GTaskAccess : GExpression() {
+    abstract val task: String
+    abstract val type: KClass<*>
+}
 
-data class GMemberAccess(
-    val obj: GExpression,
-    val member: GExpression
-)
+data class GSimpleTaskAccess(
+    override val task: String,
+    override val type: KClass<*>
+) : GTaskAccess()
+
+data class GTaskConfigure(
+    override val task: String,
+    override val type: KClass<*>,
+    val configure: GClosure
+) : GTaskAccess()
+
+//data class GMemberAccess(
+//    val obj: GExpression,
+//    val member: GExpression
+//)
 
 // ********** EXPRESSION END **********
 
