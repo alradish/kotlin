@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.psi.PsiManager
 import kastree.ast.Writer
-import org.jetbrains.kotlin.g2kts.buildTree
+import org.jetbrains.kotlin.g2kts.gradleAstBuilder.buildTree
 import org.jetbrains.kotlin.g2kts.toKotlin
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 
