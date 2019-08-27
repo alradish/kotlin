@@ -19,7 +19,7 @@ import com.intellij.psi.PsiFileFactory
 import kastree.ast.Node
 import kastree.ast.Writer
 import org.jetbrains.kotlin.g2kts.GProject
-import org.jetbrains.kotlin.g2kts.buildTree
+import org.jetbrains.kotlin.g2kts.gradleAstBuilder.buildTree
 import org.jetbrains.kotlin.g2kts.toKotlin
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.projectStructure.module
