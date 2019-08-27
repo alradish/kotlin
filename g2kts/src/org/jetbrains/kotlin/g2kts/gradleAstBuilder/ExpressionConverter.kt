@@ -169,13 +169,29 @@ fun GrMethodCall.toGradleAst(): GExpression {
 fun GrMethodCall.toTaskCreate(): GTaskCreating {
     val task = argumentList.allArguments.first().cast<GrMethodCall>()
     val (_, name) = task.parseInvokedExpression()
-//    val map = task.argumentList.allArguments.map {
-//        it.toGradleAst()
-//    }
+    val args = task.argumentList.toGradleAst()
+
+    val body = task.closureArguments.first().toGradleAst()
+    val newDependsOn = mutableListOf<GStatement>()
+    for (arg in args.args) {
+        when {
+            arg.name == "dependsOn" -> {
+                newDependsOn.addAll(
+                    if (arg.expr is GList) {
+                        arg.expr.cast<GList>().initializers
+                    } else {
+                        listOf(arg.expr)
+                    }.map {
+                        GSimpleMethodCall(null, GIdentifier("dependsOn"), GArgumentsList(listOf(GArgument(null, it)))).toStatement()
+                    }
+                )
+            }
+        }
+    }
     return GTaskCreating(
         name?.toGradleAst().cast<GIdentifier>().name,
         "",
-        task.closureArguments.first().toGradleAst()
+        body.copy(statements = GBlock(newDependsOn + body.statements.statements))
     )
 }
 
