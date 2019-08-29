@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.g2kts.*
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
@@ -43,7 +44,7 @@ fun GrExpression.toGradleAst(): GExpression = when (this) {
     is GrTupleAssignmentExpression -> TODO(this::class.toString())
     is GrParenthesizedExpression -> TODO(this::class.toString())
     is GrCallExpression -> toGradleAst()
-    else -> error("Unreachable code")
+    else -> unreachable()
 }
 
 fun GrListOrMap.toGradleAst(): GExpression {
@@ -116,19 +117,19 @@ fun GrOperatorExpression.toGradleAst(): GBinaryExpression {
             GOperator.byValue("="),
             rValue!!.toGradleAst()
         )
-        else -> error("Unreachable code")
+        else -> unreachable()
     }
 }
 
 fun GrCallExpression.toGradleAst(): GExpression = when (this) {
     is GrMethodCall -> toGradleAst()
     is GrNewExpression -> TODO(this::class.toString())
-    else -> error("Unreachable code")
+    else -> unreachable()
 }
 
 fun GrMethodCall.toGradleAst(): GExpression {
     val (obj, method) = parseInvokedExpression()
-    var gobj = obj?.toGradleAst()
+    val gobj = obj?.toGradleAst()
     val gmethod = method!!.toGradleAst()
 
     return when {
@@ -161,7 +162,7 @@ fun GrMethodCall.toGradleAst(): GExpression {
                     GSimpleMethodCall(gobj, gmethod, argumentList.toGradleAst())
             }
             is GrApplicationStatement -> GSimpleMethodCall(gobj, gmethod, argumentList.toGradleAst())
-            else -> error("Unreachable code")
+            else -> unreachable()
         }
     }
 }
