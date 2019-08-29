@@ -73,6 +73,12 @@ fun call(
     lambda: Node.Expr.Call.TrailLambda? = null
 ) = Node.Expr.Call(expr, typeArgs, args, lambda)
 
+fun lambda(
+    func: Node.Expr.Brace,
+    anns: List<Node.Modifier.AnnotationSet> = emptyList(),
+    label: String? = null
+) = Node.Expr.Call.TrailLambda(anns, label, func)
+
 fun property(
     vars: List<Node.Decl.Property.Var?>,
     mods: List<Node.Modifier> = emptyList(),
