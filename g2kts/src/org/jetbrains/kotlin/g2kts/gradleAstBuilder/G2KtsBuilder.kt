@@ -11,7 +11,10 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement
-import org.jetbrains.plugins.groovy.lang.psi.*
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.GrExpressionList
 import org.jetbrains.plugins.groovy.lang.psi.api.GrImportAlias
@@ -48,7 +51,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase
 
 fun GroovyFileBase.toGradleAst(): GProject {
     return GProject(topStatements.map { it.toGradleAst() })
@@ -102,7 +104,7 @@ fun GroovyPsiElement.toGradleAst(): GNode = when (this) {
     is GrArrayInitializer -> TODO(this::class.toString())
     is GrCall -> TODO(this::class.toString())
     is GrTryResourceList -> TODO(this::class.toString())
-    else -> error("impossible")
+    else -> unreachable()
 }
 
 

@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.g2kts.gradleAstBuilder
 
 import org.jetbrains.kotlin.g2kts.GMethodCall
 import org.jetbrains.kotlin.g2kts.GStatement
+import org.jetbrains.kotlin.g2kts.unreachable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterruptingStatement
@@ -37,7 +38,7 @@ fun GrStatement.toGradleAst(): GStatement = when (this) {
     is GrThrowStatement -> TODO(text)
     is GrSynchronizedStatement -> TODO(text)
     is GrBlockStatement -> TODO(text)
-    else -> error("Unreachable code")
+    else -> unreachable()
 }
 
 fun GrTopStatement.toGradleAst(): GStatement = when (this) {
@@ -46,7 +47,7 @@ fun GrTopStatement.toGradleAst(): GStatement = when (this) {
     is GrMethod -> TODO(this.text)
     is GrStatement -> toGradleAst()/*.also { println("${this.text}=$it") }*/
     is GrTypeDefinition -> TODO(this.text)
-    else -> error("Unreachable code")
+    else -> unreachable()
 }
 
 fun GrMethod.toGradleAst(): GMethodCall {

@@ -9,3 +9,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 
 val GrMethodCall.rawName: String?
     get() = invokedExpression.text
+
+fun unreachable(): Nothing = error("Unreachable code")
