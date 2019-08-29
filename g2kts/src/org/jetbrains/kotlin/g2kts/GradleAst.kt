@@ -165,3 +165,24 @@ sealed class GDeclaration : GNode() {
 data class GProject(
     val statements: List<GStatement>
 ) : GNode()
+
+data class GBuildScriptBlock(
+    val type: BuildScriptBlockType,
+    val block: GClosure
+) : GExpression() {
+    enum class BuildScriptBlockType(val text: String) {
+        ALL_PROJECTS("allprojects"),
+        ARTIFACTS("artifacts"),
+        BUILD_SCRIPT("buildscript"),
+        CONFIGURATIONS("configurations"),
+        DEPENDENCIES("dependencies"),
+        REPOSITORIES("repositories"),
+        SOURCE_SETS("sourceSets"),
+        SUBPROJECTS("subprojects"),
+        PUBLISHING("publishing");
+
+        companion object {
+            fun byName(name: String) = values().find { it.text == name }
+        }
+    }
+}

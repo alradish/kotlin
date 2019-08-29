@@ -78,4 +78,8 @@ fun GNode.toKotlin(): Node = when (this) {
             if (this is GTaskConfigure) Node.Expr.Call.TrailLambda(emptyList(), null, configure.toKotlin().cast()) else null
         )
     )
+    is GBuildScriptBlock -> call(
+        expr = name(type.text),
+        lambda = Node.Expr.Call.TrailLambda(emptyList(), null, block.toKotlin().cast())
+    )
 }

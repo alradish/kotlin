@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.g2kts.*
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
@@ -122,7 +121,7 @@ fun GrOperatorExpression.toGradleAst(): GBinaryExpression {
 }
 
 fun GrCallExpression.toGradleAst(): GExpression = when (this) {
-    is GrMethodCall -> toGradleAst()
+    is GrMethodCall -> toGradleAst().cast()
     is GrNewExpression -> TODO(this::class.toString())
     else -> unreachable()
 }
@@ -133,6 +132,10 @@ fun GrMethodCall.toGradleAst(): GExpression {
     val gmethod = method!!.toGradleAst()
 
     return when {
+        isBuildScriptBlock() -> GBuildScriptBlock(
+            GBuildScriptBlock.BuildScriptBlockType.byName(method.text)!!,
+            closureArguments.single().toGradleAst()
+        )
         gmethod.name == "task" -> toTaskCreate()
         resolveMethod()?.containingClass?.qualifiedName == "org.gradle.api.Project" && invokedExpression.text in vars -> {
             val args = argumentList.toGradleAst()
@@ -151,15 +154,15 @@ fun GrMethodCall.toGradleAst(): GExpression {
         }
         else -> when (this) {
             is GrMethodCallExpression -> {
-                if (hasClosureArguments()) {
-                    GConfigurationBlock(
-                        gobj,
-                        gmethod,
-                        argumentList.toGradleAst(),
-                        closureArguments.last().toGradleAst()
-                    )
-                } else
-                    GSimpleMethodCall(gobj, gmethod, argumentList.toGradleAst())
+//                if (hasClosureArguments()) {
+//                    GConfigurationBlock(
+//                        gobj,
+//                        gmethod,
+//                        argumentList.toGradleAst(),
+//                        closureArguments.last().toGradleAst()
+//                    )
+//                } else
+                GSimpleMethodCall(gobj, gmethod, argumentList.toGradleAst())
             }
             is GrApplicationStatement -> GSimpleMethodCall(gobj, gmethod, argumentList.toGradleAst())
             else -> unreachable()
@@ -191,6 +194,15 @@ fun GrMethodCall.toTaskCreate(): GTaskCreating {
         "",
         body
     )
+}
+
+fun GrMethodCall.isBuildScriptBlock(): Boolean {
+    val (obj, method) = parseInvokedExpression()
+    if (obj != null) return false
+    if (GBuildScriptBlock.BuildScriptBlockType.values().find { it.text == method!!.text } == null) return false
+    if (!argumentList.isEmpty) return false
+    if (closureArguments.singleOrNull() == null) return false
+    return true
 }
 
 fun GrMethodCall.parseInvokedExpression(): Pair<GrExpression?, PsiElement?> {
