@@ -31,18 +31,14 @@ fun GNode.toKotlin(): Node = when (this) {
             else -> obj!!.toKotlin().cast<Node.Expr>() dot method.toKotlin().cast()
         }
         val lambda = when (this) {
-            is GConfigurationBlock -> Node.Expr.Call.TrailLambda(
-                emptyList(),
-                null,
-                configuration.toKotlin().cast()
-            )
+            is GConfigurationBlock -> lambda(configuration.toKotlin().cast())
             else -> null
         }
         Node.Expr.Call(expr, emptyList(), arguments.args.map { it.toKotlin() as Node.ValueArg }, lambda)
     }
     is GClosure -> Node.Expr.Brace(emptyList(), statements.toKotlin().cast())
     is GTaskCreating -> {
-        val lambda = Node.Expr.Call.TrailLambda(emptyList(), null, body.toKotlin().cast())
+        val lambda = lambda(body.toKotlin().cast())
         property(
             vars = listOf(Node.Decl.Property.Var(name, null)),
             delegated = true,
@@ -75,11 +71,11 @@ fun GNode.toKotlin(): Node = when (this) {
             Node.Expr.Name("named"),
             listOf(Node.Type(emptyList(), Node.TypeRef.Simple(listOf(Node.TypeRef.Simple.Piece(type.simpleName!!, emptyList()))))),
             listOf(Node.ValueArg(null, false, Node.Expr.StringTmpl(listOf(Node.Expr.StringTmpl.Elem.Regular(task)), false))),
-            if (this is GTaskConfigure) Node.Expr.Call.TrailLambda(emptyList(), null, configure.toKotlin().cast()) else null
+            if (this is GTaskConfigure) lambda(configure.toKotlin().cast()) else null
         )
     )
     is GBuildScriptBlock -> call(
         expr = name(type.text),
-        lambda = Node.Expr.Call.TrailLambda(emptyList(), null, block.toKotlin().cast())
+        lambda = lambda(block.toKotlin().cast())
     )
 }
