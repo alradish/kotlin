@@ -1,5 +1,5 @@
-apply plugin: "kotlin-multiplatform" -> plugins {\n\tid("org.jetbrains.kotlin.multiplatform")\n} (add id to existing plugins block)
-apply plugin: "maven-publish" -> plugins {\n\tid("maven-publish")\n} (add id to existing plugins block)
+apply plugin: "kotlin-multiplatform" -> plugins {\n\tid("org.jetbrains.kotlin.multiplatform")\n} (add id to existing plugins block) ???
+apply plugin: "maven-publish" -> plugins {\n\tid("maven-publish")\n} (add id to existing plugins block) ???
 
 url(String) -> setUrl(String)
 namedDomain.prop -> nameDomain["prop"] (for all class with supertypes NamedDomainObjectContainer<*>)
