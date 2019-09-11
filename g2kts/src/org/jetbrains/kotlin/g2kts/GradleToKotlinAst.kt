@@ -49,12 +49,8 @@ fun GNode.toKotlin(): Node = when (this) {
     is GString -> Node.Expr.StringTmpl(listOf(Node.Expr.StringTmpl.Elem.Regular(str)), false)
     is GBinaryExpression -> Node.Expr.BinaryOp(left.toKotlin().cast(), operator.toKotlin().cast(), right.toKotlin().cast())
     is GSimplePropertyAccess ->
-        if (obj != null) {
-            obj.toKotlin().cast<Node.Expr>() dot property.toKotlin().cast()
-        } else {
-            property.toKotlin()
-        }
-    is GExtensionAccess -> Node.Expr.ArrayAccess(obj.toKotlin().cast(), listOf(property.toKotlin().cast()))
+        obj?.toKotlin()?.cast<Node.Expr>()?.dot(property.toKotlin().cast()) ?: property.toKotlin()
+    is GExtensionAccess -> Node.Expr.ArrayAccess(obj!!.toKotlin().cast(), listOf(property.toKotlin().cast()))
     is GOperator.Common -> Node.Expr.BinaryOp.Oper.Token(Node.Expr.BinaryOp.Token.values().find { it.str == token.text } ?: error(""))
     is GOperator.Uncommon -> Node.Expr.BinaryOp.Oper.Infix(text)
     is GArgument -> Node.ValueArg(name, false, expr.toKotlin().cast())
