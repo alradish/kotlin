@@ -45,7 +45,8 @@ fun GrTopStatement.toGradleAst(): GStatement = when (this) {
     is GrImportStatement -> TODO(this.text)
     is GrPackageDefinition -> TODO(this.text)
     is GrMethod -> TODO(this.text)
-    is GrStatement -> toGradleAst()/*.also { println("${this.text}=$it") }*/
+//    is GrStatement -> toGradleAst()/*.also { println("${this.text}=$it") }*/
+    is GrStatement -> toGradleAst()
     is GrTypeDefinition -> TODO(this.text)
     else -> unreachable()
 }

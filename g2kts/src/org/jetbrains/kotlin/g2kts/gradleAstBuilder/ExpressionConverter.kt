@@ -145,6 +145,7 @@ fun GrMethodCall.toGradleAst(): GExpression {
                 args.args.first().expr
             )
         }
+
         gobj == null && gmethod.name in tasks.keys && hasClosureArguments() && argumentList.isEmpty -> {
             GTaskConfigure(
                 gmethod.name,
@@ -154,15 +155,15 @@ fun GrMethodCall.toGradleAst(): GExpression {
         }
         else -> when (this) {
             is GrMethodCallExpression -> {
-//                if (hasClosureArguments()) {
-//                    GConfigurationBlock(
-//                        gobj,
-//                        gmethod,
-//                        argumentList.toGradleAst(),
-//                        closureArguments.last().toGradleAst()
-//                    )
-//                } else
-                GSimpleMethodCall(gobj, gmethod, argumentList.toGradleAst())
+                if (hasClosureArguments()) {
+                    GConfigurationBlock(
+                        gobj,
+                        gmethod,
+                        argumentList.toGradleAst(),
+                        closureArguments.last().toGradleAst()
+                    )
+                } else
+                    GSimpleMethodCall(gobj, gmethod, argumentList.toGradleAst())
             }
             is GrApplicationStatement -> GSimpleMethodCall(gobj, gmethod, argumentList.toGradleAst())
             else -> unreachable()
@@ -185,7 +186,8 @@ fun GrMethodCall.toTaskCreate(): GTaskCreating {
                     GArgumentsList(listOf(GArgument(null, arg.expr)))
                 }
                 val dependsOn = GSimpleMethodCall(null, GIdentifier("dependsOn"), argumentList).toStatement()
-                body = body.copy(statements = GBlock(listOf(dependsOn) + body.statements.statements))
+//                body = body.copy(statements = GBlock(listOf(dependsOn) + body.statements.statements))
+                body = GClosure(body.parameters, GBlock(listOf(dependsOn) + body.statements.statements))
             }
         }
     }

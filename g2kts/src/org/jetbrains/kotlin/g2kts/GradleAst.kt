@@ -5,27 +5,74 @@
 
 package org.jetbrains.kotlin.g2kts
 
+import kotlin.properties.Delegates
+import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 
-sealed class GNode
+sealed class GNode {
+    var parent: GNode? = null
 
-sealed class GStatement : GNode() {
-    data class GExpr(var expr: GExpression) : GStatement()
-    data class GDecl(var decl: GDeclaration) : GStatement()
+    fun detach(from: GNode?) {
+        from ?: return
+        val prevParent = parent
+        require(from == prevParent)
+        parent = null
+    }
+
+    fun attach(to: GNode) {
+        check(parent == null)
+        parent = to
+    }
+
+    protected fun <T : GNode?, U : T> child(v: U): ReadWriteProperty<GNode?, U> {
+        v?.detach(v.parent)
+        v?.attach(this)
+        return Delegates.observable(v) { _, old, new ->
+            old?.detach(this)
+            new?.attach(this)
+        }
+    }
+
+//    protected fun <T : GNode?, U : T>
+
+    protected fun <T : GNode> children(v: List<T>): ReadWriteProperty<GNode, List<T>> {
+        v.forEach { it.detach(it.parent) }
+        v.forEach { it.attach(this) }
+        return Delegates.observable(v) { _, old, new ->
+            old.forEach { it.detach(this) }
+            new.forEach { it.attach(this) }
+        }
+    }
 }
 
-data class GBlock(
-    var statements: List<GStatement>
-) : GStatement()
 
-data class GArgument(
+sealed class GStatement : GNode() {
+    class GExpr(expr: GExpression) : GStatement() {
+        var expr: GExpression by child(expr)
+    }
+    class GDecl(decl: GDeclaration) : GStatement() {
+        var decl: GDeclaration by child(decl)
+    }
+}
+
+class GBlock(
+    statements: List<GStatement>
+) : GStatement() {
+    var statements: List<GStatement> by children(statements)
+}
+
+class GArgument(
     var name: String?,
-    var expr: GExpression
-) : GNode()
+    expr: GExpression
+) : GNode() {
+    var expr: GExpression by child(expr)
+}
 
-data class GArgumentsList(
-    var args: List<GArgument>
-) : GNode()
+class GArgumentsList(
+    args: List<GArgument>
+) : GNode() {
+    var args: List<GArgument> by children(args)
+}
 
 sealed class GOperator : GNode() {
     data class Common(val token: Token) : GOperator()
@@ -62,39 +109,54 @@ data class GIdentifier(
     var name: String
 ) : GExpression()
 
-data class GList(
-    val initializers: List<GExpression>
-) : GExpression()
-
-sealed class GMethodCall : GExpression() {
-    abstract val obj: GExpression?
-    abstract val method: GExpression
-    abstract val arguments: GArgumentsList
+class GList(
+    initializers: List<GExpression>
+) : GExpression() {
+    var initializers: List<GExpression> by children(initializers)
 }
 
-data class GSimpleMethodCall(
-    override val obj: GExpression?,
-    override val method: GExpression,
-    override val arguments: GArgumentsList
-) : GMethodCall()
+sealed class GMethodCall(
+    obj: GExpression?,
+    method: GExpression,
+    arguments: GArgumentsList
+) : GExpression() {
+    val obj: GExpression? by child(obj)
+    val method: GExpression by child(method)
+    val arguments: GArgumentsList by child(arguments)
+}
 
-data class GConfigurationBlock(
-    override val obj: GExpression?,
-    override val method: GExpression,
-    override val arguments: GArgumentsList,
-    val configuration: GClosure
-) : GMethodCall()
+class GSimpleMethodCall(
+    obj: GExpression?,
+    method: GExpression,
+    arguments: GArgumentsList
+) : GMethodCall(obj, method, arguments)
 
-data class GClosure( // GTODO arguments
-    val parameters: List<GExpression>, // GTODO make GParameter
-    val statements: GBlock
-) : GExpression()
+class GConfigurationBlock(
+    obj: GExpression?,
+    method: GExpression,
+    arguments: GArgumentsList,
+    configuration: GClosure
+) : GMethodCall(obj, method, arguments) {
+    val configuration: GClosure by child(configuration)
+}
 
-data class GTaskCreating(
+class GClosure( // GTODO arguments
+    parameters: List<GExpression>,
+    statements: GBlock
+) : GExpression() {
+    val parameters: List<GExpression> by children(parameters) // GTODO make GParameter
+    val statements: GBlock by child(statements)
+
+}
+
+class GTaskCreating(
     val name: String,
     val type: String, // GTODO make something like GType
-    val body: GClosure
-) : GExpression()
+    body: GClosure
+) : GExpression() {
+    val body: GClosure by child(body)
+
+}
 
 data class GConst(
     val text: String,
@@ -107,27 +169,34 @@ data class GString(
     val str: String // GTODO template
 ) : GExpression()
 
-data class GBinaryExpression(
-    val left: GExpression,
-    val operator: GOperator,
-    val right: GExpression
-) : GExpression()
-
-
-sealed class GPropertyAccess : GExpression() {
-    abstract val obj: GExpression?
-    abstract val property: GExpression
+class GBinaryExpression(
+    left: GExpression,
+    operator: GOperator,
+    right: GExpression
+) : GExpression() {
+    val left: GExpression by child(left)
+    val operator: GOperator by child(operator)
+    val right: GExpression by child(right)
 }
 
-data class GSimplePropertyAccess(
-    override val obj: GExpression?,
-    override val property: GExpression
-) : GPropertyAccess()
 
-data class GExtensionAccess(
-    override val obj: GExpression,
-    override val property: GExpression
-) : GPropertyAccess() {
+sealed class GPropertyAccess(
+    obj: GExpression?,
+    property: GExpression
+) : GExpression() {
+    val obj: GExpression? by child(obj)
+    val property: GExpression by child(property)
+}
+
+class GSimplePropertyAccess(
+    obj: GExpression?,
+    property: GExpression
+) : GPropertyAccess(obj, property)
+
+class GExtensionAccess(
+    obj: GExpression,
+    property: GExpression
+) : GPropertyAccess(obj, property) {
     companion object {
         val EXT: String = "ext"
     }
@@ -143,11 +212,13 @@ data class GSimpleTaskAccess(
     override val type: KClass<*>
 ) : GTaskAccess()
 
-data class GTaskConfigure(
+class GTaskConfigure(
     override val task: String,
     override val type: KClass<*>,
-    val configure: GClosure
-) : GTaskAccess()
+    configure: GClosure
+) : GTaskAccess() {
+    val configure: GClosure by child(configure)
+}
 
 //data class GMemberAccess(
 //    val obj: GExpression,
@@ -162,14 +233,18 @@ sealed class GDeclaration : GNode() {
 }
 
 
-data class GProject(
-    val statements: List<GStatement>
-) : GNode()
+class GProject(
+    statements: List<GStatement>
+) : GNode() {
+    val statements: List<GStatement> by children(statements)
+}
 
-data class GBuildScriptBlock(
+class GBuildScriptBlock(
     val type: BuildScriptBlockType,
-    val block: GClosure
+    block: GClosure
 ) : GExpression() {
+    val block: GClosure by child(block)
+
     enum class BuildScriptBlockType(val text: String) {
         ALL_PROJECTS("allprojects"),
         ARTIFACTS("artifacts"),
