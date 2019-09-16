@@ -138,35 +138,42 @@ fun buildTree(psi: PsiElement): GNode {
 }
 
 fun convertApplyToPluginsBlock(project: GProject): GProject {
-    val plugins = mutableListOf<GStatement>()
+    val pluginsId = mutableSetOf<String>()
     val other = mutableListOf<GStatement>()
     for (statement in project.statements) {
         if (statement.isApplyPlugin()) {
             val call = statement.cast<GStatement.GExpr>().expr.cast<GMethodCall>()
-            plugins.add(
-                GSimpleMethodCall(
-                    null,
-                    GIdentifier("id"),
-                    GArgumentsList(
-                        listOf(
-                            GArgument(
-                                null,
-                                call.arguments.args.first().expr.cast<GString>()
-                            )
-                        )
-                    )
-                ).toStatement()
-            )
+            val expr = call.arguments.args.first().expr.cast<GString>()
+            pluginsId.add(expr.str)
         } else {
             other.add(statement)
         }
     }
 
-    val newStatements = if (plugins.isNotEmpty()) {
+    val newStatements = if (pluginsId.isNotEmpty()) {
         val first = other.firstOrNull().safeAs<GStatement.GExpr>()?.expr
-
+        val plugins = mutableListOf<GStatement>()
         if (first is GConfigurationBlock && first.method == GIdentifier("plugins")) {
-            plugins.addAll(first.configuration.statements.statements)
+            val withoutId = first.configuration.statements.statements.mapNotNull {
+                if (it.safeAs<GStatement.GExpr>()?.expr?.safeAs<GSimpleMethodCall>()?.method?.safeAs<GIdentifier>()?.name == "id") {
+                    pluginsId.add(it.cast<GStatement.GExpr>().expr.cast<GSimpleMethodCall>().arguments.args.first().expr.cast<GString>().str)
+                    null
+                } else {
+                    it
+                }
+            }
+            plugins.addAll(withoutId + pluginsId.map {
+                val arg = GArgument(null, GString(it))
+                GSimpleMethodCall(
+                    null,
+                    GIdentifier("id"),
+                    GArgumentsList(
+                        listOf(
+                            arg
+                        )
+                    )
+                ).toStatement()
+            })
             other.removeAt(0)
         }
         other.apply {
