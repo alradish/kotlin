@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.g2kts.tree
 import com.intellij.psi.PsiElement
 
 interface GradleElement {
-    val parrent: GradleElement?
+    val parent: GradleElement?
 
     fun attach(to: GradleElement)
 
@@ -16,6 +16,8 @@ interface GradleElement {
 }
 
 interface GradleTreeElement : GradleElement
+
+
 
 interface PsiOwner {
     var psi: PsiElement?
@@ -78,7 +80,7 @@ interface GradleStringLiteralExpression: GradleLiteralExpression {
 interface GradleLambdaExpression : GradleExpression {
 //    var parameters: List<GradleL>
 //    val returnType: GradleTypeElement
-    var statement: GradleStatement
+    var block: GradleBlock
 //    val functionalType: GradleTypeElement
 }
 

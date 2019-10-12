@@ -33,8 +33,6 @@ sealed class GNode {
         }
     }
 
-//    protected fun <T : GNode?, U : T>
-
     protected fun <T : GNode> children(v: List<T>): ReadWriteProperty<GNode, List<T>> {
         v.forEach { it.detach(it.parent) }
         v.forEach { it.attach(this) }
