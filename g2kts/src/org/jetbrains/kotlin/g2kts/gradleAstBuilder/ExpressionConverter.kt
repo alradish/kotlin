@@ -59,26 +59,28 @@ fun GrListOrMap.toGradleAst(): GExpression {
     return if (isMap) {
         TODO()
     } else {
-        GList(initializers.map { it.toGradleAst() })
+        GList(initializers.map { it.toGradleAst() }, this)
     }
 }
 
 fun GrLiteral.toGradleAst(): GExpression {
     val value = value
     return when {
-        this is GrString -> GString(toSimpleString())
-        value is String -> GString(value.cast())
+        this is GrString -> GString(toSimpleString(), this)
+        value is String -> GString(value.cast(), this)
         value is Int || (value is BigDecimal && value.scale() == 0) -> GConst(
             value.toString(),
-            GConst.Type.INT
+            GConst.Type.INT,
+            this
         )
         value is Float || (value is BigDecimal && value.scale() != 0) -> GConst(
             value.toString(),
-            GConst.Type.FLOAT
+            GConst.Type.FLOAT,
+            this
         )
-        value is Char -> GConst(value.toString(), GConst.Type.CHAR)
-        value is Boolean -> GConst(value.toString(), GConst.Type.BOOLEAN)
-        value == null -> GConst("null", GConst.Type.NULL)
+        value is Char -> GConst(value.toString(), GConst.Type.CHAR, this)
+        value is Boolean -> GConst(value.toString(), GConst.Type.BOOLEAN, this)
+        value == null -> GConst("null", GConst.Type.NULL, this)
 //        else -> GConst(value.toString(), GConst.Type.NULL)
         else -> TODO(value::class.toString())
     }
@@ -91,7 +93,8 @@ fun GrReferenceExpression.toGradleAst(): GExpression {
         if (qualifier is GIdentifier && qualifier.name in extensions) {
             GExtensionAccess(
                 qualifier,
-                GString(referenceName!!)
+                GString(referenceName!!),
+                this
             )
         } else {
             q.type?.let {
@@ -101,13 +104,13 @@ fun GrReferenceExpression.toGradleAst(): GExpression {
                     println("***************************${q.text}")
                 }
             }
-            GSimplePropertyAccess(q.toGradleAst(), referenceNameElement!!.toGradleAst())
+            GSimplePropertyAccess(q.toGradleAst(), referenceNameElement!!.toGradleAst(), this)
         }
     } else {
         if (referenceName in tasks.keys) {
-            GSimpleTaskAccess(referenceName!!, tasks.getValue(referenceName!!))
+            GSimpleTaskAccess(referenceName!!, tasks.getValue(referenceName!!), this)
         } else {
-            GIdentifier(referenceName!!)
+            GIdentifier(referenceName!!, this)
         }
     }
 }
@@ -118,12 +121,14 @@ fun GrOperatorExpression.toGradleAst(): GBinaryExpression {
         is GrBinaryExpression -> GBinaryExpression(
             leftOperand.toGradleAst(),
             GOperator.byValue(operationToken.text),
-            rightOperand!!.toGradleAst()
+            rightOperand!!.toGradleAst(),
+            this
         )
         is GrAssignmentExpression -> GBinaryExpression(
             lValue.toGradleAst(),
             GOperator.byValue("="),
-            rValue!!.toGradleAst()
+            rValue!!.toGradleAst(),
+            this
         )
         else -> unreachable()
     }
@@ -241,13 +246,15 @@ fun GrMethodCall.toSimpleMethodCall(): GSimpleMethodCall {
         obj?.toGradleAst(),
         method!!.toGradleAst(),
         argumentList.toGradleAst(),
-        closureArguments.firstOrNull()?.toGradleAst()
+        closureArguments.firstOrNull()?.toGradleAst(),
+        this
     )
 }
 
 fun GrClosableBlock.toGradleAst(): GClosure {
     return GClosure(
         parameters.map { it.toGradleAst() },
-        GBlock(statements.map { it.toGradleAst() })
+        GBlock(statements.map { it.toGradleAst() }),
+        this
     )
 }

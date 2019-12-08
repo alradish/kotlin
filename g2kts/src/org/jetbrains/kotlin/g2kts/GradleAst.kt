@@ -5,11 +5,12 @@
 
 package org.jetbrains.kotlin.g2kts
 
+import com.intellij.psi.PsiElement
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-sealed class GNode : Cloneable {
+sealed class GNode(open val psi: PsiElement? = null) : Cloneable {
     var parent: GNode? = null
 
     private var childNum = 0
@@ -138,32 +139,34 @@ private class GListChild<T : GNode>(val value: Int) : ReadWriteProperty<GNode, L
     }
 }
 
-sealed class GStatement : GNode() {
-    class GExpr(expr: GExpression) : GStatement() {
+sealed class GStatement(psi: PsiElement? = null) : GNode(psi) {
+    class GExpr(expr: GExpression, psi: PsiElement? = null) : GStatement(psi) {
         var expr: GExpression by child(expr)
     }
 
-    class GDecl(decl: GDeclaration) : GStatement() {
+    class GDecl(decl: GDeclaration, psi: PsiElement? = null) : GStatement(psi) {
         var decl: GDeclaration by child(decl)
     }
 }
 
 class GBlock(
-    statements: List<GStatement>
-) : GStatement() {
+    statements: List<GStatement>, psi: PsiElement? = null
+) : GStatement(psi) {
     var statements: List<GStatement> by children(statements)
 }
 
 class GArgument(
     var name: String?,
-    expr: GExpression
-) : GNode() {
+    expr: GExpression,
+    psi: PsiElement? = null
+) : GNode(psi) {
     var expr: GExpression by child(expr)
 }
 
 class GArgumentsList(
-    args: List<GArgument>
-) : GNode() {
+    args: List<GArgument>,
+    psi: PsiElement? = null
+) : GNode(psi) {
     var args: List<GArgument> by children(args)
 }
 
@@ -194,17 +197,19 @@ sealed class GOperator : GNode() {
 
 
 // ********** EXPRESSION **********
-sealed class GExpression : GNode() {
+sealed class GExpression(psi: PsiElement? = null) : GNode(psi) {
     fun toStatement(): GStatement = GStatement.GExpr(this)
 }
 
-data class GIdentifier(
-    var name: String
-) : GExpression()
+class GIdentifier(
+    var name: String,
+    psi: PsiElement? = null
+) : GExpression(psi)
 
 class GList(
-    initializers: List<GExpression>
-) : GExpression() {
+    initializers: List<GExpression>,
+    psi: PsiElement? = null
+) : GExpression(psi) {
     var initializers: List<GExpression> by children(initializers)
 }
 
@@ -212,8 +217,9 @@ sealed class GMethodCall(
     obj: GExpression?,
     method: GExpression,
     arguments: GArgumentsList,
-    closure: GClosure?
-) : GExpression() {
+    closure: GClosure?,
+    psi: PsiElement? = null
+) : GExpression(psi) {
     var obj: GExpression? by childNullable(obj)
     var method: GExpression by child(method)
     var arguments: GArgumentsList by child(arguments)
@@ -224,20 +230,23 @@ class GSimpleMethodCall(
     obj: GExpression?,
     method: GExpression,
     arguments: GArgumentsList,
-    closure: GClosure?
-) : GMethodCall(obj, method, arguments, closure)
+    closure: GClosure?,
+    psi: PsiElement? = null
+) : GMethodCall(obj, method, arguments, closure, psi)
 
 class GConfigurationBlock(
     obj: GExpression?,
     method: GExpression,
     arguments: GArgumentsList,
-    closure: GClosure
-) : GMethodCall(obj, method, arguments, closure) {}
+    closure: GClosure,
+    psi: PsiElement? = null
+) : GMethodCall(obj, method, arguments, closure, psi) {}
 
 class GClosure( // GTODO arguments
     parameters: List<GExpression>,
-    statements: GBlock
-) : GExpression() {
+    statements: GBlock,
+    psi: PsiElement? = null
+) : GExpression(psi) {
     var parameters: List<GExpression> by children(parameters) // GTODO make GParameter
     var statements: GBlock by child(statements)
 
@@ -246,28 +255,32 @@ class GClosure( // GTODO arguments
 class GTaskCreating(
     var name: String,
     var type: String, // GTODO make something like GType
-    body: GClosure?
-) : GExpression() {
+    body: GClosure?,
+    psi: PsiElement? = null
+) : GExpression(psi) {
     var body: GClosure? by childNullable(body)
 
 }
 
-data class GConst(
+class GConst(
     var text: String,
-    var type: Type
-) : GExpression() {
+    var type: Type,
+    psi: PsiElement? = null
+) : GExpression(psi) {
     enum class Type { BOOLEAN, CHAR, INT, FLOAT, NULL }
 }
 
-data class GString(
-    var str: String // GTODO template
-) : GExpression()
+class GString(
+    var str: String, // GTODO template
+    psi: PsiElement? = null
+) : GExpression(psi)
 
 class GBinaryExpression(
     left: GExpression,
     operator: GOperator,
-    right: GExpression
-) : GExpression() {
+    right: GExpression,
+    psi: PsiElement? = null
+) : GExpression(psi) {
     var left: GExpression by child(left)
     var operator: GOperator by child(operator)
     var right: GExpression by child(right)
@@ -276,41 +289,46 @@ class GBinaryExpression(
 
 sealed class GPropertyAccess(
     obj: GExpression?,
-    property: GExpression
-) : GExpression() {
+    property: GExpression,
+    psi: PsiElement? = null
+) : GExpression(psi) {
     var obj: GExpression? by childNullable(obj)
     var property: GExpression by child(property)
 }
 
 class GSimplePropertyAccess(
     obj: GExpression?,
-    property: GExpression
-) : GPropertyAccess(obj, property)
+    property: GExpression,
+    psi: PsiElement? = null
+) : GPropertyAccess(obj, property, psi)
 
 class GExtensionAccess(
     obj: GExpression,
-    property: GExpression
-) : GPropertyAccess(obj, property) {
+    property: GExpression,
+    psi: PsiElement? = null
+) : GPropertyAccess(obj, property, psi) {
     companion object {
         val EXT: String = "ext"
     }
 }
 
-sealed class GTaskAccess : GExpression() {
+sealed class GTaskAccess(psi: PsiElement? = null) : GExpression(psi) {
     abstract var task: String
     abstract var type: KClass<*>
 }
 
-data class GSimpleTaskAccess(
+class GSimpleTaskAccess(
     override var task: String,
-    override var type: KClass<*>
-) : GTaskAccess()
+    override var type: KClass<*>,
+    psi: PsiElement? = null
+) : GTaskAccess(psi)
 
 class GTaskConfigure(
     override var task: String,
     override var type: KClass<*>,
-    configure: GClosure
-) : GTaskAccess() {
+    configure: GClosure,
+    psi: PsiElement? = null
+) : GTaskAccess(psi) {
     var configure: GClosure by child(configure)
 }
 
@@ -322,21 +340,23 @@ class GTaskConfigure(
 // ********** EXPRESSION END **********
 
 
-sealed class GDeclaration : GNode() {
+sealed class GDeclaration(psi: PsiElement? = null) : GNode(psi) {
     fun toStatement(): GStatement = GStatement.GDecl(this)
 }
 
 
 class GProject(
-    statements: List<GStatement>
-) : GNode() {
+    statements: List<GStatement>,
+    psi: PsiElement? = null
+) : GNode(psi) {
     var statements: List<GStatement> by children(statements)
 }
 
 class GBuildScriptBlock(
     var type: BuildScriptBlockType,
-    block: GClosure
-) : GExpression() {
+    block: GClosure,
+    psi: PsiElement? = null
+) : GExpression(psi) {
     var block: GClosure by child(block)
 
     enum class BuildScriptBlockType(val text: String) {

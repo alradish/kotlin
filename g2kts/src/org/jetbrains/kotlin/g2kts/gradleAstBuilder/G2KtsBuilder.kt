@@ -52,7 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 
 fun GroovyFileBase.toGradleAst(): GProject {
-    return GProject(topStatements.map { it.toGradleAst() })
+    return GProject(topStatements.map { it.toGradleAst() }, this)
 }
 
 fun GroovyPsiElement.toGradleAst(): GNode = when (this) {
@@ -93,7 +93,7 @@ fun GroovyPsiElement.toGradleAst(): GNode = when (this) {
     is GrCaseSection -> TODO(this::class.toString())
     is GrImportAlias -> TODO(this::class.toString())
     is GrCatchClause -> TODO(this::class.toString())
-    is GrNamedArgument -> GArgument(labelName, expression!!.toGradleAst())
+    is GrNamedArgument -> GArgument(labelName, expression!!.toGradleAst(),this)
     is GrFinallyClause -> TODO(this::class.toString())
     is GrStringInjection -> TODO(this::class.toString())
     is GrSpreadArgument -> TODO(this::class.toString())
@@ -113,13 +113,13 @@ fun GrString.toSimpleString(): String = allContentParts.joinToString(separator =
 fun GrArgumentList.toGradleAst(): GArgumentsList {
     return GArgumentsList(allArguments.map { arg ->
         when (arg) {
-            is GrLiteral -> GArgument(null, arg.toGradleAst())
+            is GrLiteral -> GArgument(null, arg.toGradleAst(), arg)
 //            is GrNamedArgument -> GArgument(arg.labelName, arg.expression!!.toGradleAst())
             is GrNamedArgument -> arg.toGradleAst().cast()
-            is GrExpression -> GArgument(null, arg.toGradleAst())
+            is GrExpression -> GArgument(null, arg.toGradleAst(), arg)
             else -> TODO(arg::class.toString())
         }
-    })
+    }, this)
 }
 
 
@@ -198,5 +198,5 @@ fun convertApplyToPluginsBlock(project: GProject): GProject {
 }
 
 fun PsiElement.toGradleAst(): GIdentifier {
-    return GIdentifier(text)
+    return GIdentifier(text, this)
 }
