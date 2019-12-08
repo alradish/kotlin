@@ -151,27 +151,8 @@ fun GrMethodCall.toGradleAst(): GExpression {
 //
 //    )
     return when {
-        isBuildScriptBlock() -> GBuildScriptBlock(
-            GBuildScriptBlock.BuildScriptBlockType.byName(method.text)!!,
-            closureArguments.single().toGradleAst()
-        )
-//        gmethod.name == "task" -> toTaskCreate()
-        resolveMethod()?.containingClass?.qualifiedName == "org.gradle.api.Project" && invokedExpression.text in vars -> {
-            val args = argumentList.toGradleAst()
-            GBinaryExpression(
-                GSimplePropertyAccess(gobj, gmethod),
-                GOperator.byValue("="),
-                args.args.first().expr
-            )
-        }
 
-        gobj == null && gmethod.name in tasks.keys && hasClosureArguments() && argumentList.isEmpty -> {
-            GTaskConfigure(
-                gmethod.name,
-                tasks.getValue(gmethod.name),
-                closureArguments.last().toGradleAst()
-            )
-        }
+
         else -> when (this) {
             is GrMethodCallExpression -> {
                 if (hasClosureArguments()) {
