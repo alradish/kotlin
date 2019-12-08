@@ -24,8 +24,10 @@ class G2KtsAction : AnAction() {
         virtualFiles?.forEach { file ->
             val groovyFileBase = manager.findFile(file) as? GroovyFileBase ?: return
             val groovyGradleTree = buildTree(groovyFileBase)
-            val gradleTree = GradleTransformer.doApply(listOf(groovyGradleTree)).first()
+            val gradleTree = GradleTransformer.doApply(listOf(groovyGradleTree.copy())).first()
             val kotlin = Writer.write(gradleTree.toKotlin())
+            println("-----------------")
+            println(Writer.write(groovyGradleTree.toKotlin()))
 
             /**
              * val psiDocumentManager = PsiDocumentManager.getInstance(project)
