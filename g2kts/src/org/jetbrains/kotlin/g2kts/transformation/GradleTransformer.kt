@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.g2kts.transformation
 import org.jetbrains.kotlin.g2kts.GNode
 import org.jetbrains.kotlin.g2kts.transformation.groovy2kts.BuildScriptBlockTransformation
 import org.jetbrains.kotlin.g2kts.transformation.groovy2kts.ConfigurationBlockTransformation
+import org.jetbrains.kotlin.g2kts.transformation.groovy2kts.ProjectPropertyTransformation
 import org.jetbrains.kotlin.g2kts.transformation.groovy2kts.TaskTransformation
 
 object GradleTransformer {
@@ -22,6 +23,7 @@ object GradleTransformer {
             +BuildScriptBlockTransformation()
             +TaskTransformation()
             +ConfigurationBlockTransformation()
+            +ProjectPropertyTransformation()
         }.transformations)
     }
 
