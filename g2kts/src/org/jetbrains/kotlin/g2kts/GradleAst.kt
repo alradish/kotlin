@@ -5,12 +5,15 @@
 
 package org.jetbrains.kotlin.g2kts
 
-import kotlin.properties.Delegates
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
 
-sealed class GNode {
+sealed class GNode : Cloneable {
     var parent: GNode? = null
+
+    private var childNum = 0
+    var children: MutableList<Any?> = mutableListOf()
 
     fun detach(from: GNode?) {
         from ?: return
@@ -24,30 +27,122 @@ sealed class GNode {
         parent = to
     }
 
-    protected fun <T : GNode?, U : T> child(v: U): ReadWriteProperty<GNode?, U> {
-        v?.detach(v.parent)
+    protected fun <T : GNode, U : T> child(v: U): ReadWriteProperty<GNode, U> {
+        children.add(childNum, v)
+        v.attach(this)
+        return GChild(childNum++)
+    }
+
+    protected fun <T : GNode, U : T> childNullable(v: U?): ReadWriteProperty<GNode, U?> {
+        children.add(childNum, v)
         v?.attach(this)
-        return Delegates.observable(v) { _, old, new ->
-            old?.detach(this)
-            new?.attach(this)
-        }
+        return GNullableChild(childNum++)
     }
 
     protected fun <T : GNode> children(v: List<T>): ReadWriteProperty<GNode, List<T>> {
-        v.forEach { it.detach(it.parent) }
+        children.add(childNum, v)
         v.forEach { it.attach(this) }
-        return Delegates.observable(v) { _, old, new ->
-            old.forEach { it.detach(this) }
-            new.forEach { it.attach(this) }
+        return GListChild(childNum++)
+    }
+
+    protected inline fun <reified T : GNode> children(): ReadWriteProperty<GNode, List<T>> {
+        return children(emptyList())
+    }
+
+    @Suppress("UNCHECKED_CAST", "IMPLICIT_CAST_TO_ANY")
+    fun copy(): GNode {
+        val cloned = clone() as GNode
+        val deepClonedChildren =
+            cloned.children.map {
+                when (it) {
+                    is GNode -> it.copy()
+                    is List<*> -> (it as List<GNode>).map { it.copy() }
+                    null -> null
+                    else -> error("Tree is corrupted")
+                }
+            }
+
+        deepClonedChildren.forEach { child ->
+            when (child) {
+                is GNode -> {
+                    child.detach(this)
+                    child.attach(cloned)
+                }
+                is List<*> -> (child as List<GNode>).forEach {
+                    it.detach(this)
+                    it.attach(cloned)
+                }
+            }
         }
+        cloned.children = deepClonedChildren.toMutableList()
+        return cloned
+    }
+}
+//
+//private fun <T : GNode> KProperty0<Any>.detach(element: T) {
+//    if (element.parent == null) return
+//    val boundReceiver = (this as CallableReference).boundReceiver
+//    require(boundReceiver != CallableReference.NO_RECEIVER)
+//    require(boundReceiver is GNode)
+//    element.detach(boundReceiver)
+//}
+//
+//fun <T : GNode> KProperty0<T>.detached(): T =
+//    get().also { detach(it) }
+//
+//fun <T : GNode> KProperty0<List<T>>.detached(): List<T> =
+//    get().also { list -> list.forEach { detach(it) } }
+
+fun <T : GNode> T.detached(): T =
+    also { it.detach(it.parent) }
+
+private class GChild<T : GNode>(val index: Int) : ReadWriteProperty<GNode, T> {
+    override fun getValue(thisRef: GNode, property: KProperty<*>): T {
+        @Suppress("UNCHECKED_CAST")
+        return thisRef.children[index] as T
+    }
+
+    override fun setValue(thisRef: GNode, property: KProperty<*>, value: T) {
+        @Suppress("UNCHECKED_CAST")
+        (thisRef.children[this.index] as T).detach(thisRef)
+        thisRef.children[this.index] = value
+        value.attach(thisRef)
     }
 }
 
+private class GNullableChild<T : GNode>(val index: Int) : ReadWriteProperty<GNode, T?> {
+    override fun getValue(thisRef: GNode, property: KProperty<*>): T? {
+        @Suppress("UNCHECKED_CAST")
+        return thisRef.children[index] as T?
+    }
+
+    override fun setValue(thisRef: GNode, property: KProperty<*>, value: T?) {
+        @Suppress("UNCHECKED_CAST")
+        (thisRef.children[this.index] as T).detach(thisRef)
+        thisRef.children[this.index] = value
+        value?.attach(thisRef)
+    }
+}
+
+private class GListChild<T : GNode>(val value: Int) : ReadWriteProperty<GNode, List<T>> {
+    override operator fun getValue(thisRef: GNode, property: KProperty<*>): List<T> {
+        @Suppress("UNCHECKED_CAST")
+        return thisRef.children[value] as List<T>
+    }
+
+    override operator fun setValue(thisRef: GNode, property: KProperty<*>, value: List<T>) {
+        @Suppress("UNCHECKED_CAST")
+        (thisRef.children[this.value] as List<T>).forEach { it.detach(thisRef) }
+        thisRef.children[this.value] = value
+        value.forEach { it.attach(thisRef) }
+    }
+}
 
 sealed class GStatement : GNode() {
     class GExpr(expr: GExpression) : GStatement() {
         var expr: GExpression by child(expr)
     }
+
     class GDecl(decl: GDeclaration) : GStatement() {
         var decl: GDeclaration by child(decl)
     }
@@ -116,55 +211,56 @@ class GList(
 sealed class GMethodCall(
     obj: GExpression?,
     method: GExpression,
-    arguments: GArgumentsList
+    arguments: GArgumentsList,
+    closure: GClosure?
 ) : GExpression() {
-    val obj: GExpression? by child(obj)
-    val method: GExpression by child(method)
-    val arguments: GArgumentsList by child(arguments)
+    var obj: GExpression? by childNullable(obj)
+    var method: GExpression by child(method)
+    var arguments: GArgumentsList by child(arguments)
+    var closure: GClosure? by childNullable(closure)
 }
 
 class GSimpleMethodCall(
     obj: GExpression?,
     method: GExpression,
-    arguments: GArgumentsList
-) : GMethodCall(obj, method, arguments)
+    arguments: GArgumentsList,
+    closure: GClosure?
+) : GMethodCall(obj, method, arguments, closure)
 
 class GConfigurationBlock(
     obj: GExpression?,
     method: GExpression,
     arguments: GArgumentsList,
-    configuration: GClosure
-) : GMethodCall(obj, method, arguments) {
-    val configuration: GClosure by child(configuration)
-}
+    closure: GClosure
+) : GMethodCall(obj, method, arguments, closure) {}
 
 class GClosure( // GTODO arguments
     parameters: List<GExpression>,
     statements: GBlock
 ) : GExpression() {
-    val parameters: List<GExpression> by children(parameters) // GTODO make GParameter
-    val statements: GBlock by child(statements)
+    var parameters: List<GExpression> by children(parameters) // GTODO make GParameter
+    var statements: GBlock by child(statements)
 
 }
 
 class GTaskCreating(
-    val name: String,
-    val type: String, // GTODO make something like GType
-    body: GClosure
+    var name: String,
+    var type: String, // GTODO make something like GType
+    body: GClosure?
 ) : GExpression() {
-    val body: GClosure by child(body)
+    var body: GClosure? by childNullable(body)
 
 }
 
 data class GConst(
-    val text: String,
-    val type: Type
+    var text: String,
+    var type: Type
 ) : GExpression() {
     enum class Type { BOOLEAN, CHAR, INT, FLOAT, NULL }
 }
 
 data class GString(
-    val str: String // GTODO template
+    var str: String // GTODO template
 ) : GExpression()
 
 class GBinaryExpression(
@@ -172,9 +268,9 @@ class GBinaryExpression(
     operator: GOperator,
     right: GExpression
 ) : GExpression() {
-    val left: GExpression by child(left)
-    val operator: GOperator by child(operator)
-    val right: GExpression by child(right)
+    var left: GExpression by child(left)
+    var operator: GOperator by child(operator)
+    var right: GExpression by child(right)
 }
 
 
@@ -182,8 +278,8 @@ sealed class GPropertyAccess(
     obj: GExpression?,
     property: GExpression
 ) : GExpression() {
-    val obj: GExpression? by child(obj)
-    val property: GExpression by child(property)
+    var obj: GExpression? by childNullable(obj)
+    var property: GExpression by child(property)
 }
 
 class GSimplePropertyAccess(
@@ -201,26 +297,26 @@ class GExtensionAccess(
 }
 
 sealed class GTaskAccess : GExpression() {
-    abstract val task: String
-    abstract val type: KClass<*>
+    abstract var task: String
+    abstract var type: KClass<*>
 }
 
 data class GSimpleTaskAccess(
-    override val task: String,
-    override val type: KClass<*>
+    override var task: String,
+    override var type: KClass<*>
 ) : GTaskAccess()
 
 class GTaskConfigure(
-    override val task: String,
-    override val type: KClass<*>,
+    override var task: String,
+    override var type: KClass<*>,
     configure: GClosure
 ) : GTaskAccess() {
-    val configure: GClosure by child(configure)
+    var configure: GClosure by child(configure)
 }
 
 //data class GMemberAccess(
-//    val obj: GExpression,
-//    val member: GExpression
+//    var obj: GExpression,
+//    var member: GExpression
 //)
 
 // ********** EXPRESSION END **********
@@ -234,14 +330,14 @@ sealed class GDeclaration : GNode() {
 class GProject(
     statements: List<GStatement>
 ) : GNode() {
-    val statements: List<GStatement> by children(statements)
+    var statements: List<GStatement> by children(statements)
 }
 
 class GBuildScriptBlock(
-    val type: BuildScriptBlockType,
+    var type: BuildScriptBlockType,
     block: GClosure
 ) : GExpression() {
-    val block: GClosure by child(block)
+    var block: GClosure by child(block)
 
     enum class BuildScriptBlockType(val text: String) {
         ALL_PROJECTS("allprojects"),
