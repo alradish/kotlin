@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.g2kts.gradleAstBuilder
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.g2kts.*
 import org.jetbrains.kotlin.utils.addToStdlib.cast
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
@@ -138,63 +137,64 @@ fun buildTree(psi: PsiElement): GNode {
 }
 
 fun convertApplyToPluginsBlock(project: GProject): GProject {
-    val pluginsId = mutableSetOf<String>()
-    val other = mutableListOf<GStatement>()
-    for (statement in project.statements) {
-        if (statement.isApplyPlugin()) {
-            val call = statement.cast<GStatement.GExpr>().expr.cast<GMethodCall>()
-            val expr = call.arguments.args.first().expr.cast<GString>()
-            pluginsId.add(expr.str)
-        } else {
-            other.add(statement)
-        }
-    }
-
-    val newStatements = if (pluginsId.isNotEmpty()) {
-        val first = other.firstOrNull().safeAs<GStatement.GExpr>()?.expr
-        val plugins = mutableListOf<GStatement>()
-        if (first is GConfigurationBlock && first.method == GIdentifier("plugins")) {
-            val withoutId = first.configuration.statements.statements.mapNotNull {
-                if (it.safeAs<GStatement.GExpr>()?.expr?.safeAs<GSimpleMethodCall>()?.method?.safeAs<GIdentifier>()?.name == "id") {
-                    pluginsId.add(it.cast<GStatement.GExpr>().expr.cast<GSimpleMethodCall>().arguments.args.first().expr.cast<GString>().str)
-                    null
-                } else {
-                    it
-                }
-            }
-            plugins.addAll(withoutId + pluginsId.map {
-                val arg = GArgument(null, GString(it))
-                GSimpleMethodCall(
-                    null,
-                    GIdentifier("id"),
-                    GArgumentsList(
-                        listOf(
-                            arg
-                        )
-                    )
-                ).toStatement()
-            })
-            other.removeAt(0)
-        }
-        other.apply {
-            val configuration = GClosure(
-                emptyList(),
-                GBlock(plugins)
-            )
-            add(
-                0,
-                GConfigurationBlock(
-                    null,
-                    GIdentifier("plugins"),
-                    GArgumentsList(emptyList()),
-                    configuration
-                ).toStatement()
-            )
-        }
-    } else
-        other
-
-    return GProject(newStatements)
+    return project
+//    val pluginsId = mutableSetOf<String>()
+//    val other = mutableListOf<GStatement>()
+//    for (statement in project.statements) {
+//        if (statement.isApplyPlugin()) {
+//            val call = statement.cast<GStatement.GExpr>().expr.cast<GMethodCall>()
+//            val expr = call.arguments.args.first().expr.cast<GString>()
+//            pluginsId.add(expr.str)
+//        } else {
+//            other.add(statement.copy() as GStatement)
+//        }
+//    }
+//
+//    val newStatements = if (pluginsId.isNotEmpty()) {
+//        val first = other.firstOrNull().safeAs<GStatement.GExpr>()?.expr
+//        val plugins = mutableListOf<GStatement>()
+//        if (first is GConfigurationBlock && first.method == GIdentifier("plugins")) {
+//            val withoutId = first.configuration.statements.statements.mapNotNull {
+//                if (it.safeAs<GStatement.GExpr>()?.expr?.safeAs<GSimpleMethodCall>()?.method?.safeAs<GIdentifier>()?.name == "id") {
+//                    pluginsId.add(it.cast<GStatement.GExpr>().expr.cast<GSimpleMethodCall>().arguments.args.first().expr.cast<GString>().str)
+//                    null
+//                } else {
+//                    it.copy() as GStatement
+//                }
+//            }
+//            plugins.addAll(withoutId + pluginsId.map {
+//                val arg = GArgument(null, GString(it))
+//                GSimpleMethodCall(
+//                    null,
+//                    GIdentifier("id"),
+//                    GArgumentsList(
+//                        listOf(
+//                            arg
+//                        )
+//                    )
+//                ).toStatement()
+//            })
+//            other.removeAt(0)
+//        }
+//        other.apply {
+//            val configuration = GClosure(
+//                emptyList(),
+//                GBlock(plugins)
+//            )
+//            add(
+//                0,
+//                GConfigurationBlock(
+//                    null,
+//                    GIdentifier("plugins"),
+//                    GArgumentsList(emptyList()),
+//                    configuration
+//                ).toStatement()
+//            )
+//        }
+//    } else
+//        other
+//
+//    return GProject(newStatements)
 }
 
 fun PsiElement.toGradleAst(): GIdentifier {

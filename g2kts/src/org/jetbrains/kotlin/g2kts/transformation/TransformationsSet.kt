@@ -7,9 +7,10 @@ package org.jetbrains.kotlin.g2kts.transformation
 
 import org.jetbrains.kotlin.g2kts.GNode
 
-class TransformationsSet(val transformations: List<Transformation>): Transformation {
-    override fun runTransformation(node: List<GNode>) {
-        transformations.asSequence().onEach { it.runTransformation(node) }
+class TransformationsSet(private val transformations: List<Transformation>) : Transformation {
+    override fun runTransformation(node: GNode): GNode {
+        return transformations.fold(node) { acc: GNode, transformation: Transformation ->
+            transformation.runTransformation(acc)
+        }
     }
-
 }

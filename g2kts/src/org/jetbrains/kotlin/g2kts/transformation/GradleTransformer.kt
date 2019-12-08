@@ -6,21 +6,24 @@
 package org.jetbrains.kotlin.g2kts.transformation
 
 import org.jetbrains.kotlin.g2kts.GNode
+import org.jetbrains.kotlin.g2kts.transformation.groovy2kts.TaskTransformation
 
 object GradleTransformer {
     private fun createTransformationsList(): TransformationsSet {
         return TransformationsSet(TransformationsBuilder<Transformation>().apply {
-            +object : Transformation {
-                override fun runTransformation(node: List<GNode>) {
-                    println("heh")
-                }
-            }
+//            +object : Transformation {
+//                override fun runTransformation(node: GNode): GNode {
+//                    println("In $node")
+//                    return recurse(node)
+//                }
+//            }
+            +TaskTransformation()
         }.transformations)
     }
 
-    fun doApply(code: List<GNode>) {
+    fun doApply(code: List<GNode>) : List<GNode> {
         val transformations = createTransformationsList()
-        transformations.runTransformation(code)
+        return transformations.runTransformation(code)
     }
 }
 

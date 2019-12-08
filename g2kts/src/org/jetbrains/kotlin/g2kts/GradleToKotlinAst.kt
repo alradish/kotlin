@@ -30,15 +30,16 @@ fun GNode.toKotlin(): Node = when (this) {
             null -> method.toKotlin().cast()
             else -> obj!!.toKotlin().cast<Node.Expr>() dot method.toKotlin().cast()
         }
-        val lambda = when (this) {
-            is GConfigurationBlock -> lambda(configuration.toKotlin().cast())
-            else -> null
-        }
+//        val lambda = when (this) {
+//            is GConfigurationBlock -> lambda(closure.toKotlin().cast())
+//            else -> null
+//        }
+        val lambda = closure?.let { lambda(it.toKotlin().cast()) }
         Node.Expr.Call(expr, emptyList(), arguments.args.map { it.toKotlin() as Node.ValueArg }, lambda)
     }
     is GClosure -> Node.Expr.Brace(emptyList(), statements.toKotlin().cast())
     is GTaskCreating -> {
-        val lambda = lambda(body.toKotlin().cast())
+        val lambda = body?.let { lambda(it.toKotlin().cast()) }
         property(
             vars = listOf(Node.Decl.Property.Var(name, null)),
             delegated = true,

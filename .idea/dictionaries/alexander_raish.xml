@@ -4,8 +4,10 @@
       <w>allprojects</w>
       <w>anns</w>
       <w>buildscript</w>
+      <w>decl</w>
       <w>elems</w>
       <w>gtodo</w>
+      <w>iter</w>
       <w>oper</w>
       <w>subprojects</w>
     </words>
