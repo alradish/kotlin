@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.g2kts.gradleAstBuilder
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import org.gradle.api.NamedDomainObjectCollection
 import org.jetbrains.kotlin.g2kts.*
@@ -21,7 +20,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection
 import java.math.BigDecimal
 
@@ -48,7 +46,7 @@ fun GrExpression.toGradleAst(): GExpression = when (this) {
 }
 
 fun GrFunctionalExpression.toGradleAst(): GExpression {
-    return when(this) {
+    return when (this) {
         is GrLambdaExpression -> TODO(this::class.toString())
         is GrClosableBlock -> toGradleAst()
         else -> unreachable()
@@ -100,9 +98,7 @@ fun GrReferenceExpression.toGradleAst(): GExpression {
             q.type?.let {
                 val qName = NamedDomainObjectCollection::class.qualifiedName ?: return@let
                 val type = PsiType.getTypeByName(qName, q.project, q.resolveScope)
-                if (it.equals(type) || it.superTypes.contains(type)) {
-                    println("***************************${q.text}")
-                }
+                TODO(this::class.toString())
             }
             GSimplePropertyAccess(q.toGradleAst(), referenceNameElement!!.toGradleAst(), this)
         }
@@ -141,88 +137,13 @@ fun GrCallExpression.toGradleAst(): GExpression = when (this) {
 }
 
 fun GrMethodCall.toGradleAst(): GExpression {
-    val (obj, method) = parseInvokedExpression()
-    val gobj = obj?.toGradleAst()
-    val gmethod = method!!.toGradleAst()
     return toSimpleMethodCall()
-//    GSimpleMethodCall(
-//        gobj,
-//        gmethod,
-//
-//    )
-    return when {
-
-
-        else -> when (this) {
-            is GrMethodCallExpression -> {
-                if (hasClosureArguments()) {
-                    GConfigurationBlock(
-                        gobj,
-                        gmethod,
-                        argumentList.toGradleAst(),
-                        closureArguments.last().toGradleAst()
-                    )
-                } else
-                    GSimpleMethodCall(gobj, gmethod, argumentList.toGradleAst(), closureArguments.firstOrNull()?.toGradleAst())
-            }
-            is GrApplicationStatement -> GSimpleMethodCall(
-                gobj,
-                gmethod,
-                argumentList.toGradleAst(),
-                closureArguments.firstOrNull()?.toGradleAst()
-            )
-            else -> unreachable()
-        }
-    }
-}
-
-fun GrMethodCall.toTaskCreate(): GTaskCreating {
-//
-//    val task = argumentList.allArguments.first().cast<GrMethodCall>()
-//    val (_, name) = task.parseInvokedExpression()
-//    val args = task.argumentList.toGradleAst()
-//
-//    var body = task.closureArguments.first().toGradleAst()
-//    for (arg in args.args) {
-//        when {
-//            arg.name == "dependsOn" -> {
-//                val argumentList = if (arg.expr is GList) {
-//                    GArgumentsList((arg.expr as GList).initializers.map { GArgument(null, it) })
-//                } else {
-//                    GArgumentsList(listOf(GArgument(null, arg.expr)))
-//                }
-//                val dependsOn = GSimpleMethodCall(null, GIdentifier("dependsOn"), argumentList).toStatement()
-////                body = body.copy(statements = GBlock(listOf(dependsOn) + body.statements.statements))
-//                body = GClosure(body.parameters, GBlock(listOf(dependsOn) + body.statements.statements))
-//            }
-//        }
-//    }
-//    return GTaskCreating(
-//        name?.toGradleAst().cast<GIdentifier>().name,
-//        "",
-//        body
-//    )
-    TODO()
-}
-
-fun GrMethodCall.isBuildScriptBlock(): Boolean {
-    val (obj, method) = parseInvokedExpression()
-    if (obj != null) return false
-    if (GBuildScriptBlock.BuildScriptBlockType.values().find { it.text == method!!.text } == null) return false
-    if (!argumentList.isEmpty) return false
-    if (closureArguments.singleOrNull() == null) return false
-    return true
-}
-
-fun GrMethodCall.parseInvokedExpression(): Pair<GrExpression?, PsiElement?> {
-    val referenceExpression = invokedExpression as GrReferenceExpression
-    val obj = referenceExpression.qualifierExpression
-    val method = referenceExpression.referenceNameElement
-    return obj to method
 }
 
 fun GrMethodCall.toSimpleMethodCall(): GSimpleMethodCall {
-    val (obj, method) = parseInvokedExpression()
+    val referenceExpression = invokedExpression as GrReferenceExpression
+    val obj = referenceExpression.qualifierExpression
+    val method = referenceExpression.referenceNameElement
     return GSimpleMethodCall(
         obj?.toGradleAst(),
         method!!.toGradleAst(),
