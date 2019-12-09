@@ -11,12 +11,6 @@ import org.jetbrains.kotlin.g2kts.transformation.groovy2kts.*
 object GradleTransformer {
     private fun createTransformationsList(): TransformationsSet {
         return TransformationsSet(TransformationsBuilder<Transformation>().apply {
-//            +object : Transformation {
-//                override fun runTransformation(node: GNode): GNode {
-//                    println("In $node")
-//                    return recurse(node)
-//                }
-//            }
             +BuildScriptBlockTransformation()
             +TaskTransformation()
             +ConfigurationBlockTransformation()

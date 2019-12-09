@@ -15,11 +15,6 @@ interface Transformation {
         return nodes.map { runTransformation(it) }
     }
 
-    fun recursive(to: GNode): GNode {
-        to.applyRecursively(this::runTransformation)
-        return to
-    }
-
     fun <R : GNode> applyRecursive(
         element: R,
         func: (GNode) -> GNode
