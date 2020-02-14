@@ -11,9 +11,10 @@ import org.jetbrains.kotlin.g2kts.transformation.Transformation
 class BuildScriptBlockTransformation : Transformation {
     override fun runTransformation(node: GNode): GNode {
         return if (node.isBuildScriptBlock()) {
+            val name = ((node as GMethodCall).method as GIdentifier).name
             recurse(
                 GBuildScriptBlock(
-                    GBuildScriptBlock.BuildScriptBlockType.byName(((node as GMethodCall).method as GIdentifier).name)!!,
+                    GBuildScriptBlock.BuildScriptBlockType.byName(name)!!,
                     node.closure!!.detached()
                 )
             )
@@ -21,11 +22,12 @@ class BuildScriptBlockTransformation : Transformation {
     }
 
     private fun GNode.isBuildScriptBlock(): Boolean {
-        if (this !is GMethodCall) return false
-        if (obj != null) return false
-        if (GBuildScriptBlock.BuildScriptBlockType.values().find { it.text == (method as? GIdentifier)?.name } == null) return false
-        if (arguments.args.isNotEmpty()) return false
-        if (closure == null) return false
+        if (!(this is GMethodCall && obj == null)) return false
+        val name = (method as? GIdentifier)?.name
+        if (GBuildScriptBlock.BuildScriptBlockType.values().find { it.text == name } == null) return false
+        if (arguments.args.isNotEmpty() || closure == null) return false
         return true
     }
 }
+
+
