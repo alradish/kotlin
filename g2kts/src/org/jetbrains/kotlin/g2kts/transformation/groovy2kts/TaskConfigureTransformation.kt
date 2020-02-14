@@ -10,17 +10,8 @@ import org.jetbrains.kotlin.g2kts.transformation.Transformation
 
 class TaskConfigureTransformation : Transformation {
     override fun runTransformation(node: GNode): GNode {
-        /*
-        gobj == null && gmethod.name in tasks.keys && hasClosureArguments() && argumentList.isEmpty -> {
-            GTaskConfigure(
-                gmethod.name,
-                tasks.getValue(gmethod.name),
-                closureArguments.last().toGradleAst()
-            )
-        }
-         */
         if (node !is GMethodCall) return recurse(node)
-        return if (node.obj == null && (node.method as? GIdentifier)?.name in tasks.keys && node.closure != null && node.arguments.args.isEmpty()) {
+        return if (isTaskConfigure(node)) {
             val name = (node.method as GIdentifier).name
             recurse(
                 GTaskConfigure(
@@ -31,5 +22,11 @@ class TaskConfigureTransformation : Transformation {
             )
         } else recurse(node)
 
+    }
+
+    private fun isTaskConfigure(node: GMethodCall): Boolean {
+
+        val name = (node.method as? GIdentifier)?.name
+        return node.obj == null && name in tasks.keys && node.closure != null && node.arguments.args.isEmpty()
     }
 }

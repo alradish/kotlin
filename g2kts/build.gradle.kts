@@ -21,6 +21,7 @@ dependencies {
     compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
     compileOnly(intellijPluginDep("Groovy"))
 
+    compile(project(":idea:kotlin-gradle-tooling"))
 
     testCompile(kotlinStdlib())
     testCompile(project(":idea:idea-core"))
