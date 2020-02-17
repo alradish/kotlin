@@ -9,7 +9,7 @@ val taskException: List<String> = listOf(
     "dependencies"
 )
 
-val tasks = listOf(
+val taskss = listOf(
     "assemble" to org.gradle.api.DefaultTask::class,
     "build" to org.gradle.api.DefaultTask::class,
     "buildDependents" to org.gradle.api.DefaultTask::class,

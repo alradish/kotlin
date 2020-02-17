@@ -103,11 +103,12 @@ fun GrReferenceExpression.toGradleAst(): GExpression {
             GSimplePropertyAccess(q.toGradleAst(), referenceNameElement!!.toGradleAst(), this)
         }
     } else {
-        if (referenceName in tasks.keys) {
-            GSimpleTaskAccess(referenceName!!, tasks.getValue(referenceName!!), this)
-        } else {
-            GIdentifier(referenceName!!, this)
-        }
+        GIdentifier(referenceName!!, this)
+//        if (referenceName in tasks.keys) {
+//            GSimpleTaskAccess(referenceName!!, tasks.getValue(referenceName!!), this)
+//        } else {
+//            GIdentifier(referenceName!!, this)
+//        }
     }
 }
 

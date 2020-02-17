@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.g2kts
 
 import com.intellij.psi.PsiElement
 import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 sealed class GNode(open val psi: PsiElement? = null) : Cloneable {
@@ -314,18 +313,18 @@ class GExtensionAccess(
 
 sealed class GTaskAccess(psi: PsiElement? = null) : GExpression(psi) {
     abstract var task: String
-    abstract var type: KClass<*>
+    abstract var type: String?
 }
 
 class GSimpleTaskAccess(
     override var task: String,
-    override var type: KClass<*>,
+    override var type: String?,
     psi: PsiElement? = null
 ) : GTaskAccess(psi)
 
 class GTaskConfigure(
     override var task: String,
-    override var type: KClass<*>,
+    override var type: String?,
     configure: GClosure,
     psi: PsiElement? = null
 ) : GTaskAccess(psi) {

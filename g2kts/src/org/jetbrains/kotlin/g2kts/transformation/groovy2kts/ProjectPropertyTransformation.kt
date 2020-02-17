@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.g2kts.*
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 
-class ProjectPropertyTransformation : Transformation {
+class ProjectPropertyTransformation : Transformation() {
     override fun runTransformation(node: GNode): GNode {
         if (node !is GMethodCall) return recurse(node)
         val methodCall = node.psi as? GrMethodCall ?: return recurse(node)

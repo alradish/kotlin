@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
+import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
@@ -25,7 +26,9 @@ import kastree.ast.Node
 import kastree.ast.Writer
 import org.jetbrains.kotlin.g2kts.gradleAstBuilder.buildTree
 import org.jetbrains.kotlin.g2kts.toKotlin
+import org.jetbrains.kotlin.g2kts.transformation.GradleBuildContext
 import org.jetbrains.kotlin.g2kts.transformation.GradleTransformer
+import org.jetbrains.kotlin.g2kts.transformation.Task
 import org.jetbrains.kotlin.idea.configuration.externalProjectPath
 import org.jetbrains.kotlin.idea.framework.GRADLE_SYSTEM_ID
 import org.jetbrains.kotlin.idea.inspections.findExistingEditor
@@ -46,28 +49,38 @@ class G2KtsAction : AnAction() {
         return projectInfo.externalProjectStructure
     }
 
+    fun getGradleTasks(file: VirtualFile, e: AnActionEvent): List<Task> {
+        //            val d = findGradleProjectStructure(file, e.project!!)
+//            ModuleUtilCore.findModuleForFile(file, e.project!!)?.let { findGradleProjectStructure(it) }
+//            val key = Key.findKeyByName("GRADLE_TASKS") ?: Key.create<Map<String, String>>("GRADLE_TASKS").also { println("I LOST MY KEY") }
+//            val mydata = e.project?.getUserData(key) as? Map<String, String>
+        val module = ModuleUtilCore.findModuleForFile(file, e.project!!) ?: error("module")
+        val d = findGradleProjectStructure(module)
+        val mm = GradleProjectResolverUtil.findModule(d, module.externalProjectPath!!) ?: error("uuu")
+        return mm.children.toList().map { it.data }.filterIsInstance<TaskData>()
+            .map { Task(it.name, it.type!!, it.linkedExternalProjectPath) }
+//            d.children.find {  }
+//            GradleProjectResolverUtil.findTask(d!!, module.externalProjectPath!!, "build")
+
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
         val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
         val manager = PsiManager.getInstance(e.project!!)
         if (!TestDialog().showAndGet()) return
         virtualFiles?.forEach { file ->
             val groovyFileBase = manager.findFile(file) as? GroovyFileBase ?: return
-//            val d = findGradleProjectStructure()
-//            ModuleUtilCore.findModuleForFile(file, e.project!!)?.let { findGradleProjectStructure(it) }
-//            val key = Key.findKeyByName("GRADLE_TASKS") ?: Key.create<Map<String, String>>("GRADLE_TASKS").also { println("I LOST MY KEY") }
-//            val mydata = e.project?.getUserData(key) as? Map<String, String>
-            val module = ModuleUtilCore.findModuleForFile(file, e.project!!) ?: error("module")
-            val d = findGradleProjectStructure(module)
-            val mm = GradleProjectResolverUtil.findModule(d, module.externalProjectPath!!)
-//            d.children.find {  }
-//            GradleProjectResolverUtil.findTask(d!!, module.externalProjectPath!!, "build")
+
+            val tasks = getGradleTasks(file, e)
+            val context = GradleBuildContext(tasks)
+
             val groovyGradleTree = buildTree(groovyFileBase)
-            val gradleTree = GradleTransformer.doApply(listOf(groovyGradleTree.copy())).first()
+            val gradleTree = GradleTransformer.doApply(listOf(groovyGradleTree.copy()), context).first()
             val kotlinAST = gradleTree.toKotlin()
             //val converted = ((buildTree(file) as GProject).toKotlin() as Node.Block).stmts.joinToString(separator = "\n") { Writer.write(it) }
             val kotlin = (kotlinAST as Node.Block).stmts.joinToString(separator = "\n") { Writer.write(it) }
-            println("-----------------")
-            println(Writer.write(groovyGradleTree.toKotlin()))
+//            println("-----------------")
+//            println(Writer.write(groovyGradleTree.toKotlin()))
 
             val psiDocumentManager = PsiDocumentManager.getInstance(e.project!!)
 //            psiDocumentManager.commitDocument(edito)
@@ -81,7 +94,7 @@ class G2KtsAction : AnAction() {
 //                    replaceString(0, textLength, kotlin)
 //                }
 //            }
-            println(kotlin)
+//            println(kotlin)
 
         }
     }

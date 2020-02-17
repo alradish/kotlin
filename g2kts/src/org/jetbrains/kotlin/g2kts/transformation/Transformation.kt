@@ -7,9 +7,9 @@ package org.jetbrains.kotlin.g2kts.transformation
 
 import org.jetbrains.kotlin.g2kts.GNode
 
-interface Transformation {
+abstract class Transformation(open val context: GradleBuildContext? = null) {
 
-    fun runTransformation(node: GNode): GNode
+    abstract fun runTransformation(node: GNode): GNode
 
     fun runTransformation(nodes: List<GNode>): List<GNode> {
         return nodes.map { runTransformation(it) }

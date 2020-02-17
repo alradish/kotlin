@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.g2kts.GNode
 import org.jetbrains.kotlin.g2kts.detached
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 
-class ConfigurationBlockTransformation : Transformation {
+class ConfigurationBlockTransformation : Transformation() {
     override fun runTransformation(node: GNode): GNode {
         return if (node is GMethodCall && node.arguments.args.isEmpty() && node.closure != null) {
             recurse(
