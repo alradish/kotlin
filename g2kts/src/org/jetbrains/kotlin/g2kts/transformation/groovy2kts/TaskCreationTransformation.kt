@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.g2kts.transformation.groovy2kts
 import org.jetbrains.kotlin.g2kts.*
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 
-class TaskTransformation : Transformation {
+class TaskCreationTransformation : Transformation() {
 
     override fun runTransformation(node: GNode): GNode {
         val task = node.taskCreationOrNull() ?: return recurse(node)

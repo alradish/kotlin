@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.g2kts.transformation.groovy2kts
 import org.jetbrains.kotlin.g2kts.*
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 
-class BuildScriptBlockTransformation : Transformation {
+class BuildScriptBlockTransformation : Transformation() {
     override fun runTransformation(node: GNode): GNode {
         return if (node.isBuildScriptBlock()) {
             val name = ((node as GMethodCall).method as GIdentifier).name

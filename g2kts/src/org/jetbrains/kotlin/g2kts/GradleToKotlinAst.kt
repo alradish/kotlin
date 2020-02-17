@@ -66,7 +66,7 @@ fun GNode.toKotlin(): Node = when (this) {
         Node.Expr.BinaryOp.Oper.Token(Node.Expr.BinaryOp.Token.DOT),
         Node.Expr.Call(
             Node.Expr.Name("named"),
-            listOf(Node.Type(emptyList(), Node.TypeRef.Simple(listOf(Node.TypeRef.Simple.Piece(type.simpleName!!, emptyList()))))),
+            listOf(Node.Type(emptyList(), Node.TypeRef.Simple(listOf(Node.TypeRef.Simple.Piece(type!!, emptyList()))))),
             listOf(Node.ValueArg(null, false, Node.Expr.StringTmpl(listOf(Node.Expr.StringTmpl.Elem.Regular(task)), false))),
             if (this is GTaskConfigure) lambda(configure.toKotlin().cast()) else null
         )

@@ -6,9 +6,10 @@
 package org.jetbrains.kotlin.g2kts.transformation.groovy2kts
 
 import org.jetbrains.kotlin.g2kts.*
+import org.jetbrains.kotlin.g2kts.transformation.GradleBuildContext
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 
-class TaskConfigureTransformation : Transformation {
+class TaskConfigureTransformation(override val context: GradleBuildContext) : Transformation(context) {
     override fun runTransformation(node: GNode): GNode {
         if (node !is GMethodCall) return recurse(node)
         return if (isTaskConfigure(node)) {
@@ -16,7 +17,7 @@ class TaskConfigureTransformation : Transformation {
             recurse(
                 GTaskConfigure(
                     name,
-                    tasks.getValue(name),
+                    context.getTaskByName(name)?.type,
                     node.closure!!.detached()
                 )
             )
@@ -27,6 +28,7 @@ class TaskConfigureTransformation : Transformation {
     private fun isTaskConfigure(node: GMethodCall): Boolean {
 
         val name = (node.method as? GIdentifier)?.name
-        return node.obj == null && name in tasks.keys && node.closure != null && node.arguments.args.isEmpty()
+        val tasks = context.tasks.map { it.name }
+        return node.obj == null && name in tasks && node.closure != null && node.arguments.args.isEmpty()
     }
 }
