@@ -21,6 +21,7 @@ import kastree.ast.Writer
 import org.jetbrains.kotlin.g2kts.GProject
 import org.jetbrains.kotlin.g2kts.gradleAstBuilder.buildTree
 import org.jetbrains.kotlin.g2kts.toKotlin
+import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.psi.KtFile
@@ -86,12 +87,24 @@ class ConvertTextGradleGroovyCopyPasteProcessor : CopyPastePostProcessor<TextBlo
         val targetFile = psiDocumentManager.getPsiFile(editor.document) as? KtFile ?: return
         val targetModule = targetFile.module
 
-        val file = PsiFileFactory.getInstance(project).createFileFromText(GroovyLanguage, text) as GroovyFileBase
-        val converted = ((buildTree(file) as GProject).toKotlin() as Node.Block).stmts.joinToString(separator = "\n") { Writer.write(it) }
-        runWriteAction {
-            editor.document.replaceString(bounds.startOffset, bounds.endOffset, converted)
-            editor.caretModel.moveToOffset(bounds.startOffset + converted.length)
+        if (confirmConvertGroovyOnPaste(project, isPlainText = false)) {
+            val file = PsiFileFactory.getInstance(project).createFileFromText(GroovyLanguage, text) as GroovyFileBase
+            val converted = ((buildTree(file) as GProject).toKotlin() as Node.Block).stmts.joinToString(separator = "\n") { Writer.write(it) }
+            runWriteAction {
+                editor.document.replaceString(bounds.startOffset, bounds.endOffset, converted)
+                editor.caretModel.moveToOffset(bounds.startOffset + converted.length)
+            }
+            psiDocumentManager.commitAllDocuments()
         }
-        psiDocumentManager.commitAllDocuments()
+
+
     }
+}
+
+internal fun confirmConvertGroovyOnPaste(project: Project, isPlainText: Boolean): Boolean {
+    if (KotlinEditorOptions.getInstance().isDonTShowConversionDialogKts) return true
+
+    val dialog = KtsPasteFromGroovyDialog(project, isPlainText)
+    dialog.show()
+    return dialog.isOK
 }

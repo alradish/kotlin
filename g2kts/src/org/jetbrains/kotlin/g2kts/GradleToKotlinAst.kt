@@ -11,16 +11,23 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 fun GNode.toKotlin(): Node = when (this) {
     is GProject -> Node.Block(statements.map { it.toKotlin() as Node.Stmt })
     is GBlock -> Node.Block(statements.map { it.toKotlin() as Node.Stmt })
+    is GBrace -> Node.Expr.Brace(emptyList(), block?.toKotlin()?.cast())
+    is GWhile -> Node.Expr.While(
+        condition.toKotlin().cast(),
+        body.toKotlin().cast(),
+        false
+    )
     is GStatement -> {
         val res = when (this) {
             is GStatement.GExpr -> expr.toKotlin()
             is GStatement.GDecl -> decl.toKotlin()
-            else -> error("")
+            is GWhile -> toKotlin()
+            is GBlock -> toKotlin()
         }
         when (res) {
             is Node.Expr -> Node.Stmt.Expr(res)
             is Node.Decl -> Node.Stmt.Decl(res)
-            else -> error("")
+            else -> res
         }
     }
     is GArgumentsList -> TODO()
@@ -52,8 +59,10 @@ fun GNode.toKotlin(): Node = when (this) {
     is GSimplePropertyAccess ->
         obj?.toKotlin()?.cast<Node.Expr>()?.dot(property.toKotlin().cast()) ?: property.toKotlin()
     is GExtensionAccess -> Node.Expr.ArrayAccess(obj!!.toKotlin().cast(), listOf(property.toKotlin().cast()))
-    is GOperator.Common -> Node.Expr.BinaryOp.Oper.Token(Node.Expr.BinaryOp.Token.values().find { it.str == token.text } ?: error(""))
-    is GOperator.Uncommon -> Node.Expr.BinaryOp.Oper.Infix(text)
+    is GBinaryOperator.Common -> Node.Expr.BinaryOp.Oper.Token(Node.Expr.BinaryOp.Token.values().find { it.str == token.text } ?: error(""))
+    is GBinaryOperator.Uncommon -> Node.Expr.BinaryOp.Oper.Infix(text)
+    is GUnaryExpression -> Node.Expr.UnaryOp(expr.toKotlin().cast(), operator.toKotlin().cast(), prefix)
+    is GUnaryOperator -> Node.Expr.UnaryOp.Oper(Node.Expr.UnaryOp.Token.values().find { it.str == token.text } ?: error(""))
     is GArgument -> Node.ValueArg(name, false, expr.toKotlin().cast())
     is GList -> Node.Expr.Call(
         Node.Expr.Name("listOf"),
@@ -66,7 +75,7 @@ fun GNode.toKotlin(): Node = when (this) {
         Node.Expr.BinaryOp.Oper.Token(Node.Expr.BinaryOp.Token.DOT),
         Node.Expr.Call(
             Node.Expr.Name("named"),
-            listOf(Node.Type(emptyList(), Node.TypeRef.Simple(listOf(Node.TypeRef.Simple.Piece(type!!, emptyList()))))),
+            listOf(Node.Type(emptyList(), Node.TypeRef.Simple(listOf(Node.TypeRef.Simple.Piece(type ?: "Task", emptyList()))))),
             listOf(Node.ValueArg(null, false, Node.Expr.StringTmpl(listOf(Node.Expr.StringTmpl.Elem.Regular(task)), false))),
             if (this is GTaskConfigure) lambda(configure.toKotlin().cast()) else null
         )
@@ -75,4 +84,44 @@ fun GNode.toKotlin(): Node = when (this) {
         expr = name(type.text),
         lambda = lambda(block.toKotlin().cast())
     )
+    is GVariableDeclaration -> {
+        property(
+            vars = listOf(
+                Node.Decl.Property.Var(
+                    name.name,
+                    type?.let {
+                        Node.Type(
+                            emptyList(),
+                            Node.TypeRef.Nullable(Node.TypeRef.Simple(listOf(Node.TypeRef.Simple.Piece(it, emptyList()))))
+                        )
+                    })
+            ),
+            expr = expr?.toKotlin()?.cast(),
+            readOnly = false
+        )
+    }
+    is GIf -> Node.Expr.If(condition.toKotlin().cast(), body.toKotlin().cast(), elseBody?.toKotlin()?.cast())
+    is GTryCatch -> Node.Expr.Try(
+        body.toKotlin().cast(),
+        catches.map {
+            Node.Expr.Try.Catch(
+                emptyList(),
+                it.name,
+                Node.TypeRef.Simple(listOf(Node.TypeRef.Simple.Piece(it.type, emptyList()))),
+                it.block.toKotlin().cast()
+            )
+        },
+        finallyBody?.toKotlin()?.cast()
+    )
+    is GSwitchCase -> Node.Expr.When.Entry(
+        listOf(Node.Expr.When.Cond.Expr(expr.toKotlin().cast())),
+        body.toKotlin().cast()
+    )
+    is GSwitch -> {
+        val entries = cases.map { it.toKotlin() as Node.Expr.When.Entry }
+        Node.Expr.When(
+            expr.toKotlin().cast(),
+            if (default == null) entries else entries.plus(default!!.toKotlin() as Node.Expr.When.Entry)
+        )
+    }
 }

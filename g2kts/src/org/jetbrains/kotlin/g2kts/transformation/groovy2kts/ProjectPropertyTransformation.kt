@@ -17,7 +17,7 @@ class ProjectPropertyTransformation : Transformation() {
             recurse(
                 GBinaryExpression(
                     GSimplePropertyAccess(node.obj?.detached(), node.method.detached()),
-                    GOperator.byValue("="),
+                    GBinaryOperator.byValue("="),
                     node.arguments.args.first().expr.detached()
                 )
             )
