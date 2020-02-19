@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.g2kts
 
 import com.intellij.psi.PsiElement
 import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 sealed class GNode(open val psi: PsiElement? = null) : Cloneable {
@@ -78,6 +79,12 @@ sealed class GNode(open val psi: PsiElement? = null) : Cloneable {
         return cloned
     }
 }
+
+fun <T : GNode> GNode.topParent(type: KClass<T>): GNode? {
+    if (parent == null) return null
+    if (parent!!::class == type) return parent
+    else return parent!!.topParent(type)
+}
 //
 //private fun <T : GNode> KProperty0<Any>.detach(element: T) {
 //    if (element.parent == null) return
@@ -148,6 +155,47 @@ sealed class GStatement(psi: PsiElement? = null) : GNode(psi) {
     }
 }
 
+class GTryCatch(
+    var body: GBlock,
+    var catches: List<Catch>,
+    var finallyBody: GBlock?,
+    psi: PsiElement? = null
+) : GExpression(psi) {
+    // FIXME make catch : GNode
+    data class Catch(
+//        var anns: List<Node.Modifier.AnnotationSet>,
+        var name: String,
+        var type: String,
+        var block: GBlock
+    )
+}
+
+class GSwitch(
+    var expr: GExpression,
+    var cases: List<GSwitchCase>,
+    var default: GSwitchCase?,
+    psi: PsiElement? = null
+): GExpression(psi)
+
+class GSwitchCase(
+    var expr: GExpression,
+    var body: GBrace,
+    psi: PsiElement? = null
+) : GNode(psi)
+
+class GWhile(
+    var condition: GExpression,
+    var body: GExpression,
+    psi: PsiElement?
+) : GExpression(psi)
+
+class GIf(
+    var condition: GExpression,
+    var body: GExpression,
+    var elseBody: GExpression?,
+    psi: PsiElement? = null
+) : GExpression(psi)
+
 class GBlock(
     statements: List<GStatement>, psi: PsiElement? = null
 ) : GStatement(psi) {
@@ -169,36 +217,17 @@ class GArgumentsList(
     var args: List<GArgument> by children(args)
 }
 
-sealed class GOperator : GNode() {
-    data class Common(val token: Token) : GOperator()
-    data class Uncommon(val text: String) : GOperator()
-    enum class Token(val text: String) {
-        MUL("*"), DIV("/"), MOD("%"), ADD("+"), SUB("-"),
-        IN("in"), NOT_IN("!in"),
-        GT(">"), GTE(">="), LT("<"), LTE("<="),
-        EQ("=="), NEQ("!="),
-        ASSN("="), MUL_ASSN("*="), DIV_ASSN("/="), MOD_ASSN("%="), ADD_ASSN("+="), SUB_ASSN("-="),
-        OR("||"), AND("&&"), ELVIS("?:"), RANGE(".."),
-        DOT("."), DOT_SAFE("?."), SAFE("?")
-    }
-
-    companion object {
-        fun isCommon(text: String): Boolean =
-            text in Token.values().map(Token::text)
-
-        fun byValue(text: String): GOperator {
-            return Token.values().find { it.text == text }?.let {
-                GOperator.Common(it)
-            } ?: GOperator.Uncommon(text)
-        }
-    }
-}
-
 
 // ********** EXPRESSION **********
 sealed class GExpression(psi: PsiElement? = null) : GNode(psi) {
     fun toStatement(): GStatement = GStatement.GExpr(this)
 }
+
+class GBrace(
+    // var param: GParameter,
+    var block: GBlock?,
+    psi: PsiElement? = null
+) : GExpression(psi)
 
 class GIdentifier(
     var name: String,
@@ -274,17 +303,61 @@ class GString(
     psi: PsiElement? = null
 ) : GExpression(psi)
 
+class GUnaryExpression(
+    var expr: GExpression,
+    val operator: GUnaryOperator,
+    var prefix: Boolean,
+    psi: PsiElement? = null
+) : GExpression(psi)
+
+data class GUnaryOperator(var token: Token) : GNode() {
+    enum class Token(val text: String) {
+        NEG("-"), POS("+"), INC("++"), DEC("--"), NOT("!"), NULL_DEREF("!!")
+    }
+
+    companion object {
+        fun byValue(text: String): GUnaryOperator? {
+            return GUnaryOperator.Token.values().find { it.text == text }?.let { GUnaryOperator(it) }
+        }
+    }
+}
+
+
 class GBinaryExpression(
     left: GExpression,
-    operator: GOperator,
+    operator: GBinaryOperator,
     right: GExpression,
     psi: PsiElement? = null
 ) : GExpression(psi) {
     var left: GExpression by child(left)
-    var operator: GOperator by child(operator)
+    var operator: GBinaryOperator by child(operator)
     var right: GExpression by child(right)
 }
 
+sealed class GBinaryOperator : GNode() {
+    data class Common(val token: Token) : GBinaryOperator()
+    data class Uncommon(val text: String) : GBinaryOperator()
+    enum class Token(val text: String) {
+        MUL("*"), DIV("/"), MOD("%"), ADD("+"), SUB("-"),
+        IN("in"), NOT_IN("!in"),
+        GT(">"), GTE(">="), LT("<"), LTE("<="),
+        EQ("=="), NEQ("!="),
+        ASSN("="), MUL_ASSN("*="), DIV_ASSN("/="), MOD_ASSN("%="), ADD_ASSN("+="), SUB_ASSN("-="),
+        OR("||"), AND("&&"), ELVIS("?:"), RANGE(".."),
+        DOT("."), DOT_SAFE("?."), SAFE("?")
+    }
+
+    companion object {
+        fun isCommon(text: String): Boolean =
+            text in Token.values().map(Token::text)
+
+        fun byValue(text: String): GBinaryOperator {
+            return Token.values().find { it.text == text }?.let {
+                Common(it)
+            } ?: Uncommon(text)
+        }
+    }
+}
 
 sealed class GPropertyAccess(
     obj: GExpression?,
@@ -343,6 +416,12 @@ sealed class GDeclaration(psi: PsiElement? = null) : GNode(psi) {
     fun toStatement(): GStatement = GStatement.GDecl(this)
 }
 
+class GVariableDeclaration(
+    var type: String?,
+    var name: GIdentifier,
+    var expr: GExpression?,
+    psi: PsiElement? = null
+) : GDeclaration(psi)
 
 class GProject(
     statements: List<GStatement>,

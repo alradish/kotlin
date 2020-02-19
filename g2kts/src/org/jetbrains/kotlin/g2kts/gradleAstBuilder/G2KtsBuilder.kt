@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.g2kts.gradleAstBuilder
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.g2kts.*
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner
@@ -29,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause
@@ -56,6 +58,7 @@ fun GroovyFileBase.toGradleAst(): GProject {
 }
 
 fun GroovyPsiElement.toGradleAst(): GNode = when (this) {
+    is GrCodeBlock -> toGradleAst()
     is GrTypeParameterList -> TODO(this::class.toString())
     is GrTryCatchStatement -> TODO(this::class.toString())
     is GrModifierList -> TODO(this::class.toString())
@@ -103,7 +106,24 @@ fun GroovyPsiElement.toGradleAst(): GNode = when (this) {
     is GrArrayInitializer -> TODO(this::class.toString())
     is GrCall -> TODO(this::class.toString())
     is GrTryResourceList -> TODO(this::class.toString())
-    else -> unreachable()
+    else -> GIdentifier(text, this)
+}
+
+fun GrCodeBlock.toGradleAst(): GBlock {
+    val statements = children.mapNotNull {
+        if (it.text == "{" || it.text == "}") return@mapNotNull null
+        val t = it.toGradleAst()
+        when (t) {
+            is GExpression -> t.toStatement()
+            is GDeclaration -> t.toStatement()
+            is GStatement -> t
+            else -> null
+        }
+    }
+    return GBlock(
+        statements,
+        this
+    )
 }
 
 
@@ -197,6 +217,12 @@ fun convertApplyToPluginsBlock(project: GProject): GProject {
 //    return GProject(newStatements)
 }
 
-fun PsiElement.toGradleAst(): GIdentifier {
-    return GIdentifier(text, this)
+fun PsiElement.toGradleAst(): GNode? {
+    return when  {
+        this is GrStatement -> toGradleAst()
+        this is GrExpression -> toGradleAst()
+        this is PsiWhiteSpace -> null // TODO обработать пробелы и новые строки
+        toString() == "PsiElement(new line)" -> null // TODO
+        else -> GIdentifier(text, this)
+    }
 }

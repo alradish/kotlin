@@ -24,26 +24,27 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrP
 import java.math.BigDecimal
 
 fun GrExpression.toGradleAst(): GExpression = when (this) {
-    is GrRangeExpression -> TODO(this::class.toString())
-    is GrInstanceOfExpression -> TODO(this::class.toString())
-    is GrUnaryExpression -> TODO(this::class.toString())
+    is GrUnaryExpression -> toGradleAst()
     is GrOperatorExpression -> toGradleAst()
     is GrLiteral -> toGradleAst()
-    is GrSafeCastExpression -> TODO(this::class.toString())
     is GrReferenceExpression -> toGradleAst()
+    is GrListOrMap -> toGradleAst()
+    is GrFunctionalExpression -> toGradleAst()
+    is GrCallExpression -> toGradleAst()
+    is GrRangeExpression -> TODO(this::class.toString())
+    is GrInstanceOfExpression -> TODO(this::class.toString())
+    is GrSafeCastExpression -> TODO(this::class.toString())
     is GrConditionalExpression -> TODO(this::class.toString())
     is GrTypeCastExpression -> TODO(this::class.toString())
     is GrBuiltinTypeClassExpression -> TODO(this::class.toString())
     is GrPropertySelection -> TODO(this::class.toString())
-    is GrListOrMap -> toGradleAst()
     is GrSpreadArgument -> TODO(this::class.toString())
     is GrIndexProperty -> TODO(this::class.toString())
-    is GrFunctionalExpression -> toGradleAst()
     is GrTupleAssignmentExpression -> TODO(this::class.toString())
     is GrParenthesizedExpression -> TODO(this::class.toString())
-    is GrCallExpression -> toGradleAst()
     else -> unreachable()
 }
+
 
 fun GrFunctionalExpression.toGradleAst(): GExpression {
     return when (this) {
@@ -98,9 +99,9 @@ fun GrReferenceExpression.toGradleAst(): GExpression {
             q.type?.let {
                 val qName = NamedDomainObjectCollection::class.qualifiedName ?: return@let
                 val type = PsiType.getTypeByName(qName, q.project, q.resolveScope)
-                TODO(this::class.toString())
+                // TODO Кажется здесь я хотел проверить на неймдомейнобжект коллекцию
             }
-            GSimplePropertyAccess(q.toGradleAst(), referenceNameElement!!.toGradleAst(), this)
+            GSimplePropertyAccess(q.toGradleAst(), referenceNameElement!!.toGradleAst() as GIdentifier, this)
         }
     } else {
         GIdentifier(referenceName!!, this)
@@ -113,17 +114,26 @@ fun GrReferenceExpression.toGradleAst(): GExpression {
 }
 
 
+fun GrUnaryExpression.toGradleAst(): GExpression {
+    return GUnaryExpression(
+        operand!!.toGradleAst(),
+        GUnaryOperator.byValue(operationToken.text) ?: error("bad token for unary operation"),
+        !isPostfix,
+        this
+    )
+}
+
 fun GrOperatorExpression.toGradleAst(): GBinaryExpression {
     return when (this) {
         is GrBinaryExpression -> GBinaryExpression(
             leftOperand.toGradleAst(),
-            GOperator.byValue(operationToken.text),
+            GBinaryOperator.byValue(operationToken.text),
             rightOperand!!.toGradleAst(),
             this
         )
         is GrAssignmentExpression -> GBinaryExpression(
             lValue.toGradleAst(),
-            GOperator.byValue("="),
+            GBinaryOperator.byValue(operationToken.text),
             rValue!!.toGradleAst(),
             this
         )
@@ -147,7 +157,7 @@ fun GrMethodCall.toSimpleMethodCall(): GSimpleMethodCall {
     val method = referenceExpression.referenceNameElement
     return GSimpleMethodCall(
         obj?.toGradleAst(),
-        method!!.toGradleAst(),
+        method!!.toGradleAst() as GIdentifier,
         argumentList.toGradleAst(),
         closureArguments.firstOrNull()?.toGradleAst(),
         this

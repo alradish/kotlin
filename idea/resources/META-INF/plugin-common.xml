@@ -23,7 +23,8 @@
     <group id="GroovyToKtsGroup">
       <action class="org.jetbrains.kotlin.idea.actions.G2KtsAction"
               id="g2kts"
-              text="g2kts"
+              text="Convert Gradle Groovy to Kts"
+              description="Convert current Gradle Groovy script to kts script"
       />
       <add-to-group group-id="CodeMenu"/>
     </group>
