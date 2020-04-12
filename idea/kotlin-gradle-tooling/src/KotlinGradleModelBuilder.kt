@@ -55,6 +55,10 @@ interface KotlinGradleModel : Serializable {
     val kotlinTarget: String?
     val kotlinTaskProperties: KotlinTaskPropertiesBySourceSet
     val gradleUserHome: String
+    val containerElements: List<ContainerData>
+//    val typedProjectSchema: TypedProjectSchema
+//    val typedProjectSchema: MyTypedProjectSchema
+//    val typedProjectSchema: String
 }
 
 data class KotlinGradleModelImpl(
@@ -65,7 +69,11 @@ data class KotlinGradleModelImpl(
     override val implements: List<String>,
     override val kotlinTarget: String? = null,
     override val kotlinTaskProperties: KotlinTaskPropertiesBySourceSet,
-    override val gradleUserHome: String
+    override val gradleUserHome: String,
+    override val containerElements: List<ContainerData>
+//    override val typedProjectSchema: TypedProjectSchema
+//    override val typedProjectSchema: MyTypedProjectSchema
+//    override val typedProjectSchema: String
 ) : KotlinGradleModel
 
 abstract class AbstractKotlinGradleModelBuilder : ModelBuilderService {
@@ -184,6 +192,29 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder() {
         val platform = platformPluginId ?: pluginToPlatform.entries.singleOrNull { project.plugins.findPlugin(it.key) != null }?.value
         val implementedProjects = getImplementedProjects(project)
 
+        val typedProjectSchema = targetSchemaFor(project, typeOfProject).let { targetSchema ->
+            ProjectSchema(
+                targetSchema.extensions,
+                targetSchema.conventions,
+                targetSchema.tasks,
+                targetSchema.containerElements
+//                accessibleConfigurationsOf(project)
+            ).map(::SchemaType)
+        }
+//        val s = typedProjectSchema.containerElements.joinToString(separator = "\n") {
+//            "${it.name} | ${it.target}::${it.type}"
+//        }
+        val containerElements = typedProjectSchema.containerElements.map {
+            val name = it.name
+            val target = it.target.kotlinString
+            val type = it.type.kotlinString
+            object : ContainerData {
+                override val name: String = name
+                override val target: String = target
+                override val type: String = type
+            }
+        }
+
         return KotlinGradleModelImpl(
             kotlinPluginId != null || platformPluginId != null,
             compilerArgumentsBySourceSet,
@@ -192,7 +223,10 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder() {
             implementedProjects.map { it.pathOrName() },
             platform ?: kotlinPluginId,
             extraProperties,
-            project.gradle.gradleUserHomeDir.absolutePath
+            project.gradle.gradleUserHomeDir.absolutePath,
+            containerElements
+//            s
+//            typedProjectSchema
         )
     }
 }

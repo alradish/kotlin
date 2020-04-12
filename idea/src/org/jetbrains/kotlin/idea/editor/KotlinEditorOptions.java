@@ -32,22 +32,22 @@ import org.jetbrains.annotations.Nullable;
 )
 public class KotlinEditorOptions implements PersistentStateComponent<KotlinEditorOptions> {
     private boolean donTShowConversionDialog = false;
-    private boolean donTShowConversionDialogKts = false;
+    private boolean donTShowConversionDialogKts2 = false;
     private boolean enableJavaToKotlinConversion = true;
     private boolean autoAddValKeywordToDataClassParameters = true;
 
     public boolean isDonTShowConversionDialog() {
         return donTShowConversionDialog;
     }
-    public boolean isDonTShowConversionDialogKts() {
-        return donTShowConversionDialogKts;
+    public boolean isDonTShowConversionDialogKts2() {
+        return donTShowConversionDialogKts2;
     }
 
     public void setDonTShowConversionDialog(boolean donTShowConversionDialog) {
         this.donTShowConversionDialog = donTShowConversionDialog;
     }
-    public void setDonTShowConversionDialogKts(boolean donTShowConversionDialogKts) {
-        this.donTShowConversionDialogKts = donTShowConversionDialogKts;
+    public void setDonTShowConversionDialogKts2(boolean donTShowConversionDialogKts2) {
+        this.donTShowConversionDialogKts2 = donTShowConversionDialogKts2;
     }
 
     public boolean isAutoAddValKeywordToDataClassParameters() {

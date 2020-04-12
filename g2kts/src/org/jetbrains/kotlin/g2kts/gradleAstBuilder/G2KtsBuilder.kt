@@ -54,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 
 fun GroovyFileBase.toGradleAst(): GProject {
+
     return GProject(topStatements.map { it.toGradleAst() }, this)
 }
 

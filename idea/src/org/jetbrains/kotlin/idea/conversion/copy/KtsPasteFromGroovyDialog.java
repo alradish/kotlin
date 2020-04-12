@@ -55,7 +55,7 @@ public class KtsPasteFromGroovyDialog extends DialogWrapper {
     @Override
     protected void doOKAction() {
         if (donTShowThisCheckBox.isSelected()) {
-            KotlinEditorOptions.getInstance().setDonTShowConversionDialog(true);
+            KotlinEditorOptions.getInstance().setDonTShowConversionDialogKts2(true);
         }
         super.doOKAction();
     }

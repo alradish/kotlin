@@ -189,6 +189,17 @@ class GWhile(
     psi: PsiElement?
 ) : GExpression(psi)
 
+/*
+data class For(
+            override val anns: List<Modifier.AnnotationSet>,
+            // More than one means destructure, null means underscore
+            val vars: List<Decl.Property.Var?>,
+            val inExpr: Expr,
+            val body: Expr
+        ) : Expr(), WithAnnotations
+ */
+
+
 class GIf(
     var condition: GExpression,
     var body: GExpression,

@@ -102,8 +102,7 @@ class ConvertTextGradleGroovyCopyPasteProcessor : CopyPastePostProcessor<TextBlo
 }
 
 internal fun confirmConvertGroovyOnPaste(project: Project, isPlainText: Boolean): Boolean {
-    if (KotlinEditorOptions.getInstance().isDonTShowConversionDialogKts) return true
-
+    if (KotlinEditorOptions.getInstance().isDonTShowConversionDialogKts2) return true
     val dialog = KtsPasteFromGroovyDialog(project, isPlainText)
     dialog.show()
     return dialog.isOK

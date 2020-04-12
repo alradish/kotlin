@@ -6,7 +6,8 @@
 package org.jetbrains.kotlin.g2kts.transformation
 
 class GradleBuildContext(
-    val tasks: List<Task>
+    val tasks: List<Task>,
+    val containerElements: List<ContainerData>
 ) {
     fun getTaskByName(name: String): Task? = tasks.find { it.name == name }
 }
@@ -15,4 +16,10 @@ data class Task(
     val name: String,
     val type: String,
     val path: String
+)
+
+data class ContainerData(
+    val name: String,
+    val target: String,
+    val type: String
 )
