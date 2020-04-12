@@ -37,11 +37,15 @@ import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.CoroutineSupport
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.TargetPlatformKind
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.gradle.ArgsInfo
 import org.jetbrains.kotlin.gradle.CompilerArgumentsBySourceSet
 import org.jetbrains.kotlin.ide.konan.NativeLibraryKind
+import org.jetbrains.kotlin.idea.actions.G2KtsAction
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_CODE_STYLE_GRADLE_SETTING
 import org.jetbrains.kotlin.idea.facet.*
@@ -264,6 +268,7 @@ fun configureFacetByGradleModule(
     sourceSetNode: DataNode<GradleSourceSetData>?,
     sourceSetName: String? = sourceSetNode?.data?.id?.let { it.substring(it.lastIndexOf(':') + 1) }
 ): KotlinFacet? {
+    ideModule.project.putUserData(G2KtsAction.KEY, moduleNode.containerElements)
     if (moduleNode.kotlinSourceSet != null) return null // Suppress in the presence of new MPP model
     if (!moduleNode.isResolved) return null
 

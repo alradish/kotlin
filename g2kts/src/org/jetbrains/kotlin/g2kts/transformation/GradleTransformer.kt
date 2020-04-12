@@ -18,6 +18,7 @@ object GradleTransformer {
             +ProjectPropertyTransformation()
             +TaskConfigureTransformation(context)
             +TaskAccessTransformation(context)
+            +NamedDomainObjectCollectionTransformation(context)
         }.transformations)
     }
 

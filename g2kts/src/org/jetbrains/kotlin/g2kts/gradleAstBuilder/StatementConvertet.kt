@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.g2kts.gradleAstBuilder
 
 import org.jetbrains.kotlin.g2kts.*
+import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterruptingStatement
@@ -27,7 +28,7 @@ fun GrStatement.toGradleAst(): GStatement = when (this) {
     is GrWhileStatement -> toGradleAst().toStatement()
     is GrIfStatement -> toGradleAst().toStatement()
     is GrVariableDeclaration -> toGradleAst().toStatement()
-    is GrLoopStatement -> TODO(text)
+    is GrLoopStatement -> toGradleAst()
     is GrConstructorInvocation -> TODO(text)
     is GrAssertStatement -> TODO(text)
     is GrReturnStatement -> TODO(text)
@@ -37,6 +38,13 @@ fun GrStatement.toGradleAst(): GStatement = when (this) {
     is GrSwitchStatement -> TODO(text)
     is GrApplicationStatement -> TODO(text)
     is GrFlowInterruptingStatement -> TODO(text)
+    else -> unreachable()
+}
+
+fun GrLoopStatement.toGradleAst() = when(this) {
+    is GrWhileStatement -> toGradleAst().toStatement()
+    is GrForStatement -> TODO(text)
+    is GrDoWhileStatement -> TODO(text)
     else -> unreachable()
 }
 

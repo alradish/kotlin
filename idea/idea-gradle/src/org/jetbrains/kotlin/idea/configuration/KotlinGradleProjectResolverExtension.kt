@@ -28,12 +28,12 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.*
 import org.jetbrains.kotlin.idea.inspections.gradle.getDependencyModules
+import org.jetbrains.kotlin.idea.statistics.FUSEventGroups
+import org.jetbrains.kotlin.idea.statistics.KotlinFUSLogger
 import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.idea.util.DataNodeUserDataProperty
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.idea.util.PsiPrecedences
-import org.jetbrains.kotlin.idea.statistics.FUSEventGroups
-import org.jetbrains.kotlin.idea.statistics.KotlinFUSLogger
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
 import org.jetbrains.plugins.gradle.model.FileCollectionDependency
@@ -45,6 +45,10 @@ import java.io.File
 import java.util.*
 import kotlin.collections.HashMap
 
+var DataNode<ModuleData>.containerElements
+        by NotNullableCopyableDataNodeUserDataProperty(Key.create<List<ContainerData>>("CONTAINERS"), emptyList())
+//var DataNode<ModuleData>.containers
+//        by NotNullableCopyableDataNodeUserDataProperty(Key.create<String>("CONTAINERS"), "empty")
 var DataNode<ModuleData>.isResolved
         by NotNullableCopyableDataNodeUserDataProperty(Key.create<Boolean>("IS_RESOLVED"), false)
 var DataNode<ModuleData>.hasKotlinPlugin
@@ -287,6 +291,11 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         nextResolver.populateModuleContentRoots(gradleModule, ideModule)
         val moduleNamePrefix = GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule)
         resolverCtx.getExtraProject(gradleModule, KotlinGradleModel::class.java)?.let { gradleModel ->
+//            println(gradleModel.typedProjectSchema)
+            ideModule.containerElements = gradleModel.containerElements
+//            println("-----------")
+//            testGradleModelG2kts = gradleModel.typedProjectSchema
+//            containers = gradleModel.typedProjectSchema
             ideModule.pureKotlinSourceFolders =
                 gradleModel.kotlinTaskProperties.flatMap { it.value.pureKotlinSourceFolders ?: emptyList() }.map { it.absolutePath }
             val gradleSourceSets = ideModule.children.filter { it.data is GradleSourceSetData } as Collection<DataNode<GradleSourceSetData>>
@@ -295,7 +304,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
                     gradleModel.kotlinTaskProperties.filter { (k, v) -> gradleSourceSetNode.data.externalName == "$moduleNamePrefix:$k" }
                         .toList().singleOrNull()
                 gradleSourceSetNode.children.forEach { dataNode ->
-                    val data = dataNode.data as?  ContentRootData
+                    val data = dataNode.data as? ContentRootData
                     if (data != null) {
                         /*
                         Code snippet for setting in content root properties
