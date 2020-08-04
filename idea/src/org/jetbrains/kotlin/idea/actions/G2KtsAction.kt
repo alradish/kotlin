@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.idea.actions
 
+import com.intellij.codeInsight.actions.*
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -26,8 +27,8 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.layout.panel
 import kastree.ast.Node
 import kastree.ast.Writer
+import org.jetbrains.kotlin.g2kts.GradleToKotlin
 import org.jetbrains.kotlin.g2kts.gradleAstBuilder.buildTree
-import org.jetbrains.kotlin.g2kts.toKotlin
 import org.jetbrains.kotlin.g2kts.transformation.GradleBuildContext
 import org.jetbrains.kotlin.g2kts.transformation.GradleTransformer
 import org.jetbrains.kotlin.g2kts.transformation.Task
@@ -91,8 +92,11 @@ class G2KtsAction : AnAction() {
 
             val groovyGradleTree = buildTree(groovyFileBase)
             val gradleTree = GradleTransformer.doApply(listOf(groovyGradleTree.copy()), context).first()
-            val kotlinAST = gradleTree.toKotlin()
-            val kotlin = (kotlinAST as Node.Block).stmts.joinToString(separator = "\n") { Writer.write(it) }
+//            val kotlinAST = gradleTree.toKotlin()
+            val gradle2kotlin = GradleToKotlin()
+            val kotlinAST = with(gradle2kotlin) { gradleTree.toKotlin() }
+            val extras = gradle2kotlin.extrasMap
+            val kotlin = (kotlinAST as Node.Block).stmts.joinToString(separator = "\n") { Writer.write(it, extras) }
 
             val psiDocumentManager = PsiDocumentManager.getInstance(project!!)
 
@@ -102,6 +106,7 @@ class G2KtsAction : AnAction() {
 //            ExternalSystemApiUtil.findParent(e.project.data)
 
             WriteCommandAction.runWriteCommandAction(project) {
+
                 file.copy(this, file.parent, file.name + ".back")
                 try {
                     val newName = file.name + ".kts"
@@ -112,6 +117,11 @@ class G2KtsAction : AnAction() {
                 psiDocumentManager.getDocument(groovyFileBase)!!.apply {
                     replaceString(0, textLength, kotlin)
                 }
+                var processor: AbstractLayoutCodeProcessor = ReformatCodeProcessor(manager.findFile(file)!!, false)
+                processor = OptimizeImportsProcessor(processor)
+                processor = RearrangeCodeProcessor(processor)
+                processor = CodeCleanupCodeProcessor(processor)
+                processor.run()
 //                groovyFileBase.findExistingEditor()!!.document.apply {
 //                    replaceString(0, textLength, kotlin)
 //                }

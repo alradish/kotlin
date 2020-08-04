@@ -155,6 +155,11 @@ sealed class GStatement(psi: PsiElement? = null) : GNode(psi) {
     }
 }
 
+class GComment(
+    var string: String,
+    psi: PsiElement? = null
+) : GStatement(psi)
+
 class GTryCatch(
     var body: GBlock,
     var catches: List<Catch>,

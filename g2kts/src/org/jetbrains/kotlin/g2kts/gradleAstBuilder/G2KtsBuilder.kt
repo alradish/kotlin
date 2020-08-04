@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.g2kts.gradleAstBuilder
 
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.g2kts.*
@@ -53,12 +54,29 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 
-fun GroovyFileBase.toGradleAst(): GProject {
+fun buildTree(psi: PsiElement): GNode {
+    return when (psi) {
+        is GroovyFileBase -> psi.toGradleAst()
+        else -> TODO()
+    }
+}
 
-    return GProject(topStatements.map { it.toGradleAst() }, this)
+fun GroovyFileBase.toGradleAst(): GProject {
+    return GProject(this.children.mapNotNull { psiElement ->
+        psiElement.toGradleAst().let {
+            when (it) {
+                is GStatement -> it
+                is GExpression -> it.toStatement()
+                is GDeclaration -> it.toStatement()
+                null, is GIdentifier -> null
+                else -> unreachable()
+            }
+        }
+    }, this)
 }
 
 fun GroovyPsiElement.toGradleAst(): GNode = when (this) {
+    is PsiComment -> GComment(this.toString())
     is GrCodeBlock -> toGradleAst()
     is GrTypeParameterList -> TODO(this::class.toString())
     is GrTryCatchStatement -> TODO(this::class.toString())
@@ -97,7 +115,7 @@ fun GroovyPsiElement.toGradleAst(): GNode = when (this) {
     is GrCaseSection -> TODO(this::class.toString())
     is GrImportAlias -> TODO(this::class.toString())
     is GrCatchClause -> TODO(this::class.toString())
-    is GrNamedArgument -> GArgument(labelName, expression!!.toGradleAst(),this)
+    is GrNamedArgument -> GArgument(labelName, expression!!.toGradleAst(), this)
     is GrFinallyClause -> TODO(this::class.toString())
     is GrStringInjection -> TODO(this::class.toString())
     is GrSpreadArgument -> TODO(this::class.toString())
@@ -148,81 +166,12 @@ fun GrParameter.toGradleAst(): GExpression {
     TODO()
 }
 
-
-fun buildTree(psi: PsiElement): GNode {
-    val project = when (psi) {
-        is GroovyFileBase -> psi.toGradleAst()
-        else -> TODO()
-    }
-    return convertApplyToPluginsBlock(project)
-}
-
-fun convertApplyToPluginsBlock(project: GProject): GProject {
-    return project
-//    val pluginsId = mutableSetOf<String>()
-//    val other = mutableListOf<GStatement>()
-//    for (statement in project.statements) {
-//        if (statement.isApplyPlugin()) {
-//            val call = statement.cast<GStatement.GExpr>().expr.cast<GMethodCall>()
-//            val expr = call.arguments.args.first().expr.cast<GString>()
-//            pluginsId.add(expr.str)
-//        } else {
-//            other.add(statement.copy() as GStatement)
-//        }
-//    }
-//
-//    val newStatements = if (pluginsId.isNotEmpty()) {
-//        val first = other.firstOrNull().safeAs<GStatement.GExpr>()?.expr
-//        val plugins = mutableListOf<GStatement>()
-//        if (first is GConfigurationBlock && first.method == GIdentifier("plugins")) {
-//            val withoutId = first.configuration.statements.statements.mapNotNull {
-//                if (it.safeAs<GStatement.GExpr>()?.expr?.safeAs<GSimpleMethodCall>()?.method?.safeAs<GIdentifier>()?.name == "id") {
-//                    pluginsId.add(it.cast<GStatement.GExpr>().expr.cast<GSimpleMethodCall>().arguments.args.first().expr.cast<GString>().str)
-//                    null
-//                } else {
-//                    it.copy() as GStatement
-//                }
-//            }
-//            plugins.addAll(withoutId + pluginsId.map {
-//                val arg = GArgument(null, GString(it))
-//                GSimpleMethodCall(
-//                    null,
-//                    GIdentifier("id"),
-//                    GArgumentsList(
-//                        listOf(
-//                            arg
-//                        )
-//                    )
-//                ).toStatement()
-//            })
-//            other.removeAt(0)
-//        }
-//        other.apply {
-//            val configuration = GClosure(
-//                emptyList(),
-//                GBlock(plugins)
-//            )
-//            add(
-//                0,
-//                GConfigurationBlock(
-//                    null,
-//                    GIdentifier("plugins"),
-//                    GArgumentsList(emptyList()),
-//                    configuration
-//                ).toStatement()
-//            )
-//        }
-//    } else
-//        other
-//
-//    return GProject(newStatements)
-}
-
 fun PsiElement.toGradleAst(): GNode? {
-    return when  {
+    return when {
         this is GrStatement -> toGradleAst()
         this is GrExpression -> toGradleAst()
         this is PsiWhiteSpace -> null // TODO обработать пробелы и новые строки
+        this is PsiComment -> GComment(this.text)
         toString() == "PsiElement(new line)" -> null // TODO
         else -> GIdentifier(text, this)
     }
