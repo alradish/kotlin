@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.g2kts.transformation.groovy2kts.*
 object GradleTransformer {
     private fun createTransformationsList(context: GradleBuildContext): TransformationsSet {
         return TransformationsSet(TransformationsBuilder<Transformation>().apply {
-//            +JavaSourceCompatibilityTransformation()
             +BuildScriptBlockTransformation()
             +TaskCreationTransformation()
             +ConfigurationBlockTransformation()

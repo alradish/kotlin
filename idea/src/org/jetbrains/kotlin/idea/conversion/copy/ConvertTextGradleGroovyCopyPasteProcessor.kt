@@ -19,8 +19,8 @@ import com.intellij.psi.PsiFileFactory
 import kastree.ast.Node
 import kastree.ast.Writer
 import org.jetbrains.kotlin.g2kts.GProject
+import org.jetbrains.kotlin.g2kts.GradleToKotlin
 import org.jetbrains.kotlin.g2kts.gradleAstBuilder.buildTree
-import org.jetbrains.kotlin.g2kts.toKotlin
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.projectStructure.module
@@ -89,7 +89,10 @@ class ConvertTextGradleGroovyCopyPasteProcessor : CopyPastePostProcessor<TextBlo
 
         if (confirmConvertGroovyOnPaste(project, isPlainText = false)) {
             val file = PsiFileFactory.getInstance(project).createFileFromText(GroovyLanguage, text) as GroovyFileBase
-            val converted = ((buildTree(file) as GProject).toKotlin() as Node.Block).stmts.joinToString(separator = "\n") { Writer.write(it) }
+            val gradle2kotlin = GradleToKotlin()
+            val gProject = buildTree(file) as GProject
+            val block = with(gradle2kotlin) { gProject.toKotlin() as Node.Block }
+            val converted = block.stmts.joinToString(separator = "\n") { Writer.write(it, gradle2kotlin.extrasMap) }
             runWriteAction {
                 editor.document.replaceString(bounds.startOffset, bounds.endOffset, converted)
                 editor.caretModel.moveToOffset(bounds.startOffset + converted.length)
