@@ -233,10 +233,14 @@ class GArgumentsList(
     var args: List<GArgument> by children(args)
 }
 
+interface ConvertableToStatement {
+    fun toStatement(): GStatement
+}
 
 // ********** EXPRESSION **********
-sealed class GExpression(psi: PsiElement? = null) : GNode(psi) {
-    fun toStatement(): GStatement = GStatement.GExpr(this)
+
+sealed class GExpression(psi: PsiElement? = null) : GNode(psi), ConvertableToStatement {
+    override fun toStatement(): GStatement = GStatement.GExpr(this)
 }
 
 class GBrace(
@@ -252,7 +256,7 @@ class GIdentifier(
 
 class GList(
     initializers: List<GExpression>,
-    psi: PsiElement? = null
+psi: PsiElement? = null
 ) : GExpression(psi) {
     var initializers: List<GExpression> by children(initializers)
 }
@@ -428,8 +432,8 @@ class GTaskConfigure(
 // ********** EXPRESSION END **********
 
 
-sealed class GDeclaration(psi: PsiElement? = null) : GNode(psi) {
-    fun toStatement(): GStatement = GStatement.GDecl(this)
+sealed class GDeclaration(psi: PsiElement? = null) : GNode(psi), ConvertableToStatement {
+    override fun toStatement(): GStatement = GStatement.GDecl(this)
 }
 
 class GVariableDeclaration(
