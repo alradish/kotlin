@@ -11,8 +11,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.model.ProjectKeys
-import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -46,21 +44,21 @@ class G2KtsAction : AnAction() {
 
     private fun findGradleProjectStructure(module: Module): DataNode<ProjectData>? {
         val externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module) ?: return null
-//        val moduleNode = ExternalSystemApiUtil.findParent(sourceSetNode, ProjectKeys.MODULE) ?: continue
-        val projectInfo = ExternalSystemUtil.getExternalProjectInfo(module.project, GRADLE_SYSTEM_ID, externalProjectPath) ?: return null
+        val projectInfo = ExternalSystemUtil.getExternalProjectInfo(
+            module.project,
+            GRADLE_SYSTEM_ID,
+            externalProjectPath
+        ) ?: return null
         return projectInfo.externalProjectStructure
     }
 
     private fun getGradleTasks(file: VirtualFile, e: AnActionEvent): List<Task> {
         val module = ModuleUtilCore.findModuleForFile(file, e.project!!) ?: error("module")
-//        module.
-        val d = findGradleProjectStructure(module)
-        // ExternalSystemApiUtil.findParent(sourceSetNode, ProjectKeys.MODULE) ?: continue
-        val t = ExternalSystemApiUtil.find<ModuleData>(d!!, ProjectKeys.MODULE)
-//        t?.let {
-//            it.con
-//        }
-        val mm = GradleProjectResolverUtil.findModule(d, module.externalProjectPath!!) ?: error("uuu")
+        val projectData = findGradleProjectStructure(module)
+        val mm = GradleProjectResolverUtil.findModule(
+            projectData,
+            module.externalProjectPath!!
+        ) ?: error("gradle project resolver return null")
         return mm.children.toList().map { it.data }.filterIsInstance<TaskData>()
             .map { Task(it.name, it.type!!.substringAfterLast('.'), it.linkedExternalProjectPath) }
     }
@@ -73,40 +71,25 @@ class G2KtsAction : AnAction() {
         if (!ConvertGroovyGradleScriptDialog().showAndGet()) return
 
         virtualFiles?.forEach { file ->
-            //            val module = ModuleManager.getInstance(project).findModuleByName("project") ?: error("null module")
             val module = ModuleUtilCore.findModuleForFile(file, project) ?: error("null module")
-            println("action module name ${module.name}")
             if (module.isDisposed) error("is disposed")
-
             val groovyFileBase = manager.findFile(file) as? GroovyFileBase ?: return
-
             val tasks = getGradleTasks(file, e)
             val containerElements = project.getUserData(KEY) ?: emptyList()
-            println(containerElements.joinToString(prefix = "\t", separator = "\n") {
-                "${it.name}\t${it.target}\t${it.type}"
-            })
             val context = GradleBuildContext(
                 tasks,
                 containerElements.map { org.jetbrains.kotlin.g2kts.transformation.ContainerData(it.name, it.target, it.type) }
             )
 
-            val groovyGradleTree = buildTree(groovyFileBase)
-            val gradleTree = GradleTransformer.doApply(listOf(groovyGradleTree.copy()), context).first()
-//            val kotlinAST = gradleTree.toKotlin()
+            val gradleTree = GradleTransformer.doApply(listOf(buildTree(groovyFileBase).copy()), context).first()
             val gradle2kotlin = GradleToKotlin()
             val kotlinAST = with(gradle2kotlin) { gradleTree.toKotlin() }
             val extras = gradle2kotlin.extrasMap
             val kotlin = (kotlinAST as Node.Block).stmts.joinToString(separator = "\n") { Writer.write(it, extras) }
 
-            val psiDocumentManager = PsiDocumentManager.getInstance(project!!)
-
-//            ExternalSystemApiUtil.findModuleData() TODO ВАЖНО кажется
-//            ExternalSystemApiUtil.findModuleData(e.project!!.allModules().first(), )
-//            ExternalSystemApiUtil.findParent(sourceSetNode, ProjectKeys.MODULE) ?: continue
-//            ExternalSystemApiUtil.findParent(e.project.data)
+            val psiDocumentManager = PsiDocumentManager.getInstance(project)
 
             WriteCommandAction.runWriteCommandAction(project) {
-
                 file.copy(this, file.parent, file.name + ".back")
                 try {
                     val newName = file.name + ".kts"
@@ -122,22 +105,9 @@ class G2KtsAction : AnAction() {
                 processor = RearrangeCodeProcessor(processor)
                 processor = CodeCleanupCodeProcessor(processor)
                 processor.run()
-//                groovyFileBase.findExistingEditor()!!.document.apply {
-//                    replaceString(0, textLength, kotlin)
-//                }
-//                groovyFileBase.name = groovyFileBase.name + ".back"
-//                groovyFileBase.findExistingEditor()?.document?.apply {
-//                    replaceString(0, textLength, kotlin)
-//                }
+
             }
-//            println("kotlin")
-            /*
-            ((((((((manager.findFile(file) as KtFile).script.blockExpression.children.get(1) as KtScriptInitializer).body
-            .children.get(1) as KtLambdaArgument)
-            .children.get(0).children.get(0) as KtFunctionLiteral)
-            .children.get(0).children.get(0) as KtCallExpression).valueArguments.get(0) as KtValueArgument)
-            .getArgumentExpression() as KtDotQualifiedExpression).receiverExpression as KtNameReferenceExpression).reference
-             */
+
         }
     }
 }
