@@ -291,11 +291,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         nextResolver.populateModuleContentRoots(gradleModule, ideModule)
         val moduleNamePrefix = GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule)
         resolverCtx.getExtraProject(gradleModule, KotlinGradleModel::class.java)?.let { gradleModel ->
-//            println(gradleModel.typedProjectSchema)
             ideModule.containerElements = gradleModel.containerElements
-//            println("-----------")
-//            testGradleModelG2kts = gradleModel.typedProjectSchema
-//            containers = gradleModel.typedProjectSchema
             ideModule.pureKotlinSourceFolders =
                 gradleModel.kotlinTaskProperties.flatMap { it.value.pureKotlinSourceFolders ?: emptyList() }.map { it.absolutePath }
             val gradleSourceSets = ideModule.children.filter { it.data is GradleSourceSetData } as Collection<DataNode<GradleSourceSetData>>
