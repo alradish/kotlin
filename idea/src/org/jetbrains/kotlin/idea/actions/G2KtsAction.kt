@@ -11,12 +11,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -52,6 +54,17 @@ class G2KtsAction : AnAction() {
         return projectInfo.externalProjectStructure
     }
 
+    private fun findModuleDataForFile(file: VirtualFile, project: Project): DataNode<ModuleData> {
+        val module =
+            ModuleUtilCore.findModuleForFile(file, project) ?: error("null module for file $file")
+        val projectData =
+            findGradleProjectStructure(module) ?: error("null project structure for module $module")
+        @Suppress("UNCHECKED_CAST")
+        return projectData.children.find {
+            (it.data as? ModuleData)?.id == module.name
+        } as? DataNode<ModuleData> ?: error("no module data for this module")
+    }
+
     private fun getGradleTasks(file: VirtualFile, e: AnActionEvent): List<Task> {
         val module = ModuleUtilCore.findModuleForFile(file, e.project!!) ?: error("module")
         val projectData = findGradleProjectStructure(module)
@@ -63,6 +76,7 @@ class G2KtsAction : AnAction() {
             .map { Task(it.name, it.type!!.substringAfterLast('.'), it.linkedExternalProjectPath) }
     }
 
+    @Suppress("UNREACHABLE_CODE")
     override fun actionPerformed(e: AnActionEvent) {
         val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
         val project = e.project ?: error("null project")
@@ -71,11 +85,13 @@ class G2KtsAction : AnAction() {
         if (!ConvertGroovyGradleScriptDialog().showAndGet()) return
 
         virtualFiles?.forEach { file ->
-            val module = ModuleUtilCore.findModuleForFile(file, project) ?: error("null module")
-            if (module.isDisposed) error("is disposed")
             val groovyFileBase = manager.findFile(file) as? GroovyFileBase ?: return
+
+            val moduleData = findModuleDataForFile(file, project)
+
+            @Suppress("UNCHECKED_CAST")
+            val containerElements = moduleData.getCopyableUserData(Key.findKeyByName("GRADLE_CONTAINERS")!!) as List<ContainerData>
             val tasks = getGradleTasks(file, e)
-            val containerElements = project.getUserData(KEY) ?: emptyList()
             val context = GradleBuildContext(
                 tasks,
                 containerElements.map { org.jetbrains.kotlin.g2kts.transformation.ContainerData(it.name, it.target, it.type) }
