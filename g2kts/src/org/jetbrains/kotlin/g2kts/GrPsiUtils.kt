@@ -5,9 +5,12 @@
 
 package org.jetbrains.kotlin.g2kts
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 
 val GrMethodCall.rawName: String?
     get() = invokedExpression.text
 
 fun unreachable(): Nothing = error("Unreachable code")
+
+fun unknownPsiElement(psi: PsiElement): Nothing = error("Unknown psi element: ${psi::class.toString()}::${psi.text}")

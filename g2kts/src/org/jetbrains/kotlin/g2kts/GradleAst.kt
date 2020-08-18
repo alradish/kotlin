@@ -157,6 +157,13 @@ sealed class GStatement(psi: PsiElement? = null) : GNode(psi) {
 
 class GComment(
     var string: String,
+    var startsLine: Boolean,
+    var ensLine: Boolean,
+    psi: PsiElement? = null
+) : GStatement(psi)
+
+class GNewLine(
+    val n: Int = 1,
     psi: PsiElement? = null
 ) : GStatement(psi)
 

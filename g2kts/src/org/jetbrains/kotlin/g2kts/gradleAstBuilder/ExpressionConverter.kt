@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString
@@ -167,7 +168,7 @@ fun GrMethodCall.toSimpleMethodCall(): GSimpleMethodCall {
 fun GrClosableBlock.toGradleAst(): GClosure {
     return GClosure(
         parameters.map { it.toGradleAst() },
-        GBlock(statements.map { it.toGradleAst() }),
+        (this as GrCodeBlock).toGradleAst(),
         this
     )
 }

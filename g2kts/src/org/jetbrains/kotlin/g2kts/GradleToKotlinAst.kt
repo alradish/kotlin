@@ -14,42 +14,27 @@ class GradleToKotlin {
 
     private fun GNode.toStatement(): GStatement? {
         return when (this) {
+            is ConvertableToStatement -> this.toStatement()
             is GStatement -> this
-            is GSwitchCase -> null
-            is GArgument -> null
-            is GArgumentsList -> null
-            is GExpression -> this.toStatement()
-            is GUnaryOperator -> null
-            is GBinaryOperator -> null
-            is GDeclaration -> this.toStatement()
-            is GProject -> null
-
+            else -> null
         }
     }
 
     private fun List<GStatement>.toKotlin(): List<Node.Stmt> {
         val res = mutableListOf<Node.Stmt>()
-        val bufComments: MutableList<Node.Extra> = mutableListOf()
+        val extras: MutableList<Node.Extra> = mutableListOf()
         for (stmt in this) {
-            if (bufComments.isNotEmpty() && res.isNotEmpty()) {
-                bufComments.forEach {
-                    extrasMap.addExtraBefore(res.last(), it)
-                }
-                bufComments.clear()
-            }
             when (stmt) {
-                is GComment -> {
-//                    bufComments.add(Node.Extra.Comment(stmt.string, startsLine = true, endsLine = true))
-                    if (res.isEmpty()) {
-                        bufComments.add(Node.Extra.Comment(stmt.string, startsLine = true, endsLine = true))
-                    } else {
-                        extrasMap.addExtraAfter(
-                            res.last(),
-                            Node.Extra.Comment(stmt.string, startsLine = false, endsLine = false)
-                        )
-                    }
+                is GComment ->
+                    extras.add(stmt.toKotlin() as Node.Extra.Comment)
+                is GNewLine ->
+                    extras.add(stmt.toKotlin() as Node.Extra.BlankLines)
+                is GBlock -> {
+                    val element = stmt.toKotlin() as Node.Stmt
+                    res.add(element)
+                    extras.forEach { extrasMap.addExtraBefore(element, it) }
+                    extras.clear()
                 }
-                is GBlock -> res.add(stmt.toKotlin() as Node.Stmt)
                 is GStatement.GExpr, is GStatement.GDecl -> {
                     var buf = when (stmt) {
                         is GStatement.GExpr -> stmt.expr.toKotlin()
@@ -63,15 +48,18 @@ class GradleToKotlin {
                     }
 
                     res.add(buf as Node.Stmt)
+                    extras.forEach { extrasMap.addExtraBefore(buf, it) }
+                    extras.clear()
                 }
-//                is GStatement.GDecl -> res.add(Node.Stmt.Decl(stmt.decl.toKotlin() as Node.Decl))
             }
         }
+        extras.forEach { extrasMap.addExtraAfter(res.last(), it) }
         return res
     }
 
     fun GNode.toKotlin(): Node = when (this) {
-        is GComment -> unreachable()
+        is GComment -> Node.Extra.Comment(string, startsLine, ensLine)
+        is GNewLine -> Node.Extra.BlankLines(n)
         is GProject -> Node.Block(statements.toKotlin())
         is GBlock -> Node.Block(statements.toKotlin())
         is GBrace -> Node.Expr.Brace(emptyList(), block?.toKotlin()?.cast())
@@ -86,6 +74,7 @@ class GradleToKotlin {
                 is GStatement.GDecl -> decl.toKotlin()
                 is GBlock -> toKotlin()
                 is GComment -> toKotlin()
+                is GNewLine -> toKotlin()
             }
             when (res) {
                 is Node.Expr -> Node.Stmt.Expr(res)

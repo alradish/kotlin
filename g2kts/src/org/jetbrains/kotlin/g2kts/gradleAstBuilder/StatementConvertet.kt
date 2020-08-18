@@ -8,11 +8,6 @@ package org.jetbrains.kotlin.g2kts.gradleAstBuilder
 import org.jetbrains.kotlin.g2kts.*
 import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterruptingStatement
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -29,16 +24,16 @@ fun GrStatement.toGradleAst(): GStatement = when (this) {
     is GrIfStatement -> toGradleAst().toStatement()
     is GrVariableDeclaration -> toGradleAst().toStatement()
     is GrLoopStatement -> toGradleAst()
-    is GrConstructorInvocation -> TODO(text)
-    is GrAssertStatement -> TODO(text)
-    is GrReturnStatement -> TODO(text)
-    is GrLabeledStatement -> TODO(text)
-    is GrThrowStatement -> TODO(text)
-    is GrSynchronizedStatement -> TODO(text)
-    is GrSwitchStatement -> TODO(text)
-    is GrApplicationStatement -> TODO(text)
-    is GrFlowInterruptingStatement -> TODO(text)
-    else -> unreachable()
+//    is GrConstructorInvocation -> TODO(text)
+//    is GrAssertStatement -> TODO(text)
+//    is GrReturnStatement -> TODO(text)
+//    is GrLabeledStatement -> TODO(text)
+//    is GrThrowStatement -> TODO(text)
+//    is GrSynchronizedStatement -> TODO(text)
+//    is GrSwitchStatement -> TODO(text)
+//    is GrApplicationStatement -> TODO(text)
+//    is GrFlowInterruptingStatement -> TODO(text)
+    else -> unknownPsiElement(this)
 }
 
 fun GrLoopStatement.toGradleAst() = when(this) {
