@@ -388,6 +388,7 @@ allprojects {
         maven("https://kotlin.bintray.com/kotlin-dependencies")
         maven("https://jetbrains.bintray.com/intellij-third-party-dependencies")
         maven("https://dl.google.com/dl/android/maven2")
+        maven { setUrl("https://repo.gradle.org/gradle/libs-releases-local") }
         bootstrapKotlinRepo?.let(::maven)
         internalBootstrapRepo?.let(::maven)
     }

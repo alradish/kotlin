@@ -7,8 +7,15 @@ plugins {
 
 jvmTarget = "1.6"
 
+//repositories {
+//    maven { url = uri("https://repo.gradle.org/gradle/libs-releases-local") }
+//}
+
 dependencies {
     compile(kotlinStdlib())
+
+    compile("org.gradle","gradle-kotlin-dsl-provider-plugins","6.0.1")
+//    gradleApi()
 
     compileOnly(intellijPluginDep("gradle"))
     compileOnly(intellijDep()) { includeJars("slf4j-api-1.7.25") }

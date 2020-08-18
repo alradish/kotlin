@@ -4,6 +4,23 @@
  */
 
 package org.jetbrains.kotlin.g2kts
+
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleImportingTestCase
+import org.junit.Test
+import java.io.File
+
+class TestTest : GradleImportingTestCase() {
+    override fun testDataDirectory(): File {
+        val baseDir = "g2kts/testData/${testDataDirName()}/"
+        return File(baseDir, getTestName(true).substringBefore("_"))
+    }
+
+    @Test
+    fun testConfigure10() {
+//        PsiFileFactory.getInstance()
+    }
+}
+
 //
 //import junit.framework.TestCase
 //import kastree.ast.Writer

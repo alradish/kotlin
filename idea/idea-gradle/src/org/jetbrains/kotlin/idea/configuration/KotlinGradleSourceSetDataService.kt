@@ -275,7 +275,6 @@ fun configureFacetByGradleModule(
     sourceSetNode: DataNode<GradleSourceSetData>?,
     sourceSetName: String? = sourceSetNode?.data?.id?.let { it.substring(it.lastIndexOf(':') + 1) }
 ): KotlinFacet? {
-//    ideModule.project.putUserData(G2KtsAction.KEY, moduleNode.containerElements)
     if (moduleNode.kotlinSourceSet != null) return null // Suppress in the presence of new MPP model
     if (!moduleNode.isResolved) return null
 

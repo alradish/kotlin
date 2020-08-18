@@ -63,6 +63,7 @@ dependencies {
     compile(project(":idea:jvm-debugger:jvm-debugger-sequence"))
     compile(project(":idea:jvm-debugger:jvm-debugger-coroutine"))
     compile(project(":g2kts"))
+//    compile(project(":idea:idea-gradle"))
     compile(project(":j2k"))
     compile(project(":idea:idea-j2k"))
     compile(project(":idea:formatter"))
