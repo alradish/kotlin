@@ -159,9 +159,13 @@ dependencies {
     libraries(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8"))
     libraries(commonDep("org.jetbrains", "markdown"))
     libraries(commonDep("io.javaslang", "javaslang"))
-    libraries(commonDep("com.github.cretz.kastree", "kastree-ast-jvm")) // GTODO наследил
+    libraries(commonDep("com.github.cretz.kastree", "kastree-ast-jvm"))
+//    libraries(commonDep("org.gradle","gradle-core-api"))
 //    libraries(commonDep("org.codehaus.groovy", "groovy-all"))
-    
+    libraries(DefaultSelfResolvingDependency(gradleKotlinDslJarsOf(project) as org.gradle.api.internal.file.FileCollectionInternal))
+//    libraries(DefaultSelfResolvingDependency(gradleKotlinDslOf(project) as org.gradle.api.internal.file.FileCollectionInternal))
+//    libraries(DefaultSelfResolvingDependency(    gradleApiExtensions(project) as org.gradle.api.internal.file.FileCollectionInternal))
+//    gradleApi
     libraries(kotlinStdlib("jdk8"))
 
     Platform[193].orHigher {

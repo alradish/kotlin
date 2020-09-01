@@ -6,6 +6,11 @@ plugins {
 dependencies {
     testRuntime(intellijDep())
 
+//    compile(kotlinStdlib())
+//    Platform[193].orLower {
+//        compile(project(":idea:idea-gradle-tooling-api"))
+//    }
+
     compileOnly(project(":idea"))
     compileOnly(project(":idea:idea-jvm"))
     compileOnly(project(":idea:idea-native"))
@@ -19,6 +24,7 @@ dependencies {
     compile(project(":native:frontend.native"))
 
     compileOnly(intellijDep())
+
     compileOnly(intellijPluginDep("gradle"))
     Platform[193].orHigher {
         compileOnly(intellijPluginDep("gradle-java"))
@@ -29,6 +35,11 @@ dependencies {
     runtimeOnly(project(":kotlin-coroutines-experimental-compat"))
 
     compileOnly(project(":kotlin-gradle-statistics"))
+
+//    compile(group = "org.gradle", name = "gradle-core-api", version = "6.0.1")
+//    compile("org.gradle","gradle-kotlin-dsl-provider-plugins","6.0.1")
+    implementation(gradleKotlinDsl())
+    runtimeOnly(gradleKotlinDsl())
 
     Platform[192].orHigher {
         compileOnly(intellijPluginDep("java"))

@@ -17,7 +17,7 @@ class TestTest : GradleImportingTestCase() {
 
     @Test
     fun testConfigure10() {
-//        PsiFileFactory.getInstance()
+        importProject()
     }
 }
 

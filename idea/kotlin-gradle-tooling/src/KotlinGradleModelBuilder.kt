@@ -9,6 +9,9 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ProjectDependency
+import org.gradle.api.internal.project.ProjectInternal
+import org.jetbrains.kotlin.gradle.provider.InternalTypedProjectSchema
+import org.jetbrains.kotlin.gradle.provider.toInternal
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import java.io.File
@@ -46,6 +49,12 @@ fun CompilerArgumentsBySourceSet.deepCopy(): CompilerArgumentsBySourceSet {
     return result
 }
 
+interface ContainerData : Serializable {
+    val name: String
+    val target: String
+    val type: String
+}
+
 interface KotlinGradleModel : Serializable {
     val hasKotlinPlugin: Boolean
     val compilerArgumentsBySourceSet: CompilerArgumentsBySourceSet
@@ -55,10 +64,11 @@ interface KotlinGradleModel : Serializable {
     val kotlinTarget: String?
     val kotlinTaskProperties: KotlinTaskPropertiesBySourceSet
     val gradleUserHome: String
-    val containerElements: List<ContainerData>
+
+    //    val containerElements: List<ContainerData>
 //    val typedProjectSchema: TypedProjectSchema
-//    val typedProjectSchema: MyTypedProjectSchema
-//    val typedProjectSchema: String
+    val internalTypedProjectSchema: InternalTypedProjectSchema
+//    val test: InternalSchemaType
 }
 
 data class KotlinGradleModelImpl(
@@ -70,10 +80,10 @@ data class KotlinGradleModelImpl(
     override val kotlinTarget: String? = null,
     override val kotlinTaskProperties: KotlinTaskPropertiesBySourceSet,
     override val gradleUserHome: String,
-    override val containerElements: List<ContainerData>
+//    override val containerElements: List<ContainerData>
 //    override val typedProjectSchema: TypedProjectSchema
-//    override val typedProjectSchema: MyTypedProjectSchema
-//    override val typedProjectSchema: String
+    override val internalTypedProjectSchema: InternalTypedProjectSchema
+//    override val test: InternalSchemaType
 ) : KotlinGradleModel
 
 abstract class AbstractKotlinGradleModelBuilder : ModelBuilderService {
@@ -192,18 +202,28 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder() {
         val platform = platformPluginId ?: pluginToPlatform.entries.singleOrNull { project.plugins.findPlugin(it.key) != null }?.value
         val implementedProjects = getImplementedProjects(project)
 
-        val typedProjectSchema = targetSchemaFor(project, typeOfProject).let { targetSchema ->
-            ProjectSchema(
-                targetSchema.extensions,
-                targetSchema.conventions,
-                targetSchema.tasks,
-                targetSchema.containerElements
-//                accessibleConfigurationsOf(project)
-            ).map(::SchemaType)
-        }
+
+//        val typedProjectSchema = DefaultProjectSchemaProvider().schemaFor(project)
+        val typedProjectSchema =
+            (project as ProjectInternal).services.get(org.gradle.kotlin.dsl.accessors.ProjectSchemaProvider::class.java).schemaFor(project)
+
+
+//        val typedProjectSchema = targetSchemaFor(project, typeOfProject).let { targetSchema ->
+//            ProjectSchema(
+//                targetSchema.extensions,
+//                targetSchema.conventions,
+//                targetSchema.tasks,
+//                targetSchema.containerElements
+////                accessibleConfigurationsOf(project)
+//            ).map(::SchemaType)
+//        }
+
 //        val s = typedProjectSchema.containerElements.joinToString(separator = "\n") {
 //            "${it.name} | ${it.target}::${it.type}"
 //        }
+
+//        val containerElements = emptyList<ContainerData>()
+//        val containerElements = typedProjectSchema.containerElements
         val containerElements = typedProjectSchema.containerElements.map {
             val name = it.name
             val target = it.target.kotlinString
@@ -224,9 +244,10 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder() {
             platform ?: kotlinPluginId,
             extraProperties,
             project.gradle.gradleUserHomeDir.absolutePath,
-            containerElements
-//            s
+//            containerElements
 //            typedProjectSchema
+            typedProjectSchema.toInternal()
+//            InternalSchemaType.of<String>()
         )
     }
 }

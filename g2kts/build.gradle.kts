@@ -20,9 +20,10 @@ dependencies {
     compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
     compileOnly(intellijPluginDep("Groovy"))
 
-    compile(project(":idea:kotlin-gradle-tooling"))
+    implementation(gradleKotlinDsl())
+//    compile(project(":idea:idea-gradle"))
 
-//    compile(group = "org.gradle", name = "gradle-kotlin-dsl-provider-plugins", version = "6.1.1")
+    compile(project(":idea:kotlin-gradle-tooling"))
 
     Platform[192].orHigher {
         compileOnly(intellijPluginDep("java"))
@@ -32,7 +33,7 @@ dependencies {
 
 
     testCompile(projectTests(":idea:idea-gradle"))
-    testCompile(projectTests(":idea"))
+//    testCompile(projectTests(":idea"))
     testCompile(projectTests(":idea:idea-test-framework"))
 
     testCompile(intellijPluginDep("gradle"))
@@ -44,8 +45,8 @@ dependencies {
 
     testCompile(project(":idea:idea-native")) { isTransitive = false }
     testCompile(project(":idea:idea-gradle-native")) { isTransitive = false }
-    testRuntime(project(":kotlin-native:kotlin-native-library-reader")) { isTransitive = false }
-    testRuntime(project(":kotlin-native:kotlin-native-utils")) { isTransitive = false }
+//    testRuntime(project(":kotlin-native:kotlin-native-library-reader")) { isTransitive = false }
+//    testRuntime(project(":kotlin-native:kotlin-native-utils")) { isTransitive = false }
     testRuntime(project(":idea:idea-new-project-wizard"))
 
     testRuntime(project(":kotlin-reflect"))
@@ -100,7 +101,7 @@ dependencies {
     testRuntime(intellijPluginDep("gradle"))
     testRuntime(intellijPluginDep("Groovy"))
 
-    testImplementation(project(":idea:idea-gradle"))
+//    testImplementation(project(":idea:idea-gradle"))
 }
 
 sourceSets {

@@ -5,6 +5,10 @@
 
 package org.jetbrains.kotlin.idea.actions
 
+//import org.gradle.kotlin.dsl.provider.plugins.DefaultProjectSchemaProvider
+//import org.jetbrains.kotlin.idea.configuration.typedProjectSchema
+//import org.gradle.kotlin.dsl.accessors.TypedProjectSchema
+//import org.gradle.kotlin.dsl.accessors.*
 import com.intellij.codeInsight.actions.*
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -41,7 +45,7 @@ import javax.swing.JComponent
 
 class G2KtsAction : AnAction() {
     companion object {
-        val KEY = Key.create<List<ContainerData>>("FOR_ME")
+//        val KEY = Key.create<List<ContainerData>>("FOR_ME")
     }
 
     private fun findGradleProjectStructure(module: Module): DataNode<ProjectData>? {
@@ -76,7 +80,7 @@ class G2KtsAction : AnAction() {
             .map { Task(it.name, it.type!!.substringAfterLast('.'), it.linkedExternalProjectPath) }
     }
 
-    @Suppress("UNREACHABLE_CODE")
+    //    @Suppress("UNREACHABLE_CODE")
     override fun actionPerformed(e: AnActionEvent) {
         val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
         val project = e.project ?: error("null project")
@@ -91,10 +95,23 @@ class G2KtsAction : AnAction() {
 
             @Suppress("UNCHECKED_CAST")
             val containerElements = moduleData.getCopyableUserData(Key.findKeyByName("GRADLE_CONTAINERS")!!) as List<ContainerData>
+
+//            var typedProjectSchema = moduleData.typedProjectSchema
+//            @Suppress("UNCHECKED_CAST")
+//            val typedProjectSchema = Key.findKeyByName("TYPED_PROJECT_SCHEMA")?.let {
+//                moduleData.getCopyableUserData(it) as TypedProjectSchema
+//            } ?: error("Need import project")
+
+
+//            if (!typedProjectSchema.isNotEmpty()) error("empty project schema")
+//            println(typedProjectSchema.toString())
+
+
             val tasks = getGradleTasks(file, e)
             val context = GradleBuildContext(
                 tasks,
-                containerElements.map { org.jetbrains.kotlin.g2kts.transformation.ContainerData(it.name, it.target, it.type) }
+//                containerElements.map { org.jetbrains.kotlin.g2kts.transformation.ContainerData(it.name, it.target, it.type) }
+                emptyList()
             )
 
             val gradleTree = GradleTransformer.doApply(listOf(buildTree(groovyFileBase).copy()), context).first()

@@ -39,6 +39,8 @@ dependencies {
     testRuntime(intellijDep())
     testRuntime(intellijRuntimeAnnotations())
 
+    implementation(gradleKotlinDsl())
+
     compile(kotlinStdlib("jdk8"))
     compileOnly(project(":kotlin-reflect-api"))
     compile(project(":core:descriptors"))
