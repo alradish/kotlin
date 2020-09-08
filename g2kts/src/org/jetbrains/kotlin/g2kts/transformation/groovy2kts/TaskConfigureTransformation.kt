@@ -17,7 +17,7 @@ class TaskConfigureTransformation(override val context: GradleBuildContext) : Tr
             recurse(
                 GTaskConfigure(
                     name,
-                    context.getTaskByName(name)?.type,
+                    context.getTaskByName(name)?.type?.kotlinString,
                     node.closure!!.detached()
                 )
             )
@@ -26,9 +26,8 @@ class TaskConfigureTransformation(override val context: GradleBuildContext) : Tr
     }
 
     private fun isTaskConfigure(node: GMethodCall): Boolean {
-
         val name = (node.method as? GIdentifier)?.name
-        val tasks = context.tasks.map { it.name }
+        val tasks = context.internalTypedProjectSchema.tasks.map { it.name }
         return node.obj == null && name in tasks && node.closure != null && node.arguments.args.isEmpty()
     }
 }

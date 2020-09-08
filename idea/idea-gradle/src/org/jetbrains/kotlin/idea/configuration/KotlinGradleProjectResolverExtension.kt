@@ -26,10 +26,9 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import org.gradle.api.artifacts.Dependency
-import org.gradle.kotlin.dsl.accessors.TypedProjectSchema
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.*
-import org.jetbrains.kotlin.gradle.provider.fromInternal
+import org.jetbrains.kotlin.gradle.provider.InternalTypedProjectSchema
 import org.jetbrains.kotlin.idea.inspections.gradle.getDependencyModules
 import org.jetbrains.kotlin.idea.statistics.FUSEventGroups
 import org.jetbrains.kotlin.idea.statistics.KotlinFUSLogger
@@ -54,8 +53,8 @@ var DataNode<ModuleData>.containerElements
 
 var DataNode<ModuleData>.typedProjectSchema
         by NotNullableCopyableDataNodeUserDataProperty(
-            Key.create<TypedProjectSchema>("TYPED_PROJECT_SCHEMA"),
-            TypedProjectSchema(emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
+            Key.create<InternalTypedProjectSchema>("TYPED_PROJECT_SCHEMA"),
+            InternalTypedProjectSchema(emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
         )
 
 var DataNode<ModuleData>.isResolved
@@ -309,15 +308,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         val moduleNamePrefix = GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule)
         resolverCtx.getExtraProject(gradleModule, KotlinGradleModel::class.java)?.let { gradleModel ->
             KotlinGradleFUSLogger.populateGradleUserDir(gradleModel.gradleUserHome)
-
-//            ideModule.containerElements = gradleModel.containerElements
-//            ideModule.typedProjectSchema = gradleModel.typedProjectSchema
-//            ideModule.typedProjectSchema = TypedProjectSchema(emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
-
-            val typedProjectSchema = gradleModel.internalTypedProjectSchema.fromInternal()
-//            val a = gradleModel.
-//            println(gradleModel.typedProjectSchema)
-
+            ideModule.typedProjectSchema = gradleModel.internalTypedProjectSchema
 
             ideModule.pureKotlinSourceFolders =
                 gradleModel.kotlinTaskProperties.flatMap { it.value.pureKotlinSourceFolders ?: emptyList() }.map { it.absolutePath }

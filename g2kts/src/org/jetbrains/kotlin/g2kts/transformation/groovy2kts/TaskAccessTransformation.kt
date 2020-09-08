@@ -16,7 +16,7 @@ class TaskAccessTransformation(override val context: GradleBuildContext) : Trans
         if (node !is GIdentifier) return recurse(node)
         val task = context.getTaskByName(node.name)
         return if(task != null) {
-            recurse(GSimpleTaskAccess(task.name, task.type, node.psi))
+            recurse(GSimpleTaskAccess(task.name, task.type.kotlinString, node.psi))
         } else {
             recurse(node)
         }

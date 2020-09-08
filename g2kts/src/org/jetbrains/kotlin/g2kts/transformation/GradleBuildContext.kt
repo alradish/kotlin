@@ -5,21 +5,15 @@
 
 package org.jetbrains.kotlin.g2kts.transformation
 
+import org.jetbrains.kotlin.gradle.provider.InternalProjectSchemaEntry
+import org.jetbrains.kotlin.gradle.provider.InternalSchemaType
+import org.jetbrains.kotlin.gradle.provider.InternalTypedProjectSchema
+
 class GradleBuildContext(
-    val tasks: List<Task>,
-    val containerElements: List<ContainerData>
+    val internalTypedProjectSchema: InternalTypedProjectSchema
 ) {
-    fun getTaskByName(name: String): Task? = tasks.find { it.name == name }
+    fun getTaskByName(name: String): InternalProjectSchemaEntry<InternalSchemaType>? {
+        return internalTypedProjectSchema.tasks.find { it.name == name }
+    }
+
 }
-
-data class Task(
-    val name: String,
-    val type: String,
-    val path: String
-)
-
-data class ContainerData(
-    val name: String,
-    val target: String,
-    val type: String
-)

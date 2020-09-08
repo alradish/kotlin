@@ -16,8 +16,10 @@ class NamedDomainObjectCollectionTransformation(override val context: GradleBuil
     //    val NAMED_DOMAIN_OBJECT_COLLECTION = org.gradle.api.NamedDomainObjectCollection::class
     override fun runTransformation(node: GNode): GNode {
         if (node !is GPropertyAccess) return recurse(node)
+
         val obj = node.obj as? GIdentifier ?: return recurse(node)
-        if (context.containerElements.find { it.name == obj.name } != null) {
+
+        if (context.internalTypedProjectSchema.containerElements.find { it.name == obj.name } != null) {
             return recurse(
                 GExtensionAccess(
                     obj,

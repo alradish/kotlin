@@ -12,8 +12,9 @@ import java.io.Serializable
 fun SchemaType.toInternal() = InternalSchemaType.from(value)
 
 fun InternalSchemaType.fromInternal(): SchemaType {
-    fun <T> from(v: TypeOf<T>) = SchemaType(object : TypeOf<T>() {})
-    return from(value)
+//    fun <T> from(v: TypeOf<T>) = SchemaType(object : TypeOf<T>() {})
+//    return from(value)
+    return SchemaType(value)
 }
 
 fun ProjectSchemaEntry<SchemaType>.toInternal() =

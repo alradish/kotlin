@@ -53,6 +53,9 @@ class GradleToKotlin {
                 }
             }
         }
+        if ( extras.isNotEmpty() && res.isEmpty()) {
+            extras.clear() // TODO не могу сохранить extras, т.к. нет доступа до Node
+        }
         extras.forEach { extrasMap.addExtraAfter(res.last(), it) }
         return res
     }

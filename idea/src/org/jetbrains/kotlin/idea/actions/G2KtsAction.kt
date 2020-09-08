@@ -9,6 +9,7 @@ package org.jetbrains.kotlin.idea.actions
 //import org.jetbrains.kotlin.idea.configuration.typedProjectSchema
 //import org.gradle.kotlin.dsl.accessors.TypedProjectSchema
 //import org.gradle.kotlin.dsl.accessors.*
+//import org.jetbrains.kotlin.idea.configuration.typedProjectSchema
 import com.intellij.codeInsight.actions.*
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -17,7 +18,6 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
-import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
@@ -35,13 +35,13 @@ import org.jetbrains.kotlin.g2kts.GradleToKotlin
 import org.jetbrains.kotlin.g2kts.gradleAstBuilder.buildTree
 import org.jetbrains.kotlin.g2kts.transformation.GradleBuildContext
 import org.jetbrains.kotlin.g2kts.transformation.GradleTransformer
-import org.jetbrains.kotlin.g2kts.transformation.Task
-import org.jetbrains.kotlin.gradle.ContainerData
-import org.jetbrains.kotlin.idea.configuration.externalProjectPath
+import org.jetbrains.kotlin.gradle.provider.InternalTypedProjectSchema
 import org.jetbrains.kotlin.idea.framework.GRADLE_SYSTEM_ID
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
+import javax.swing.Action
 import javax.swing.JComponent
+
+//import org.jetbrains.kotlin.idea.configuration.type
 
 class G2KtsAction : AnAction() {
     companion object {
@@ -69,18 +69,6 @@ class G2KtsAction : AnAction() {
         } as? DataNode<ModuleData> ?: error("no module data for this module")
     }
 
-    private fun getGradleTasks(file: VirtualFile, e: AnActionEvent): List<Task> {
-        val module = ModuleUtilCore.findModuleForFile(file, e.project!!) ?: error("module")
-        val projectData = findGradleProjectStructure(module)
-        val mm = GradleProjectResolverUtil.findModule(
-            projectData,
-            module.externalProjectPath!!
-        ) ?: error("gradle project resolver return null")
-        return mm.children.toList().map { it.data }.filterIsInstance<TaskData>()
-            .map { Task(it.name, it.type!!.substringAfterLast('.'), it.linkedExternalProjectPath) }
-    }
-
-    //    @Suppress("UNREACHABLE_CODE")
     override fun actionPerformed(e: AnActionEvent) {
         val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
         val project = e.project ?: error("null project")
@@ -90,28 +78,19 @@ class G2KtsAction : AnAction() {
 
         virtualFiles?.forEach { file ->
             val groovyFileBase = manager.findFile(file) as? GroovyFileBase ?: return
-
             val moduleData = findModuleDataForFile(file, project)
 
+            val key = Key.findKeyByName("TYPED_PROJECT_SCHEMA")
+            if (key == null) {
+                NeedImportProjectDialog().show()
+                return
+            }
             @Suppress("UNCHECKED_CAST")
-            val containerElements = moduleData.getCopyableUserData(Key.findKeyByName("GRADLE_CONTAINERS")!!) as List<ContainerData>
+            val internalTypedProjectSchema =
+                moduleData.getCopyableUserData(key) as InternalTypedProjectSchema
 
-//            var typedProjectSchema = moduleData.typedProjectSchema
-//            @Suppress("UNCHECKED_CAST")
-//            val typedProjectSchema = Key.findKeyByName("TYPED_PROJECT_SCHEMA")?.let {
-//                moduleData.getCopyableUserData(it) as TypedProjectSchema
-//            } ?: error("Need import project")
-
-
-//            if (!typedProjectSchema.isNotEmpty()) error("empty project schema")
-//            println(typedProjectSchema.toString())
-
-
-            val tasks = getGradleTasks(file, e)
             val context = GradleBuildContext(
-                tasks,
-//                containerElements.map { org.jetbrains.kotlin.g2kts.transformation.ContainerData(it.name, it.target, it.type) }
-                emptyList()
+                internalTypedProjectSchema
             )
 
             val gradleTree = GradleTransformer.doApply(listOf(buildTree(groovyFileBase).copy()), context).first()
@@ -143,6 +122,27 @@ class G2KtsAction : AnAction() {
 
         }
     }
+}
+
+class NeedImportProjectDialog : DialogWrapper(true) {
+    init {
+        init()
+        title = "Need to import Gradle project"
+    }
+
+    override fun createCenterPanel(): JComponent? {
+        return panel {
+            row {
+                label("Before translation you need to import gradle project")
+            }
+        }
+    }
+
+    override fun createActions(): Array<Action> {
+        // TODO Add action which perform importing
+        return arrayOf(okAction)
+    }
+
 }
 
 
