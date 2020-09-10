@@ -9,9 +9,10 @@ import org.jetbrains.kotlin.g2kts.GIdentifier
 import org.jetbrains.kotlin.g2kts.GNode
 import org.jetbrains.kotlin.g2kts.GSimpleTaskAccess
 import org.jetbrains.kotlin.g2kts.transformation.GradleBuildContext
+import org.jetbrains.kotlin.g2kts.transformation.GradleScopeContext
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 
-class TaskAccessTransformation(override val context: GradleBuildContext) : Transformation(context) {
+class TaskAccessTransformation(override val context: GradleBuildContext, scopeContext: GradleScopeContext) : Transformation(scopeContext) {
     override fun runTransformation(node: GNode): GNode {
         if (node !is GIdentifier) return recurse(node)
         val task = context.getTaskByName(node.name)
@@ -20,5 +21,9 @@ class TaskAccessTransformation(override val context: GradleBuildContext) : Trans
         } else {
             recurse(node)
         }
+    }
+
+    override fun can(node: GNode, scope: GNode?): Boolean {
+        TODO("Not yet implemented")
     }
 }

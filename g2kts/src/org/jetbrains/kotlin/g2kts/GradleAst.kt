@@ -168,38 +168,57 @@ class GNewLine(
 ) : GStatement(psi)
 
 class GTryCatch(
-    var body: GBlock,
-    var catches: List<Catch>,
-    var finallyBody: GBlock?,
+    body: GBlock,
+    catches: List<Catch>,
+    finallyBody: GBlock?,
     psi: PsiElement? = null
 ) : GExpression(psi) {
-    // FIXME make catch : GNode
-    data class Catch(
+    var body: GBlock by child(body)
+    var catches: List<Catch> by children(catches)
+    var finallyBody: GBlock? by childNullable(finallyBody)
+
+
+}
+
+// FIXME make catch : GNode
+class Catch(
 //        var anns: List<Node.Modifier.AnnotationSet>,
-        var name: String,
-        var type: String,
-        var block: GBlock
-    )
+    var name: String,
+    var type: String,
+    block: GBlock,
+    psi: PsiElement? = null
+): GNode(psi) {
+    var block: GBlock by child(block)
 }
 
 class GSwitch(
-    var expr: GExpression,
-    var cases: List<GSwitchCase>,
-    var default: GSwitchCase?,
+    expr: GExpression,
+    cases: List<GSwitchCase>,
+    default: GSwitchCase?,
     psi: PsiElement? = null
-): GExpression(psi)
+): GExpression(psi) {
+    var expr: GExpression by child(expr)
+    var cases: List<GSwitchCase> by children(cases)
+    var default: GSwitchCase? by childNullable(default)
+}
 
 class GSwitchCase(
-    var expr: GExpression,
-    var body: GBrace,
+    expr: GExpression,
+    body: GBrace,
     psi: PsiElement? = null
-) : GNode(psi)
+) : GNode(psi) {
+    var expr: GExpression by child(expr)
+    var body: GBrace by child(body)
+}
 
 class GWhile(
-    var condition: GExpression,
-    var body: GExpression,
+    condition: GExpression,
+    body: GExpression,
     psi: PsiElement?
-) : GExpression(psi)
+) : GExpression(psi) {
+    var condition: GExpression by child(condition)
+    var body: GExpression by child(body)
+}
 
 /*
 data class For(
@@ -213,11 +232,15 @@ data class For(
 
 
 class GIf(
-    var condition: GExpression,
-    var body: GExpression,
-    var elseBody: GExpression?,
+    condition: GExpression,
+    body: GExpression,
+    elseBody: GExpression?,
     psi: PsiElement? = null
-) : GExpression(psi)
+) : GExpression(psi) {
+    var condition: GExpression by child(condition)
+    var body: GExpression by child(body)
+    var elseBody: GExpression? by childNullable(elseBody)
+}
 
 class GBlock(
     statements: List<GStatement>, psi: PsiElement? = null

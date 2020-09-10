@@ -7,9 +7,10 @@ package org.jetbrains.kotlin.g2kts.transformation.groovy2kts
 
 import org.jetbrains.kotlin.g2kts.*
 import org.jetbrains.kotlin.g2kts.transformation.GradleBuildContext
+import org.jetbrains.kotlin.g2kts.transformation.GradleScopeContext
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 
-class TaskConfigureTransformation(override val context: GradleBuildContext) : Transformation(context) {
+class TaskConfigureTransformation(override val context: GradleBuildContext, scopeContext: GradleScopeContext) : Transformation(scopeContext) {
     override fun runTransformation(node: GNode): GNode {
         if (node !is GMethodCall) return recurse(node)
         return if (isTaskConfigure(node)) {
@@ -29,5 +30,9 @@ class TaskConfigureTransformation(override val context: GradleBuildContext) : Tr
         val name = (node.method as? GIdentifier)?.name
         val tasks = context.internalTypedProjectSchema.tasks.map { it.name }
         return node.obj == null && name in tasks && node.closure != null && node.arguments.args.isEmpty()
+    }
+
+    override fun can(node: GNode, scope: GNode?): Boolean {
+        TODO("Not yet implemented")
     }
 }

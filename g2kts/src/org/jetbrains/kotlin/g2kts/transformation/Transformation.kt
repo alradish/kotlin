@@ -7,15 +7,34 @@ package org.jetbrains.kotlin.g2kts.transformation
 
 import org.jetbrains.kotlin.g2kts.GNode
 
-abstract class Transformation(open val context: GradleBuildContext? = null) {
+abstract class Transformation(
+    val scopeContext: GradleScopeContext,
+    open val context: GradleBuildContext? = null
+) {
 
     abstract fun runTransformation(node: GNode): GNode
 
-    fun runTransformation(nodes: List<GNode>): List<GNode> {
+    fun check(node: GNode): Int {
+        if (scopeContext.isEmpty()) return -1 // TODO i don't sure about this
+        val size = scopeContext.size
+        for (i in 0 until size) {
+            if (can(node, scopeContext[i])) return i
+        }
+        return -1
+    }
+
+
+    // FIXME rename
+    abstract fun can(node: GNode, scope: GNode?): Boolean
+
+    open fun runTransformation(nodes: List<GNode>): List<GNode> {
         return nodes.map { runTransformation(it) }
     }
 
-    fun <T : GNode> recurse(element: T): T = applyRecursive(element, this::runTransformation)
+    open fun <T : GNode> recurse(element: T): T {
+        // TODO add new scope and leave old
+        return applyRecursive(element, this::runTransformation)
+    }
 }
 
 fun <R : GNode> applyRecursive(

@@ -6,10 +6,11 @@
 package org.jetbrains.kotlin.g2kts.transformation.groovy2kts
 
 import org.jetbrains.kotlin.g2kts.*
+import org.jetbrains.kotlin.g2kts.transformation.GradleScopeContext
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 
-class ProjectPropertyTransformation : Transformation() {
+class ProjectPropertyTransformation(scopeContext: GradleScopeContext) : Transformation(scopeContext) {
     override fun runTransformation(node: GNode): GNode {
         if (node !is GMethodCall) return recurse(node)
         val methodCall = node.psi as? GrMethodCall ?: return recurse(node)
@@ -23,5 +24,9 @@ class ProjectPropertyTransformation : Transformation() {
             )
         } else recurse(node)
 
+    }
+
+    override fun can(node: GNode, scope: GNode?): Boolean {
+        TODO("Not yet implemented")
     }
 }

@@ -10,14 +10,16 @@ import org.jetbrains.kotlin.g2kts.GIdentifier
 import org.jetbrains.kotlin.g2kts.GNode
 import org.jetbrains.kotlin.g2kts.GPropertyAccess
 import org.jetbrains.kotlin.g2kts.transformation.GradleBuildContext
+import org.jetbrains.kotlin.g2kts.transformation.GradleScopeContext
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 
-class NamedDomainObjectCollectionTransformation(override val context: GradleBuildContext) : Transformation() {
+class NamedDomainObjectCollectionTransformation(override val context: GradleBuildContext, scopeContext: GradleScopeContext) : Transformation(scopeContext) {
     //    val NAMED_DOMAIN_OBJECT_COLLECTION = org.gradle.api.NamedDomainObjectCollection::class
     override fun runTransformation(node: GNode): GNode {
         if (node !is GPropertyAccess) return recurse(node)
 
         val obj = node.obj as? GIdentifier ?: return recurse(node)
+        val property = node.property
 
         if (context.internalTypedProjectSchema.containerElements.find { it.name == obj.name } != null) {
             return recurse(
@@ -28,5 +30,9 @@ class NamedDomainObjectCollectionTransformation(override val context: GradleBuil
             )
         }
         return recurse(node)
+    }
+
+    override fun can(node: GNode, scope: GNode?): Boolean {
+        TODO("Not yet implemented")
     }
 }

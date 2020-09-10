@@ -181,6 +181,7 @@ class GradleToKotlin {
                 if (default == null) entries else entries.plus(default!!.toKotlin() as Node.Expr.When.Entry)
             )
         }
+        is Catch -> TODO()
     }
 
 

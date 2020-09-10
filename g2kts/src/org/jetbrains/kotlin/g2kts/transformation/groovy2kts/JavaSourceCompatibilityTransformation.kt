@@ -6,9 +6,10 @@
 package org.jetbrains.kotlin.g2kts.transformation.groovy2kts
 
 import org.jetbrains.kotlin.g2kts.*
+import org.jetbrains.kotlin.g2kts.transformation.GradleScopeContext
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 
-class JavaSourceCompatibilityTransformation : Transformation() {
+class JavaSourceCompatibilityTransformation(scopeContext: GradleScopeContext) : Transformation(scopeContext) {
     override fun runTransformation(node: GNode): GNode {
         if (node !is GBinaryExpression) return recurse(node)
         return if (node.left is GIdentifier && (node.left as GIdentifier).name == "sourceCompatibility" && node.parent?.parent is GProject) {
@@ -28,5 +29,9 @@ class JavaSourceCompatibilityTransformation : Transformation() {
         } else {
             recurse(node)
         }
+    }
+
+    override fun can(node: GNode, scope: GNode?): Boolean {
+        TODO("Not yet implemented")
     }
 }

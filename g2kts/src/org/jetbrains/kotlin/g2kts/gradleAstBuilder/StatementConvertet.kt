@@ -47,7 +47,7 @@ fun GrTryCatchStatement.toGradleAst(): GTryCatch {
     val body = tryBlock?.toGradleAst() as GBlock
     val catches = catchClauses.map {
         val parameter = it.parameter ?: error("")
-        GTryCatch.Catch(parameter.name, parameter.type.presentableText, it.body?.toGradleAst() as GBlock)
+        Catch(parameter.name, parameter.type.presentableText, it.body?.toGradleAst() as GBlock)
     }
     val finallyBody = finallyClause?.body?.toGradleAst()
     return GTryCatch(

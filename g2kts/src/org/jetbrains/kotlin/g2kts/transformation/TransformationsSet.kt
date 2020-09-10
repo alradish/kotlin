@@ -7,10 +7,26 @@ package org.jetbrains.kotlin.g2kts.transformation
 
 import org.jetbrains.kotlin.g2kts.GNode
 
-class TransformationsSet(private val transformations: List<Transformation>) : Transformation() {
+class TransformationsSet(private val transformations: List<Transformation>, scopeContext: GradleScopeContext) :
+    Transformation(scopeContext) {
+
     override fun runTransformation(node: GNode): GNode {
-        return transformations.fold(node) { acc: GNode, transformation: Transformation ->
-            transformation.runTransformation(acc)
-        }
+        val (i, transformation) = transformations
+            .map { it.check(node) to it }
+            .minBy { it.first } ?: return node // If minBy returns zero it means that the transformations is empty
+        if (i == -1) return recurse(node)
+        val newNode = transformation.runTransformation(node)
+        return recurse(newNode)
+    }
+
+    override fun can(node: GNode, scope: GNode?): Boolean {
+        return true
+    }
+
+    override fun <T : GNode> recurse(element: T): T {
+        scopeContext.newScope(element)
+        val node = applyRecursive(element, this::runTransformation)
+        scopeContext.leaveScope()
+        return node
     }
 }

@@ -6,9 +6,10 @@
 package org.jetbrains.kotlin.g2kts.transformation.groovy2kts
 
 import org.jetbrains.kotlin.g2kts.*
+import org.jetbrains.kotlin.g2kts.transformation.GradleScopeContext
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 
-class TaskCreationTransformation : Transformation() {
+class TaskCreationTransformation(scopeContext: GradleScopeContext) : Transformation(scopeContext) {
 
     override fun runTransformation(node: GNode): GNode {
         val task = node.taskCreationOrNull() ?: return recurse(node)
@@ -49,4 +50,7 @@ class TaskCreationTransformation : Transformation() {
         return GSimpleMethodCall(null, GIdentifier("dependsOn"), argumentList, null).toStatement()
     }
 
+    override fun can(node: GNode, scope: GNode?): Boolean {
+        TODO("Not yet implemented")
+    }
 }

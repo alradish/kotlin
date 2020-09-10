@@ -8,21 +8,25 @@ package org.jetbrains.kotlin.g2kts.transformation
 import org.jetbrains.kotlin.g2kts.GNode
 import org.jetbrains.kotlin.g2kts.transformation.groovy2kts.*
 
-object GradleTransformer {
-    private fun createTransformationsList(context: GradleBuildContext): TransformationsSet {
-        return TransformationsSet(TransformationsBuilder<Transformation>().apply {
-            +BuildScriptBlockTransformation()
-            +TaskCreationTransformation()
-            +ConfigurationBlockTransformation()
-            +ProjectPropertyTransformation()
-            +TaskConfigureTransformation(context)
-            +TaskAccessTransformation(context)
-            +NamedDomainObjectCollectionTransformation(context)
-        }.transformations)
+class GradleTransformer(val context: GradleBuildContext) {
+    private val scope = GradleScopeContext()
+
+    private val transformations: TransformationsSet = TransformationsSet(TransformationsBuilder<Transformation>().apply {
+        +BuildScriptBlockTransformation(scope)
+//            +TaskCreationTransformation()
+//            +ConfigurationBlockTransformation()
+//            +ProjectPropertyTransformation()
+//            +TaskConfigureTransformation(context)
+//            +TaskAccessTransformation(context)
+//            +NamedDomainObjectCollectionTransformation(context)
+    }.transformations, scope)
+
+
+    fun doApply(node: GNode): GNode {
+        return transformations.runTransformation(node)
     }
 
-    fun doApply(code: List<GNode>, context: GradleBuildContext) : List<GNode> {
-        val transformations = createTransformationsList(context)
+    fun doApply(code: List<GNode>): List<GNode> {
         return transformations.runTransformation(code)
     }
 }

@@ -6,19 +6,22 @@
 package org.jetbrains.kotlin.g2kts.transformation.groovy2kts
 
 import org.jetbrains.kotlin.g2kts.*
+import org.jetbrains.kotlin.g2kts.transformation.GradleScopeContext
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 
-class BuildScriptBlockTransformation : Transformation() {
+class BuildScriptBlockTransformation(scopeContext: GradleScopeContext) : Transformation(scopeContext) {
     override fun runTransformation(node: GNode): GNode {
-        return if (node.isBuildScriptBlock()) {
+        return if (can(node, scopeContext.getCurrentScope())) {
             val name = ((node as GMethodCall).method as GIdentifier).name
-            recurse(
-                GBuildScriptBlock(
-                    GBuildScriptBlock.BuildScriptBlockType.byName(name)!!,
-                    node.closure!!.detached()
-                )
+            GBuildScriptBlock(
+                GBuildScriptBlock.BuildScriptBlockType.byName(name)!!,
+                node.closure!!.detached()
             )
-        } else recurse(node)
+        } else node
+    }
+
+    override fun can(node: GNode, scope: GNode?): Boolean {
+        return node.isBuildScriptBlock() && scope is GStatement.GExpr && scope.parent is GProject
     }
 
     private fun GNode.isBuildScriptBlock(): Boolean {

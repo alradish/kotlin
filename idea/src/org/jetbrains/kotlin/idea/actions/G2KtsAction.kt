@@ -18,6 +18,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
+import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
@@ -34,9 +35,12 @@ import kastree.ast.Writer
 import org.jetbrains.kotlin.g2kts.GradleToKotlin
 import org.jetbrains.kotlin.g2kts.gradleAstBuilder.buildTree
 import org.jetbrains.kotlin.g2kts.transformation.GradleBuildContext
+import org.jetbrains.kotlin.g2kts.transformation.GradleScopeContext
 import org.jetbrains.kotlin.g2kts.transformation.GradleTransformer
 import org.jetbrains.kotlin.gradle.provider.InternalTypedProjectSchema
+import org.jetbrains.kotlin.idea.configuration.externalProjectPath
 import org.jetbrains.kotlin.idea.framework.GRADLE_SYSTEM_ID
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import javax.swing.Action
 import javax.swing.JComponent
@@ -69,6 +73,20 @@ class G2KtsAction : AnAction() {
         } as? DataNode<ModuleData> ?: error("no module data for this module")
     }
 
+    data class Task(val name: String, val type: String, val target: String)
+
+    private fun getGradleTasks(file: VirtualFile, e: AnActionEvent): List<Task> {
+        val module = ModuleUtilCore.findModuleForFile(file, e.project!!) ?: error("module")
+        val projectData = findGradleProjectStructure(module)
+        val mm = GradleProjectResolverUtil.findModule(
+            projectData,
+            module.externalProjectPath!!
+        ) ?: error("gradle project resolver return null")
+        return mm.children.toList().map { it.data }.filterIsInstance<TaskData>()
+            .map { Task(it.name, it.type!!.substringAfterLast('.'), it.linkedExternalProjectPath) }
+    }
+
+
     override fun actionPerformed(e: AnActionEvent) {
         val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
         val project = e.project ?: error("null project")
@@ -88,12 +106,14 @@ class G2KtsAction : AnAction() {
             @Suppress("UNCHECKED_CAST")
             val internalTypedProjectSchema =
                 moduleData.getCopyableUserData(key) as InternalTypedProjectSchema
-
+            val ttt = getGradleTasks(file, e)
             val context = GradleBuildContext(
                 internalTypedProjectSchema
             )
 
-            val gradleTree = GradleTransformer.doApply(listOf(buildTree(groovyFileBase).copy()), context).first()
+
+            val gradleTransformer = GradleTransformer(context)
+            val gradleTree = gradleTransformer.doApply(buildTree(groovyFileBase).copy())
             val gradle2kotlin = GradleToKotlin()
             val kotlinAST = with(gradle2kotlin) { gradleTree.toKotlin() }
             val extras = gradle2kotlin.extrasMap

@@ -9,12 +9,20 @@ import org.gradle.api.reflect.TypeOf
 import org.gradle.kotlin.dsl.accessors.*
 import java.io.Serializable
 
-fun SchemaType.toInternal() = InternalSchemaType.from(value)
+fun SchemaType.toInternal() = InternalSchemaType(value)
+//fun SchemaType.toInternal() = InternalSchemaType(typeOf<>())
+
+inline fun <reified T> typeOf(): TypeOf<T> =
+    object : TypeOf<T>(), Serializable {}
+
+fun <T> ttt(value: Class<T>): TypeOf<T> {
+    return object : TypeOf<T>(), Serializable {}
+}
 
 fun InternalSchemaType.fromInternal(): SchemaType {
 //    fun <T> from(v: TypeOf<T>) = SchemaType(object : TypeOf<T>() {})
 //    return from(value)
-    return SchemaType(value)
+    TODO()
 }
 
 fun ProjectSchemaEntry<SchemaType>.toInternal() =
@@ -49,11 +57,11 @@ fun InternalTypedProjectSchema.fromInternal(): TypedProjectSchema {
     )
 }
 
-data class InternalSchemaType(val value: TypeOf<*>) : Serializable {
+class InternalSchemaType(value: TypeOf<*>) : Serializable {
     companion object {
         inline fun <reified T> of() = InternalSchemaType(object : TypeOf<T>(), Serializable {})
 
-        //        inline fun <reified T> of(value: TypeOf<T>) = of<T>()
+
         fun <T> from(v: TypeOf<T>) = InternalSchemaType(object : TypeOf<T>(), Serializable {})
     }
 
