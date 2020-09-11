@@ -12,12 +12,12 @@ import org.jetbrains.kotlin.g2kts.transformation.Transformation
 class TaskCreationTransformation(scopeContext: GradleScopeContext) : Transformation(scopeContext) {
 
     override fun runTransformation(node: GNode): GNode {
-        val task = node.taskCreationOrNull() ?: return recurse(node)
+        if (check(node) == -1) return node
 
+        val task = (node as GMethodCall).arguments.args.first().expr as GMethodCall
         val taskName = (task.method as GIdentifier).name
         val args = task.arguments.args
         val body = task.closure?.detached()
-
         for (arg in args) {
             when {
                 arg.name == "dependsOn" -> {
@@ -28,7 +28,7 @@ class TaskCreationTransformation(scopeContext: GradleScopeContext) : Transformat
             }
         }
 
-        return recurse(GTaskCreating(taskName, "", body))
+        return GTaskCreating(taskName, "", body)
     }
 
     private fun GNode.taskCreationOrNull(): GMethodCall? {
@@ -50,7 +50,14 @@ class TaskCreationTransformation(scopeContext: GradleScopeContext) : Transformat
         return GSimpleMethodCall(null, GIdentifier("dependsOn"), argumentList, null).toStatement()
     }
 
+    // TODO check scope?
     override fun can(node: GNode, scope: GNode?): Boolean {
-        TODO("Not yet implemented")
+        if (node !is GMethodCall) return false
+        val obj = node.obj
+        val method = node.method
+        if (!(obj == null && method is GIdentifier && method.name == "task")) return false
+        if (node.arguments.args.size != 1) return false
+        if (node.arguments.args.first().expr !is GMethodCall) return false
+        return true
     }
 }

@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 
 class ProjectPropertyTransformation(scopeContext: GradleScopeContext) : Transformation(scopeContext) {
     override fun runTransformation(node: GNode): GNode {
-        return if (can(node, scopeContext.getCurrentScope())) {
+        return if (check(node) >= 0) {
             node as GMethodCall
             GBinaryExpression(
                 GSimplePropertyAccess(node.obj?.detached(), node.method.detached()),

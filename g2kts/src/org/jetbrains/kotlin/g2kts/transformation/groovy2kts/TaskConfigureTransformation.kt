@@ -10,19 +10,18 @@ import org.jetbrains.kotlin.g2kts.transformation.GradleBuildContext
 import org.jetbrains.kotlin.g2kts.transformation.GradleScopeContext
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 
-class TaskConfigureTransformation(override val context: GradleBuildContext, scopeContext: GradleScopeContext) : Transformation(scopeContext) {
+class TaskConfigureTransformation(override val context: GradleBuildContext, scopeContext: GradleScopeContext) :
+    Transformation(scopeContext) {
     override fun runTransformation(node: GNode): GNode {
-        if (node !is GMethodCall) return recurse(node)
-        return if (isTaskConfigure(node)) {
+        return if (check(node) >= 0) {
+            node as GMethodCall
             val name = (node.method as GIdentifier).name
-            recurse(
-                GTaskConfigure(
-                    name,
-                    context.getTaskByName(name)?.type?.kotlinString,
-                    node.closure!!.detached()
-                )
+            GTaskConfigure(
+                name,
+                context.getTaskByName(name)?.type?.kotlinString,
+                node.closure!!.detached()
             )
-        } else recurse(node)
+        } else node
 
     }
 
@@ -33,6 +32,8 @@ class TaskConfigureTransformation(override val context: GradleBuildContext, scop
     }
 
     override fun can(node: GNode, scope: GNode?): Boolean {
-        TODO("Not yet implemented")
+        if (scope !is GProject) return false
+        if (node !is GMethodCall) return false
+        return isTaskConfigure(node)
     }
 }

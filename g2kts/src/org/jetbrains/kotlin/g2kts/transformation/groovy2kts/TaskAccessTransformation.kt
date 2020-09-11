@@ -5,25 +5,25 @@
 
 package org.jetbrains.kotlin.g2kts.transformation.groovy2kts
 
-import org.jetbrains.kotlin.g2kts.GIdentifier
-import org.jetbrains.kotlin.g2kts.GNode
-import org.jetbrains.kotlin.g2kts.GSimpleTaskAccess
+import org.jetbrains.kotlin.g2kts.*
 import org.jetbrains.kotlin.g2kts.transformation.GradleBuildContext
 import org.jetbrains.kotlin.g2kts.transformation.GradleScopeContext
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 
 class TaskAccessTransformation(override val context: GradleBuildContext, scopeContext: GradleScopeContext) : Transformation(scopeContext) {
     override fun runTransformation(node: GNode): GNode {
-        if (node !is GIdentifier) return recurse(node)
-        val task = context.getTaskByName(node.name)
-        return if(task != null) {
-            recurse(GSimpleTaskAccess(task.name, task.type.kotlinString, node.psi))
-        } else {
-            recurse(node)
-        }
+        if (check(node) == -1) return node
+        val task = context.getTaskByName((node as GIdentifier).name)!!
+        return GSimpleTaskAccess(task.name, task.type.kotlinString, node.psi)
     }
 
+
+    // FIXME many false positive!
     override fun can(node: GNode, scope: GNode?): Boolean {
-        TODO("Not yet implemented")
+        if (node !is GIdentifier) return false
+        if (node.parent is GMethodCall) return false
+        val task = context.getTaskByName(node.name) ?: return false
+        if (scope !is GProject) return false
+        return true
     }
 }

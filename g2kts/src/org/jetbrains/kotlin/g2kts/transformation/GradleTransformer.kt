@@ -14,10 +14,10 @@ class GradleTransformer(val context: GradleBuildContext) {
     private val transformations: TransformationsSet = TransformationsSet(TransformationsBuilder<Transformation>().apply {
         +BuildScriptBlockTransformation(scope)
         +ProjectPropertyTransformation(scope)
-//            +TaskCreationTransformation()
+        +TaskCreationTransformation(scope)
+        +TaskConfigureTransformation(context, scope)
+        +TaskAccessTransformation(context, scope)
 //            +ConfigurationBlockTransformation()
-//            +TaskConfigureTransformation(context)
-//            +TaskAccessTransformation(context)
 //            +NamedDomainObjectCollectionTransformation(context)
     }.transformations, scope)
 
