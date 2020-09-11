@@ -12,21 +12,22 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 
 class ProjectPropertyTransformation(scopeContext: GradleScopeContext) : Transformation(scopeContext) {
     override fun runTransformation(node: GNode): GNode {
-        if (node !is GMethodCall) return recurse(node)
-        val methodCall = node.psi as? GrMethodCall ?: return recurse(node)
-        return if (methodCall.resolveMethod()?.containingClass?.qualifiedName == "org.gradle.api.Project" && methodCall.invokedExpression.text in vars) {
-            recurse(
-                GBinaryExpression(
-                    GSimplePropertyAccess(node.obj?.detached(), node.method.detached()),
-                    GBinaryOperator.byValue("="),
-                    node.arguments.args.first().expr.detached()
-                )
+        return if (can(node, scopeContext.getCurrentScope())) {
+            node as GMethodCall
+            GBinaryExpression(
+                GSimplePropertyAccess(node.obj?.detached(), node.method.detached()),
+                GBinaryOperator.byValue("="),
+                node.arguments.args.first().expr.detached()
             )
-        } else recurse(node)
-
+        } else node
     }
 
     override fun can(node: GNode, scope: GNode?): Boolean {
-        TODO("Not yet implemented")
+        val gMethodCall = node as? GMethodCall ?: return false
+        val grMethodCall = node.psi as? GrMethodCall ?: return false
+        val containingClassIsProject = grMethodCall.resolveMethod()?.containingClass?.qualifiedName == "org.gradle.api.Project"
+        val inVars = grMethodCall.invokedExpression.text in vars
+        val inScope = scope?.topParent(GProject::class)?.let { true } ?: false
+        return containingClassIsProject && inVars && inScope
     }
 }

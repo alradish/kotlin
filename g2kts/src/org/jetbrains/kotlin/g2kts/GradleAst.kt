@@ -28,6 +28,7 @@ sealed class GNode(open val psi: PsiElement? = null) : Cloneable {
         parent = to
     }
 
+    // TODO maybe check if v have parent and detach if so
     protected fun <T : GNode, U : T> child(v: U): ReadWriteProperty<GNode, U> {
         children.add(childNum, v)
         v.attach(this)

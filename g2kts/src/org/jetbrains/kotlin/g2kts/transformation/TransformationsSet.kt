@@ -13,8 +13,8 @@ class TransformationsSet(private val transformations: List<Transformation>, scop
     override fun runTransformation(node: GNode): GNode {
         val (i, transformation) = transformations
             .map { it.check(node) to it }
-            .minBy { it.first } ?: return node // If minBy returns zero it means that the transformations is empty
-        if (i == -1) return recurse(node)
+            .filter { it.first >= 0 }
+            .minBy { it.first } ?: return recurse(node)
         val newNode = transformation.runTransformation(node)
         return recurse(newNode)
     }
