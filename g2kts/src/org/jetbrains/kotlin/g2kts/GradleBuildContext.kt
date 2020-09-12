@@ -3,9 +3,8 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.g2kts.transformation
+package org.jetbrains.kotlin.g2kts
 
-import org.jetbrains.kotlin.g2kts.GNode
 import org.jetbrains.kotlin.gradle.provider.InternalProjectSchemaEntry
 import org.jetbrains.kotlin.gradle.provider.InternalSchemaType
 import org.jetbrains.kotlin.gradle.provider.InternalTypedProjectSchema

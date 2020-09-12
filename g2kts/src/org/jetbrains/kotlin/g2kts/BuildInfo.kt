@@ -5,10 +5,10 @@
 
 package org.jetbrains.kotlin.g2kts
 
-val taskException: List<String> = listOf(
-    "dependencies"
-)
-
+//val taskException: List<String> = listOf(
+//    "dependencies"
+//)
+//
 val extensions = listOf(
     "ext",
     "defaultArtifacts",

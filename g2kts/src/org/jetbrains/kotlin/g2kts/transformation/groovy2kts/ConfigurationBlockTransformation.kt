@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.g2kts.GConfigurationBlock
 import org.jetbrains.kotlin.g2kts.GMethodCall
 import org.jetbrains.kotlin.g2kts.GNode
 import org.jetbrains.kotlin.g2kts.detached
-import org.jetbrains.kotlin.g2kts.transformation.GradleScopeContext
+import org.jetbrains.kotlin.g2kts.GradleScopeContext
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 
 class ConfigurationBlockTransformation(scopeContext: GradleScopeContext) : Transformation(scopeContext) {

@@ -6,6 +6,8 @@
 package org.jetbrains.kotlin.g2kts.transformation
 
 import org.jetbrains.kotlin.g2kts.GNode
+import org.jetbrains.kotlin.g2kts.GradleBuildContext
+import org.jetbrains.kotlin.g2kts.GradleScopeContext
 
 abstract class Transformation(
     val scopeContext: GradleScopeContext,

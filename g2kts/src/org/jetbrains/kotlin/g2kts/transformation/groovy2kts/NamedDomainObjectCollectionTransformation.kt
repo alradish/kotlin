@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.g2kts.GExtensionAccess
 import org.jetbrains.kotlin.g2kts.GIdentifier
 import org.jetbrains.kotlin.g2kts.GNode
 import org.jetbrains.kotlin.g2kts.GPropertyAccess
-import org.jetbrains.kotlin.g2kts.transformation.GradleBuildContext
-import org.jetbrains.kotlin.g2kts.transformation.GradleScopeContext
+import org.jetbrains.kotlin.g2kts.GradleBuildContext
+import org.jetbrains.kotlin.g2kts.GradleScopeContext
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 
 class NamedDomainObjectCollectionTransformation(override val context: GradleBuildContext, scopeContext: GradleScopeContext) : Transformation(scopeContext) {

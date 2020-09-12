@@ -6,8 +6,8 @@
 package org.jetbrains.kotlin.g2kts.transformation.groovy2kts
 
 import org.jetbrains.kotlin.g2kts.*
-import org.jetbrains.kotlin.g2kts.transformation.GradleBuildContext
-import org.jetbrains.kotlin.g2kts.transformation.GradleScopeContext
+import org.jetbrains.kotlin.g2kts.GradleBuildContext
+import org.jetbrains.kotlin.g2kts.GradleScopeContext
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 
 class TaskConfigureTransformation(override val context: GradleBuildContext, scopeContext: GradleScopeContext) :

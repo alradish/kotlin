@@ -6,6 +6,8 @@
 package org.jetbrains.kotlin.g2kts.transformation
 
 import org.jetbrains.kotlin.g2kts.GNode
+import org.jetbrains.kotlin.g2kts.GradleBuildContext
+import org.jetbrains.kotlin.g2kts.GradleScopeContext
 import org.jetbrains.kotlin.g2kts.transformation.groovy2kts.*
 
 class GradleTransformer(val context: GradleBuildContext) {

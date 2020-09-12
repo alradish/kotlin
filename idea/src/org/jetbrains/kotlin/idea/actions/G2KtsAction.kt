@@ -28,9 +28,8 @@ import com.intellij.ui.layout.panel
 import kastree.ast.Node
 import org.jetbrains.kotlin.g2kts.GradleToKotlin
 import org.jetbrains.kotlin.g2kts.KotlinWriter
-import org.jetbrains.kotlin.g2kts.gradleAstBuilder.buildTree
-import org.jetbrains.kotlin.g2kts.transformation.GradleBuildContext
-import org.jetbrains.kotlin.g2kts.transformation.GradleScopeContext
+import org.jetbrains.kotlin.g2kts.GradleBuildContext
+import org.jetbrains.kotlin.g2kts.gradleAstBuilder.G2KtsBuilder
 import org.jetbrains.kotlin.g2kts.transformation.GradleTransformer
 import org.jetbrains.kotlin.gradle.provider.InternalTypedProjectSchema
 import org.jetbrains.kotlin.idea.configuration.externalProjectPath
@@ -107,8 +106,9 @@ class G2KtsAction : AnAction() {
             )
 
 
+            val g2ktsBuilder = G2KtsBuilder(context)
             val gradleTransformer = GradleTransformer(context)
-            val gradleTree = gradleTransformer.doApply(buildTree(groovyFileBase).copy())
+            val gradleTree = gradleTransformer.doApply(g2ktsBuilder.buildTree(groovyFileBase).copy())
             val gradle2kotlin = GradleToKotlin()
             val kotlinAST = with(gradle2kotlin) { gradleTree.toKotlin() }
             val extras = gradle2kotlin.extrasMap

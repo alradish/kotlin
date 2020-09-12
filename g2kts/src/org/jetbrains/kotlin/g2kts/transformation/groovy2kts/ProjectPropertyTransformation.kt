@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.g2kts.transformation.groovy2kts
 
 import org.jetbrains.kotlin.g2kts.*
-import org.jetbrains.kotlin.g2kts.transformation.GradleScopeContext
+import org.jetbrains.kotlin.g2kts.GradleScopeContext
 import org.jetbrains.kotlin.g2kts.transformation.Transformation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 
