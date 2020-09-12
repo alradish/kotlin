@@ -15,6 +15,7 @@ class GradleTransformer(val context: GradleBuildContext) {
 
     private val transformations: TransformationsSet = TransformationsSet(TransformationsBuilder<Transformation>().apply {
         +BuildScriptBlockTransformation(scope)
+        +MoveApplyPluginTransformation(scope)
         +ProjectPropertyTransformation(scope)
         +TaskCreationTransformation(scope)
         +TaskAccessWithTypeTransformation(scope)
