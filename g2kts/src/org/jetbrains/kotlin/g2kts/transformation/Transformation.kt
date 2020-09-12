@@ -17,7 +17,7 @@ abstract class Transformation(
     abstract fun runTransformation(node: GNode): GNode
 
     fun check(node: GNode): Int {
-        if (scopeContext.isEmpty()) return -1 // TODO i don't sure about this
+        if (scopeContext.isEmpty() && can(node, null)) return 0
         val size = scopeContext.size
         for (i in 0 until size) {
             if (can(node, scopeContext[i])) return i

@@ -45,7 +45,7 @@ class G2KtsBuilder(val gradleContext: GradleBuildContext) {
     private val expressionConverter = ExpressionConverter()
     private val statementConverter = StatementConverter()
 
-    fun buildTree(psi: PsiElement): GNode {
+    fun buildTree(psi: PsiElement): GProject {
         return when (psi) {
             is GroovyFileBase -> psi.toGradleAst()
             else -> error("Need groovy file $psi")

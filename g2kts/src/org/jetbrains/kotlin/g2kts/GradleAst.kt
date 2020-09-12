@@ -104,6 +104,9 @@ fun <T : GNode> GNode.topParent(type: KClass<T>): GNode? {
 fun <T : GNode> T.detached(): T =
     also { it.detach(it.parent) }
 
+fun <T: GNode> List<T>.detached(): List<T> =
+    map { it.detached() }
+
 private class GChild<T : GNode>(val index: Int) : ReadWriteProperty<GNode, T> {
     override fun getValue(thisRef: GNode, property: KProperty<*>): T {
         @Suppress("UNCHECKED_CAST")

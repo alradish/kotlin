@@ -52,6 +52,7 @@ class TaskCreationTransformation(scopeContext: GradleScopeContext) : Transformat
 
     // TODO check scope?
     override fun can(node: GNode, scope: GNode?): Boolean {
+        if (scope == null) return false
         if (node !is GMethodCall) return false
         val obj = node.obj
         val method = node.method
