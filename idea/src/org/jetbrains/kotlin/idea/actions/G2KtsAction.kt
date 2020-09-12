@@ -5,11 +5,6 @@
 
 package org.jetbrains.kotlin.idea.actions
 
-//import org.gradle.kotlin.dsl.provider.plugins.DefaultProjectSchemaProvider
-//import org.jetbrains.kotlin.idea.configuration.typedProjectSchema
-//import org.gradle.kotlin.dsl.accessors.TypedProjectSchema
-//import org.gradle.kotlin.dsl.accessors.*
-//import org.jetbrains.kotlin.idea.configuration.typedProjectSchema
 import com.intellij.codeInsight.actions.*
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -31,8 +26,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.ui.layout.panel
 import kastree.ast.Node
-import kastree.ast.Writer
 import org.jetbrains.kotlin.g2kts.GradleToKotlin
+import org.jetbrains.kotlin.g2kts.KotlinWriter
 import org.jetbrains.kotlin.g2kts.gradleAstBuilder.buildTree
 import org.jetbrains.kotlin.g2kts.transformation.GradleBuildContext
 import org.jetbrains.kotlin.g2kts.transformation.GradleScopeContext
@@ -117,7 +112,7 @@ class G2KtsAction : AnAction() {
             val gradle2kotlin = GradleToKotlin()
             val kotlinAST = with(gradle2kotlin) { gradleTree.toKotlin() }
             val extras = gradle2kotlin.extrasMap
-            val kotlin = (kotlinAST as Node.Block).stmts.joinToString(separator = "\n") { Writer.write(it, extras) }
+            val kotlin = (kotlinAST as Node.Block).stmts.joinToString(separator = "\n") { KotlinWriter.write(it, extras) }
 
             val psiDocumentManager = PsiDocumentManager.getInstance(project)
 
