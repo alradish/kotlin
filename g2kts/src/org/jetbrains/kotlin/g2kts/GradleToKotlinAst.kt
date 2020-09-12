@@ -53,7 +53,7 @@ class GradleToKotlin {
                 }
             }
         }
-        if ( extras.isNotEmpty() && res.isEmpty()) {
+        if (extras.isNotEmpty() && res.isEmpty()) {
             extras.clear() // TODO не могу сохранить extras, т.к. нет доступа до Node
         }
         extras.forEach { extrasMap.addExtraAfter(res.last(), it) }
@@ -92,12 +92,11 @@ class GradleToKotlin {
                 null -> method.toKotlin().cast()
                 else -> obj!!.toKotlin().cast<Node.Expr>() dot method.toKotlin().cast()
             }
-//        val lambda = when (this) {
-//            is GConfigurationBlock -> lambda(closure.toKotlin().cast())
-//            else -> null
-//        }
+            val typeArgs =
+                typeArguments.map { Node.Type(emptyList(), Node.TypeRef.Simple(listOf(Node.TypeRef.Simple.Piece(it, emptyList())))) }
+
             val lambda = closure?.let { lambda(it.toKotlin().cast()) }
-            Node.Expr.Call(expr, emptyList(), arguments.args.map { it.toKotlin() as Node.ValueArg }, lambda)
+            Node.Expr.Call(expr, typeArgs, arguments.args.map { it.toKotlin() as Node.ValueArg }, lambda)
         }
         is GClosure -> Node.Expr.Brace(emptyList(), statements.toKotlin().cast())
         is GTaskCreating -> {

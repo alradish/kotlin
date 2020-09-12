@@ -47,7 +47,7 @@ class TaskCreationTransformation(scopeContext: GradleScopeContext) : Transformat
         } else {
             GArgumentsList(listOf(GArgument(null, arg.expr.detached())))
         }
-        return GSimpleMethodCall(null, GIdentifier("dependsOn"), argumentList, null).toStatement()
+        return GSimpleMethodCall(null, GIdentifier("dependsOn"), emptyList(), argumentList, null).toStatement()
     }
 
     // TODO check scope?

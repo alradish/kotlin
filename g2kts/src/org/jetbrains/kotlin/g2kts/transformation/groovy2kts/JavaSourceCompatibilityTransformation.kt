@@ -22,6 +22,7 @@ class JavaSourceCompatibilityTransformation(scopeContext: GradleScopeContext) : 
             GConfigurationBlock(
                 null,
                 GIdentifier("java"),
+                emptyList(),
                 GArgumentsList(emptyList(), null),
                 GClosure(emptyList(), GBlock(listOf(sourceCompatibility.toStatement())), null),
                 null

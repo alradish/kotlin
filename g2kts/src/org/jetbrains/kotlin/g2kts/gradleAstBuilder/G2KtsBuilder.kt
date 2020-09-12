@@ -310,9 +310,11 @@ class G2KtsBuilder(val gradleContext: GradleBuildContext) {
             val referenceExpression = invokedExpression as GrReferenceExpression
             val obj = referenceExpression.qualifierExpression
             val method = referenceExpression.referenceNameElement
+            // TODO check for typeArgs
             return GSimpleMethodCall(
                 obj?.toGradleAst(),
                 method!!.toGradleAst() as GIdentifier,
+                emptyList(),
                 argumentList.toGradleAst(),
                 closureArguments.firstOrNull()?.toGradleAst(),
                 this

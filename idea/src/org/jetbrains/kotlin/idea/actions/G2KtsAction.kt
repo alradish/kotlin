@@ -42,9 +42,6 @@ import javax.swing.JComponent
 //import org.jetbrains.kotlin.idea.configuration.type
 
 class G2KtsAction : AnAction() {
-    companion object {
-//        val KEY = Key.create<List<ContainerData>>("FOR_ME")
-    }
 
     private fun findGradleProjectStructure(module: Module): DataNode<ProjectData>? {
         val externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module) ?: return null
@@ -69,18 +66,6 @@ class G2KtsAction : AnAction() {
 
     data class Task(val name: String, val type: String, val target: String)
 
-    private fun getGradleTasks(file: VirtualFile, e: AnActionEvent): List<Task> {
-        val module = ModuleUtilCore.findModuleForFile(file, e.project!!) ?: error("module")
-        val projectData = findGradleProjectStructure(module)
-        val mm = GradleProjectResolverUtil.findModule(
-            projectData,
-            module.externalProjectPath!!
-        ) ?: error("gradle project resolver return null")
-        return mm.children.toList().map { it.data }.filterIsInstance<TaskData>()
-            .map { Task(it.name, it.type!!.substringAfterLast('.'), it.linkedExternalProjectPath) }
-    }
-
-
     override fun actionPerformed(e: AnActionEvent) {
         val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
         val project = e.project ?: error("null project")
@@ -100,11 +85,9 @@ class G2KtsAction : AnAction() {
             @Suppress("UNCHECKED_CAST")
             val internalTypedProjectSchema =
                 moduleData.getCopyableUserData(key) as InternalTypedProjectSchema
-            val ttt = getGradleTasks(file, e)
             val context = GradleBuildContext(
                 internalTypedProjectSchema
             )
-
 
             val g2ktsBuilder = G2KtsBuilder(context)
             val gradleTransformer = GradleTransformer(context)

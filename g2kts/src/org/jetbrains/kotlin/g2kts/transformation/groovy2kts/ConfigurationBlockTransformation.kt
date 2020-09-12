@@ -19,6 +19,7 @@ class ConfigurationBlockTransformation(scopeContext: GradleScopeContext) : Trans
                 GConfigurationBlock(
                     node.obj?.detached(),
                     node.method.detached(),
+                    emptyList(),
                     node.arguments.detached(),
                     node.closure!!.detached()
                 )

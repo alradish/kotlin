@@ -295,6 +295,7 @@ psi: PsiElement? = null
 sealed class GMethodCall(
     obj: GExpression?,
     method: GExpression,
+    var typeArguments: List<String>,
     arguments: GArgumentsList,
     closure: GClosure?,
     psi: PsiElement? = null
@@ -308,18 +309,20 @@ sealed class GMethodCall(
 class GSimpleMethodCall(
     obj: GExpression?,
     method: GExpression,
+    typeArguments: List<String>,
     arguments: GArgumentsList,
     closure: GClosure?,
     psi: PsiElement? = null
-) : GMethodCall(obj, method, arguments, closure, psi)
+) : GMethodCall(obj, method, typeArguments, arguments, closure, psi)
 
 class GConfigurationBlock(
     obj: GExpression?,
     method: GExpression,
+    typeArguments: List<String>,
     arguments: GArgumentsList,
     closure: GClosure,
     psi: PsiElement? = null
-) : GMethodCall(obj, method, arguments, closure, psi) {}
+) : GMethodCall(obj, method, typeArguments, arguments, closure, psi) {}
 
 class GClosure( // GTODO arguments
     parameters: List<GExpression>,
