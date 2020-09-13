@@ -29,3 +29,19 @@ fun GNode.isConfigurationBlock(): Boolean {
     }
 }
 
+fun GProject.firstIsBuildScriptBlock(): Boolean {
+    return if (statements.first() is GStatement.GExpr) {
+        val s = (statements.first() as GStatement.GExpr).expr
+        s is GBuildScriptBlock || s.isBuildScriptBlock()
+    } else {
+        false
+    }
+}
+
+fun GNode.isBuildScriptBlock(): Boolean {
+    if (!(this is GMethodCall && obj == null)) return false
+    val name = (method as? GIdentifier)?.name
+    if (GBuildScriptBlock.BuildScriptBlockType.values().find { it.text == name } == null) return false
+    if (arguments.args.isNotEmpty() || closure == null) return false
+    return true
+}

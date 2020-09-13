@@ -56,27 +56,21 @@ class MoveApplyPluginTransformation(scopeContext: GradleScopeContext) : Transfor
             )
             // FIXME should check for more than one build script block
             if (node.firstIsBuildScriptBlock()) {
+                val s = node.statements.filter { !applyPlugins.contains(it) }.detached()
                 GProject(
-                    node.statements.subList(0, 1).detached()
+                    s.subList(0, 1).detached()
                             + listOf(newPluginsBlock.toStatement())
-                            + node.statements.subList(1, node.statements.size).detached()
+                            + s.subList(1, s.size).detached()
                 )
             } else {
+                val s = node.statements.filter { !applyPlugins.contains(it) }.detached()
                 GProject(
-                    listOf(newPluginsBlock.toStatement()) + node.statements.detached()
+                    listOf(newPluginsBlock.toStatement()) + s
                 )
             }
         }
     }
 
-    private fun GProject.firstIsBuildScriptBlock(): Boolean {
-        return if (statements.first() is GStatement.GExpr) {
-            val s = (statements.first() as GStatement.GExpr).expr
-            s is GBuildScriptBlock
-        } else {
-            false
-        }
-    }
 
     private fun GStatement.applyPluginOrNull(): GStatement? {
         if (this !is GStatement.GExpr) return null

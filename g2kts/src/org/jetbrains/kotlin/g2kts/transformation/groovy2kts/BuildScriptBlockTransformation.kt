@@ -23,14 +23,6 @@ class BuildScriptBlockTransformation(scopeContext: GradleScopeContext) : Transfo
     override fun can(node: GNode, scope: GNode?): Boolean {
         return node.isBuildScriptBlock() && scope is GStatement.GExpr && scope.parent is GProject
     }
-
-    private fun GNode.isBuildScriptBlock(): Boolean {
-        if (!(this is GMethodCall && obj == null)) return false
-        val name = (method as? GIdentifier)?.name
-        if (GBuildScriptBlock.BuildScriptBlockType.values().find { it.text == name } == null) return false
-        if (arguments.args.isNotEmpty() || closure == null) return false
-        return true
-    }
 }
 
 

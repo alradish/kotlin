@@ -13,26 +13,29 @@ import org.jetbrains.kotlin.g2kts.transformation.groovy2kts.*
 class GradleTransformer(val context: GradleBuildContext) {
     private val scope = GradleScopeContext()
 
+    // FIXME maybe should run transformation if its CHECK number equal
+    private val transformationOrder: TransformationsOrder = TransformationsOrder(TransformationsBuilder<Transformation>().apply {
+        +JavaSourceCompatibilityTransformation(scope)
+        +MoveApplyPluginTransformation(scope)
+    }.transformations, scope)
+
     private val transformations: TransformationsSet = TransformationsSet(TransformationsBuilder<Transformation>().apply {
         +BuildScriptBlockTransformation(scope)
-        +MoveApplyPluginTransformation(scope)
         +ProjectPropertyTransformation(scope)
         +SourceSetsConfigureTransformation(scope)
         +TaskCreationTransformation(scope)
         +TaskAccessWithTypeTransformation(scope)
         +TaskConfigureTransformation(context, scope)
         +TaskAccessTransformation(context, scope)
-//            +ConfigurationBlockTransformation()
-//            +NamedDomainObjectCollectionTransformation(context)
     }.transformations, scope)
 
 
     fun doApply(node: GNode): GNode {
-        return transformations.runTransformation(node)
+        return transformationOrder.runTransformation(node).let(transformations::runTransformation)
     }
 
     fun doApply(code: List<GNode>): List<GNode> {
-        return transformations.runTransformation(code)
+        return transformationOrder.runTransformation(code).let(transformations::runTransformation)
     }
 }
 
