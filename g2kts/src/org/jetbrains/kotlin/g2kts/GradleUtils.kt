@@ -14,19 +14,18 @@ fun GStatement.isApplyPlugin(): Boolean {
     return method.name == "apply" && call.arguments.args.size == 1 && call.arguments.args.first().name == "plugin"
 }
 
-fun GStatement.isConfigurationBlock(): Boolean {
-    return if (this is GStatement.GExpr) {
-        expr.isConfigurationBlock()
-    } else {
-        false
+fun GNode.isConfigurationBlock(): Boolean {
+    fun GExpression.isConfigurationBlock(): Boolean {
+        return this is GMethodCall
+                && obj == null
+                && method is GIdentifier
+                && arguments.args.isEmpty()
+                && closure != null
     }
-}
-
-fun GExpression.isConfigurationBlock(): Boolean {
-    return this is GMethodCall
-            && obj == null
-            && method is GIdentifier
-            && arguments.args.isEmpty()
-            && closure != null
+    return when (this) {
+        is GStatement.GExpr -> expr.isConfigurationBlock()
+        is GExpression -> isConfigurationBlock()
+        else -> false
+    }
 }
 

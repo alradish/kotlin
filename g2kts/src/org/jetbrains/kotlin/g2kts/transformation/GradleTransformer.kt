@@ -17,6 +17,7 @@ class GradleTransformer(val context: GradleBuildContext) {
         +BuildScriptBlockTransformation(scope)
         +MoveApplyPluginTransformation(scope)
         +ProjectPropertyTransformation(scope)
+        +SourceSetsConfigureTransformation(scope)
         +TaskCreationTransformation(scope)
         +TaskAccessWithTypeTransformation(scope)
         +TaskConfigureTransformation(context, scope)
