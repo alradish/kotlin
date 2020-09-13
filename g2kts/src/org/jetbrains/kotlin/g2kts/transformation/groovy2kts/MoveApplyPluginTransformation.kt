@@ -33,16 +33,11 @@ class MoveApplyPluginTransformation(scopeContext: GradleScopeContext) : Transfor
                 ).toStatement()
             }
         }
-        // find existing plugins configuration block pr create one
+        // find existing plugins configuration block or create one
         val pluginsBlock = (node.statements.find {
-            if (it !is GStatement.GExpr) return@find false
-            val expr = it.expr
-            if (expr !is GSimpleMethodCall) return@find false
-            val obj = expr.obj == null
-            val method = (expr.method as? GIdentifier)?.name == "plugins"
-            val args = expr.arguments.args.isEmpty()
-            val closure = expr.closure != null
-            obj && method && args && closure
+            if (!it.isConfigurationBlock()) return@find false
+            val expr = (it as GStatement.GExpr).expr as GMethodCall
+            (expr.method as GIdentifier).name == "plugins"
         } as? GStatement.GExpr)?.expr as? GMethodCall
         return if (pluginsBlock != null) {
             val statements = pluginsBlock.closure!!.statements.statements.detached()
