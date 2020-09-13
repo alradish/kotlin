@@ -90,3 +90,5 @@ fun property(
     expr: Node.Expr? = null,
     accessors: Node.Decl.Property.Accessors? = null
 ) = Node.Decl.Property(mods, readOnly, typeParams, receiverType, vars, typeConstraints, delegated, expr, accessors)
+
+fun simpleString(str: String) = Node.Expr.StringTmpl(listOf(Node.Expr.StringTmpl.Elem.Regular(str)), false)

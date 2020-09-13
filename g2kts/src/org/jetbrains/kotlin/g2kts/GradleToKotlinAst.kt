@@ -100,11 +100,18 @@ class GradleToKotlin {
         }
         is GClosure -> Node.Expr.Brace(emptyList(), statements.toKotlin().cast())
         is GTaskCreating -> {
+            val typeArgs = if (type.isEmpty()) emptyList() else listOf(
+                Node.Type(
+                    emptyList(),
+                    Node.TypeRef.Simple(listOf(Node.TypeRef.Simple.Piece(type, emptyList())))
+                )
+            )
             val lambda = body?.let { lambda(it.toKotlin().cast()) }
-            property(
-                vars = listOf(Node.Decl.Property.Var(name, null)),
-                delegated = true,
-                expr = name("tasks") dot call(name("creating"), lambda = lambda)
+            name("tasks") dot call(
+                expr = name("register"),
+                typeArgs = typeArgs,
+                args = listOf(Node.ValueArg(null, false, simpleString(name))),
+                lambda
             )
         }
         is GConst -> Node.Expr.Const(text, Node.Expr.Const.Form.valueOf(type.toString()))

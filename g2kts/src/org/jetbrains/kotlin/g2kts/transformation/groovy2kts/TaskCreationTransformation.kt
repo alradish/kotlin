@@ -18,6 +18,7 @@ class TaskCreationTransformation(scopeContext: GradleScopeContext) : Transformat
         val taskName = (task.method as GIdentifier).name
         val args = task.arguments.args
         val body = task.closure?.detached()
+        var type = ""
         for (arg in args) {
             when {
                 arg.name == "dependsOn" -> {
@@ -25,10 +26,17 @@ class TaskCreationTransformation(scopeContext: GradleScopeContext) : Transformat
                         statements = listOf(moveDependsOn(arg)) + statements
                     }
                 }
+                arg.name == "type" -> {
+                    type = when (arg.expr) {
+                        is GIdentifier -> (arg.expr as GIdentifier).name
+                        is GString -> (arg.expr as GString).str
+                        else -> unreachable()
+                    }
+                }
             }
         }
 
-        return GTaskCreating(taskName, "", body)
+        return GTaskCreating(taskName, type, body)
     }
 
     private fun GNode.taskCreationOrNull(): GMethodCall? {
