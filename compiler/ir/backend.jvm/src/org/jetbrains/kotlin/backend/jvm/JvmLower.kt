@@ -313,6 +313,8 @@ private val jvmFilePhases = listOf(
     collectionStubMethodLowering,
     jvmInlineClassPhase,
 
+    propertyDelegationPhase,
+
     sharedVariablesPhase,
 
     makePatchParentsPhase(1),

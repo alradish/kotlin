@@ -41,6 +41,8 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.CleanableBindingContext
 
 class JvmIrCodegenFactory(private val phaseConfig: PhaseConfig) : CodegenFactory {
+    var irModule: IrModuleFragment? = null
+
     override fun generateModule(state: GenerationState, files: Collection<KtFile>) {
         val extensions = JvmGeneratorExtensions()
         val mangler = JvmManglerDesc(MainFunctionDetector(state.bindingContext, state.languageVersionSettings))
@@ -146,6 +148,7 @@ class JvmIrCodegenFactory(private val phaseConfig: PhaseConfig) : CodegenFactory
         }
 
         JvmLower(context).lower(irModuleFragment)
+        irModule = irModuleFragment
 
         for (generateMultifileFacade in listOf(true, false)) {
             for (irFile in irModuleFragment.files) {
