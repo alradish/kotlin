@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir
 
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
 import org.jetbrains.kotlin.cli.jvm.compiler.NoScopeRecordCliBindingTrace
 import org.jetbrains.kotlin.codegen.GenerationUtils.compileFiles
@@ -15,7 +16,7 @@ import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.expressions.IrInstanceInitializerCall
 import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
-import org.jetbrains.kotlin.ir.util.dump
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.test.KotlinTestUtils
@@ -25,6 +26,15 @@ import java.io.File
 class PropertyDelegateTest : AbstractIrTextTestCase() {
 
     private var generationState: GenerationState? = null
+    private val kotlinLikeDumpOptions = KotlinLikeDumpOptions(
+        printRegionsPerFile = true,
+        printFileName = true,
+        printFilePath = true,
+        useNamedArguments = true,
+        labelPrintingStrategy = LabelPrintingStrategy.ALWAYS,
+        printFakeOverridesStrategy = FakeOverridesStrategy.ALL
+    )
+
     override fun doTest(wholeFile: File, testFiles: List<TestFile>) {
         myEnvironment.configuration.put(JVMConfigurationKeys.IR, true)
         generationState = compileFiles(
@@ -33,10 +43,23 @@ class PropertyDelegateTest : AbstractIrTextTestCase() {
         )
 
         val irModuleLower = (generationState?.codegenFactory as? JvmIrCodegenFactory)?.irModule
-        println(
-            irModuleLower?.dump(true)
+
+        val before = generateIrModule(false).dumpKotlinLike(kotlinLikeDumpOptions)
+        val after = irModuleLower?.dumpKotlinLike(kotlinLikeDumpOptions) ?: ""
+
+//        println(irModuleLower?.dumpKotlinLike(kotlinLikeDumpOptions))
+
+
+        FileUtil.writeToFile(
+            File(wholeFile.parentFile.path, "before.kt"),
+            before
+        )
+        FileUtil.writeToFile(
+            File(wholeFile.parentFile.path, "after.kt"),
+            after
         )
     }
+
 
     fun testFile() {
         KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/test.kt")
