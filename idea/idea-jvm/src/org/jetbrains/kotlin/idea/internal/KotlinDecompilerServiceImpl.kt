@@ -26,6 +26,7 @@ import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
 import org.jetbrains.java.decompiler.main.extern.IResultSaver
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.idea.actions.canBeDecompiledToJava
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
@@ -82,6 +83,7 @@ class KotlinDecompilerServiceImpl : KotlinDecompilerService {
     private fun bytecodeMapForSourceFile(file: KtFile): Map<File, () -> ByteArray> {
         val configuration = CompilerConfiguration().apply {
             languageVersionSettings = file.languageVersionSettings
+            put(JVMConfigurationKeys.IR, true)
         }
         val generationState = KotlinBytecodeToolWindow.compileSingleFile(file, configuration) ?: return emptyMap()
 

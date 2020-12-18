@@ -293,6 +293,8 @@ private val jvmFilePhases = listOf(
     lateinitDeclarationLoweringPhase,
     lateinitUsageLoweringPhase,
 
+    propertyDelegationPhase,
+
     inlineCallableReferenceToLambdaPhase,
     functionReferencePhase,
     suspendLambdaPhase,
@@ -313,7 +315,7 @@ private val jvmFilePhases = listOf(
     collectionStubMethodLowering,
     jvmInlineClassPhase,
 
-    propertyDelegationPhase,
+//    propertyDelegationPhase,
 
     sharedVariablesPhase,
 
