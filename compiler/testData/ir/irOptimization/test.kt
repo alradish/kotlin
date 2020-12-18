@@ -1,8 +1,9 @@
-package a
+// FILE: Delegate.kt
 import kotlin.reflect.KProperty
 
 class Delegate {
     operator fun getValue(thisRef: Any?, property: KProperty<*>): String {
+        val a = 2
         return "get"
     }
 
@@ -10,6 +11,9 @@ class Delegate {
 
     }
 }
+
+// FILE: A.kt
+
 class A {
     var a by Delegate()
 }
