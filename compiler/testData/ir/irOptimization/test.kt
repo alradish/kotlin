@@ -28,8 +28,12 @@ class Delegate2 {
 
 
 // FILE: A.kt
+fun <T> delegate(initializer: () -> T): Delegate1 = Delegate1()
 
 class A {
     var a by Delegate1()
     var b by Delegate2()
+    val c: String by delegate {
+        42
+    }
 }

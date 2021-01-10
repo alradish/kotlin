@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.ir
 
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.NoScopeRecordCliBindingTrace
 import org.jetbrains.kotlin.codegen.GenerationUtils.compileFiles
 import org.jetbrains.kotlin.codegen.state.GenerationState
@@ -35,8 +36,19 @@ class PropertyDelegateTest : AbstractIrTextTestCase() {
         printFakeOverridesStrategy = FakeOverridesStrategy.ALL
     )
 
+    override fun setupEnvironment(environment: KotlinCoreEnvironment) {
+        super.setupEnvironment(environment)
+//        val mockJdk = listOf(File(KotlinTestUtils.getHomeDirectory(), "compiler/testData/mockJDK/jre/lib/rt.jar"))
+//        environment.registerJavac(bootClasspath = mockJdk)
+//        environment.configuration.put(JVMConfigurationKeys.USE_JAVAC, true)
+    }
+
     override fun doTest(wholeFile: File, testFiles: List<TestFile>) {
+//        val mockJdk = listOf(File(KotlinTestUtils.getHomeDirectory(), "compiler/testData/mockJDK/jre/lib/rt.jar"))
+//        myEnvironment.registerJavac(bootClasspath = mockJdk)
+//        myEnvironment.configuration.put(JVMConfigurationKeys.USE_JAVAC, true)
         myEnvironment.configuration.put(JVMConfigurationKeys.IR, true)
+
         generationState = compileFiles(
             myFiles.psiFiles, myEnvironment, classBuilderFactory,
             NoScopeRecordCliBindingTrace()
