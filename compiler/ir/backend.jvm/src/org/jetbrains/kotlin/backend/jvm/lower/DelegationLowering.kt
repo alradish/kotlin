@@ -7,29 +7,32 @@ package org.jetbrains.kotlin.backend.jvm.lower
 
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
+import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.common.phaser.makeIrFilePhase
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.codegen.AnnotationCodegen.Companion.annotationClass
+import org.jetbrains.kotlin.backend.jvm.codegen.representativeUpperBound
 import org.jetbrains.kotlin.ir.IrElement
-import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.declarations.addFunction
-import org.jetbrains.kotlin.ir.builders.declarations.addProperty
+import org.jetbrains.kotlin.ir.builders.declarations.addTypeParameter
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.builders.irCall
-import org.jetbrains.kotlin.ir.builders.irInt
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
-import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrReturnImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrNull
-import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
+import org.jetbrains.kotlin.ir.util.getSimpleFunction
+import org.jetbrains.kotlin.ir.util.isInterface
+import org.jetbrains.kotlin.ir.util.superTypes
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
-import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
+import org.jetbrains.kotlin.name.Name
 
 val propertyDelegationPhase = makeIrFilePhase(
     ::DelegationLowering,
@@ -47,6 +50,7 @@ private data class KPropertyUsageInFun(
     val used: Boolean,
     val newF: IrSimpleFunction?
 )
+
 
 private class DelegationLowering(val context: JvmBackendContext) : IrElementVisitorVoid, FileLoweringPass {
     val analyzedDelegates: MutableMap<IrClass, KPropertyUsages> = mutableMapOf()
@@ -68,19 +72,24 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
         val backingFieldExpression = declaration.backingField?.initializer?.expression ?: error("Backing field is null") // FIXME
         val delegateClass = when (backingFieldExpression) {
             is IrConstructorCall -> backingFieldExpression.annotationClass
-            is IrCall -> backingFieldExpression.type.classOrNull?.owner ?: return
+//            is IrCall -> backingFieldExpression.type.classOrNull?.owner ?: return // Могут вернуть общий интерфейс
+            is IrCall -> return // Могут вернуть общий интерфейс
+            is IrBlock -> backingFieldExpression.type.takeIf { it is IrClassSymbol }?.classOrNull?.owner ?: return
+            is IrConst<*> -> return
             else -> TODO("Backing field was initialize with ${backingFieldExpression::class.simpleName}")
         }
+
+        if (delegateClass.isInterface)
+            return
 
         val (get, set) = analyzedDelegates.getOrPut(delegateClass) {
             analyzeDelegateAndGenerate(delegateClass)
         }
-        val parent = declaration.parent as IrClass
 
-        if (!get.used && declaration.getter != null) {
+        if (!get.used && declaration.getter != null && get.newF != null) {
             declaration.getter!!.replaceCallInReturn(get.newF!!)
         }
-        if (!set.used && declaration.setter != null) {
+        if (!set.used && declaration.setter != null && set.newF != null) {
             declaration.setter!!.replaceCallInReturn(set.newF!!)
         }
     }
@@ -100,7 +109,8 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
                         var indexOfNewArg = 0
                         (0 until call.valueArgumentsCount).forEach { i ->
                             val valueArgument = call.getValueArgument(i)
-                            if (kProperty !in valueArgument!!.type.allSuperTypes().map { it.classOrNull })
+                            if (i != 1)
+//                            if (kProperty !in valueArgument!!.type.allSuperTypes().map { it.classOrNull })
                                 putValueArgument(indexOfNewArg++, valueArgument)
                         }
                     })
@@ -110,17 +120,19 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
     }
 
     private fun analyzeDelegateAndGenerate(delegate: IrClass): KPropertyUsages {
+        // FIXME Нет доступа к операторам объявленым внешне(через экстеншн)
         val getValue = delegate.symbol.getSimpleFunction("getValue")?.owner
         val setValue = delegate.symbol.getSimpleFunction("setValue")?.owner
 
+        // FIXME Тело может быть пустым. Нужно как-то обработать это
         val usedInGet = getValue?.let { KPropertyUsageFuncAnalyzer(getValue).used } ?: false
         val usedInSet = setValue?.let { KPropertyUsageFuncAnalyzer(setValue).used } ?: false
 
-        val newGet = if (!usedInGet) {
-            copyFunWithoutProperty(delegate, getValue!!)
+        val newGet = if (!usedInGet && getValue != null) {
+            copyFunWithoutProperty(delegate, getValue)
         } else null
-        val newSet = if (!usedInSet) {
-            copyFunWithoutProperty(delegate, setValue!!)
+        val newSet = if (!usedInSet && setValue != null) {
+            copyFunWithoutProperty(delegate, setValue)
         } else null
 
         return KPropertyUsages(
@@ -138,19 +150,66 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
     }
 
     private fun copyFunWithoutProperty(delegate: IrClass, f: IrSimpleFunction): IrSimpleFunction {
-        return delegate.addFunction(
-            f.name.identifier,
-            f.returnType,
-        ).apply {
-            f.valueParameters.forEach {
-                if (it.index != 1) { // FIXME определять по типу
-                    addValueParameter(it.name.identifier, it.type)
+        return delegate.addFunction {
+            this.startOffset = f.startOffset
+            this.endOffset = f.endOffset
+            this.name = Name.identifier(f.name.identifier)
+            this.returnType = f.returnType
+            this.modality = f.modality
+            this.visibility = f.visibility
+            this.isSuspend = f.isSuspend
+            this.isFakeOverride = f.isFakeOverride
+            this.origin = f.origin
+            this.isOperator = false
+        }.apply {
+            val f = f
+            f.typeParameters.forEach {
+                addTypeParameter(it.name.identifier, it.representativeUpperBound, it.variance)
+            }
+
+
+            // TODO: Не уверен, что явно задавать тип правильно
+//            dispatchReceiverParameter = parentAsClass.thisReceiver!!.copyTo(this)
+//            dispatchReceiverParameter = parentAsClass.thisReceiver?.copyTo(this, type = parentAsClass.defaultType)
+            dispatchReceiverParameter = f.dispatchReceiverParameter?.copyTo(this)
+//            dispatchReceiverParameter = parentAsClass.thisReceiver
+//            createDispatchReceiverParameter()
+
+
+            f.valueParameters.forEach { valueArgument ->
+                if (valueArgument.index != 1 && valueArgument.index != -1) { // FIXME определять по типу
+                    addValueParameter(valueArgument.name.identifier, valueArgument.type)
                 }
             }
-            body = f.body?.deepCopyWithSymbols(this)
+
+
+            val oldParameters = f.valueParameters + f.dispatchReceiverParameter!!
+            val newParameters = valueParameters.toMutableList<IrValueParameter?>().apply {
+                add(1, null)
+                add(dispatchReceiverParameter)
+            }
+
+            val parameterMapping = oldParameters.zip(newParameters).toMap()
+
+            val parameterTransformer = object : IrElementTransformerVoid() {
+                override fun visitGetValue(expression: IrGetValue): IrGetValue {
+                    return parameterMapping[expression.symbol.owner]?.let {
+                        expression.run { IrGetValueImpl(startOffset, endOffset, type, it.symbol, origin) }
+                    } ?: expression
+                }
+
+//                override fun visitReturn(expression: IrReturn): IrExpression {
+////                    expression.transformChildren(this, null)
+//                    expression.value = expression.value.transform(this, null)
+//                    return IrReturnImpl(expression.startOffset, expression.endOffset, expression.type, symbol, expression.value)
+//                }
+            }
+            body = f.body?.deepCopyWithSymbols(this)?.also {
+                it.transform(parameterTransformer, null)
+            }
+            overriddenSymbols = f.overriddenSymbols.toList()
         }
     }
-
 
 }
 
