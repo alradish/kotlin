@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.utils.addToStdlib.same
 
 val propertyDelegationPhase = makeIrFilePhase(
     ::DelegationLowering,
@@ -73,7 +74,24 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
         val delegateClass = when (backingFieldExpression) {
             is IrConstructorCall -> backingFieldExpression.annotationClass
 //            is IrCall -> backingFieldExpression.type.classOrNull?.owner ?: return // Могут вернуть общий интерфейс
-            is IrCall -> return // Могут вернуть общий интерфейс
+//            is IrCall -> return // Могут вернуть общий интерфейс
+            is IrCall -> {
+                val f = backingFieldExpression.symbol.owner
+                if (f.isOperator && f.name.identifier == "provideDelegate") {
+                    // TODO Проверить возвращает ли провайдДелегат конструктор
+                    val returns = ReturnConstructorCollector().let {
+                        f.accept(it, null)
+                        it.returns
+                    }
+                    if (returns.isNotEmpty() && returns.all { it is IrConstructorCall } && returns.same { (it as IrConstructorCall).type }) {
+                        (returns.first() as IrConstructorCall).annotationClass
+                    } else {
+                        return
+                    }
+                } else {
+                    return
+                }
+            }
             is IrBlock -> backingFieldExpression.type.takeIf { it is IrClassSymbol }?.classOrNull?.owner ?: return
             is IrConst<*> -> return
             else -> TODO("Backing field was initialize with ${backingFieldExpression::class.simpleName}")
@@ -232,5 +250,23 @@ private class KPropertyUsageFuncAnalyzer(val function: IrFunction) : IrElementVi
             used = true
         else
             super.visitGetValue(expression)
+    }
+}
+
+private class ReturnConstructorCollector : IrElementVisitorVoid {
+    val returns = mutableListOf<IrExpression>()
+
+
+    override fun visitElement(element: IrElement) {
+        element.acceptChildrenVoid(this)
+    }
+
+    override fun visitReturn(expression: IrReturn) {
+        val value = expression.value
+        if (value is IrCall) {
+            value.symbol.owner.accept(this, null)
+        } else {
+            returns.add(value)
+        }
     }
 }
