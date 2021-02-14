@@ -44,7 +44,7 @@ private data class KPropertyUsages(
 )
 
 private data class KPropertyUsageInFun(
-    val f: IrSimpleFunction?,
+    val function: IrSimpleFunction?,
     val used: Boolean,
     val newF: IrSimpleFunction?
 )
@@ -63,35 +63,20 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
 
     override fun visitProperty(declaration: IrProperty) {
         if (!declaration.isDelegated || declaration.isFakeOverride) {
-            super.visitProperty(declaration)
             return
         }
 
-        val backingFieldExpression = declaration.backingField?.initializer?.expression ?: error("Backing field is null") // FIXME
+        val backingFieldExpression = declaration
+            .backingField
+            ?.initializer
+            ?.expression ?: return
+
         val delegateClass = when (backingFieldExpression) {
             is IrConstructorCall -> backingFieldExpression.annotationClass
-//            is IrCall -> backingFieldExpression.type.classOrNull?.owner ?: return // Могут вернуть общий интерфейс
-//            is IrCall -> return // Могут вернуть общий интерфейс
-            is IrCall -> {
-                val f = backingFieldExpression.symbol.owner
-                if (f.isOperator && f.name.identifier == "provideDelegate") {
-                    // TODO Проверить возвращает ли провайдДелегат конструктор
-                    val returns = ReturnConstructorCollector().let {
-                        f.accept(it, null)
-                        it.returns
-                    }
-                    if (returns.isNotEmpty() && returns.all { it is IrConstructorCall } && returns.same { (it as IrConstructorCall).type }) {
-                        (returns.first() as IrConstructorCall).annotationClass
-                    } else {
-                        return
-                    }
-                } else {
-                    return
-                }
-            }
+            is IrGetObjectValue -> backingFieldExpression.symbol.owner
+            is IrCall -> backingFieldExpression.getDelegatedClassFromCall() ?: return
             is IrBlock -> backingFieldExpression.type.takeIf { it is IrClassSymbol }?.classOrNull?.owner ?: return
             is IrConst<*> -> return
-            is IrGetObjectValue -> backingFieldExpression.symbol.owner
             is IrPropertyReference -> TODO()
             else -> TODO("Backing field was initialize with ${backingFieldExpression::class.simpleName}\n${backingFieldExpression.dumpKotlinLike()}")
         }
@@ -99,24 +84,38 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
         if (delegateClass.isInterface)
             return
 
-        val (get, set) = analyzedDelegates.getOrPut(delegateClass) {
-            analyzeDelegateAndGenerate(delegateClass)
-        }
+        analyzeAndReplaceCalls(declaration, delegateClass)
+    }
 
-        if (!get.used && declaration.getter != null && get.newF != null) {
-            declaration.getter!!.replaceCallInReturn(get.newF)
+    // TODO Убрать аннотацию когда реализую хотя бы один из случаев
+    @Suppress("UNREACHABLE_CODE")
+    private fun IrCall.getDelegatedClassFromCall(): IrClass? {
+        val function = symbol.owner
+        val expressions: List<IrExpression> = when {
+            function.isOperator && function.name.identifier == "provideDelegate" -> TODO("Обработать случай с provideDelegate")
+            else -> TODO("Обработать случай с делегированием через функцию")
         }
-        if (!set.used && declaration.setter != null && set.newF != null) {
-            declaration.setter!!.replaceCallInReturn(set.newF)
+        return if (expressions.isNotEmpty() && expressions.same { (it.type as? IrConstructorCall)?.type }) {
+            (expressions.first() as IrConstructorCall).annotationClass
+        } else {
+            null
         }
     }
 
-    private fun IrType.allSuperTypes(): List<IrType> {
-        return superTypes().flatMap { it.allSuperTypes().plus(it) }
+    private fun analyzeAndReplaceCalls(delegatedProperty: IrProperty, delegate: IrClass) {
+        val (get, set) = analyzedDelegates.getOrPut(delegate) {
+            analyzeDelegateAndGenerate(delegate)
+        }
+
+        if (!get.used && delegatedProperty.getter != null && get.newF != null) {
+            delegatedProperty.getter!!.replaceCallInReturn(get.newF)
+        }
+        if (!set.used && delegatedProperty.setter != null && set.newF != null) {
+            delegatedProperty.setter!!.replaceCallInReturn(set.newF)
+        }
     }
 
     private fun IrSimpleFunction.replaceCallInReturn(newCall: IrSimpleFunction) {
-        val kProperty = context.irBuiltIns.kPropertyClass
         transform(object : IrElementTransformerVoidWithContext() {
             override fun visitReturn(expression: IrReturn): IrExpression {
                 return context.createIrBuilder(currentScope!!.scope.scopeOwnerSymbol, expression.startOffset, expression.endOffset).run {
@@ -127,7 +126,6 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
                         (0 until call.valueArgumentsCount).forEach { i ->
                             val valueArgument = call.getValueArgument(i)
                             if (i != 1)
-//                            if (kProperty !in valueArgument!!.type.allSuperTypes().map { it.classOrNull })
                                 putValueArgument(indexOfNewArg++, valueArgument)
                         }
                     })
@@ -142,8 +140,8 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
         val setValue = delegate.symbol.getSimpleFunction("setValue")?.owner
 
         // FIXME Тело может быть пустым. Нужно как-то обработать это
-        val usedInGet = getValue?.let { KPropertyUsageFuncAnalyzer(getValue).used } ?: false
-        val usedInSet = setValue?.let { KPropertyUsageFuncAnalyzer(setValue).used } ?: false
+        val usedInGet = getValue?.let { analyzeOperatorForKPropertyUsage(it) } ?: false
+        val usedInSet = setValue?.let { analyzeOperatorForKPropertyUsage(it) } ?: false
 
         val newGet = if (!usedInGet && getValue != null) {
             copyFunWithoutProperty(delegate, getValue)
@@ -166,41 +164,33 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
         )
     }
 
-    private fun copyFunWithoutProperty(delegate: IrClass, f: IrSimpleFunction): IrSimpleFunction {
+    private fun copyFunWithoutProperty(delegate: IrClass, function: IrSimpleFunction): IrSimpleFunction {
         return delegate.addFunction {
-            this.startOffset = f.startOffset
-            this.endOffset = f.endOffset
-            this.name = Name.identifier(f.name.identifier)
-            this.returnType = f.returnType
-            this.modality = f.modality
-            this.visibility = f.visibility
-            this.isSuspend = f.isSuspend
-            this.isFakeOverride = f.isFakeOverride
-            this.origin = f.origin
+            this.startOffset = function.startOffset
+            this.endOffset = function.endOffset
+            this.name = Name.identifier(function.name.identifier)
+            this.returnType = function.returnType
+            this.modality = function.modality
+            this.visibility = function.visibility
+            this.isSuspend = function.isSuspend
+            this.isFakeOverride = function.isFakeOverride
+            this.origin = function.origin
             this.isOperator = false
         }.apply {
-            val f = f
-            f.typeParameters.forEach {
+            function.typeParameters.forEach {
                 addTypeParameter(it.name.identifier, it.representativeUpperBound, it.variance)
             }
 
+            dispatchReceiverParameter = function.dispatchReceiverParameter?.copyTo(this)
 
-            // TODO: Не уверен, что явно задавать тип правильно
-//            dispatchReceiverParameter = parentAsClass.thisReceiver!!.copyTo(this)
-//            dispatchReceiverParameter = parentAsClass.thisReceiver?.copyTo(this, type = parentAsClass.defaultType)
-            dispatchReceiverParameter = f.dispatchReceiverParameter?.copyTo(this)
-//            dispatchReceiverParameter = parentAsClass.thisReceiver
-//            createDispatchReceiverParameter()
-
-
-            f.valueParameters.forEach { valueArgument ->
+            function.valueParameters.forEach { valueArgument ->
                 if (valueArgument.index != 1 && valueArgument.index != -1) { // FIXME определять по типу
                     addValueParameter(valueArgument.name.identifier, valueArgument.type)
                 }
             }
 
 
-            val oldParameters = f.valueParameters + f.dispatchReceiverParameter!!
+            val oldParameters = function.valueParameters + function.dispatchReceiverParameter!!
             val newParameters = valueParameters.toMutableList<IrValueParameter?>().apply {
                 add(1, null)
                 add(dispatchReceiverParameter)
@@ -214,41 +204,34 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
                         expression.run { IrGetValueImpl(startOffset, endOffset, type, it.symbol, origin) }
                     } ?: expression
                 }
-
-//                override fun visitReturn(expression: IrReturn): IrExpression {
-////                    expression.transformChildren(this, null)
-//                    expression.value = expression.value.transform(this, null)
-//                    return IrReturnImpl(expression.startOffset, expression.endOffset, expression.type, symbol, expression.value)
-//                }
             }
-            body = f.body?.deepCopyWithSymbols(this)?.also {
+
+            body = function.body?.deepCopyWithSymbols(this)?.also {
                 it.transform(parameterTransformer, null)
             }
-            overriddenSymbols = f.overriddenSymbols.toList()
+
+            overriddenSymbols = function.overriddenSymbols.toList()
         }
     }
 
-}
+    private fun analyzeOperatorForKPropertyUsage(function: IrFunction): Boolean {
+        val kPropertySymbol = function.valueParameters[1].symbol
+        val analyzer = object : IrElementVisitorVoid {
+            var used = false
+            override fun visitElement(element: IrElement) {
+                element.acceptChildrenVoid(this)
+            }
 
-private class KPropertyUsageFuncAnalyzer(val function: IrFunction) : IrElementVisitorVoid {
-    var used = false
-        private set
+            override fun visitGetValue(expression: IrGetValue) {
+                if (expression.symbol == kPropertySymbol) {
+                    used = true
+                }
+            }
+        }
 
-    private val propertySymbol = function.valueParameters[1].symbol // FIXME
-
-    init {
-        visitFunction(function)
-    }
-
-    override fun visitElement(element: IrElement) {
-        element.acceptChildrenVoid(this)
-    }
-
-    override fun visitGetValue(expression: IrGetValue) {
-        if (expression.symbol == propertySymbol)
-            used = true
-        else
-            super.visitGetValue(expression)
+        return analyzer.apply {
+            visitFunction(function)
+        }.used
     }
 }
 
