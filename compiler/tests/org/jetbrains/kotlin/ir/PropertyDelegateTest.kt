@@ -76,6 +76,22 @@ class PropertyDelegateTest : AbstractIrTextTestCase() {
     fun testFile() {
         KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/test.kt")
     }
+
+    fun testFakeOverride() {
+        KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/fakeOverride.kt")
+    }
+
+    fun testDelegateToAnother() {
+        KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/delegateToAnother.kt")
+    }
+
+    fun testDelegate() {
+        KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/delegate.kt")
+    }
+
+    fun testTwoClasses() {
+        KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/twoClasses.kt")
+    }
 }
 
 private class DebugVisitor(val withType: Boolean = false) : IrElementVisitorVoid {

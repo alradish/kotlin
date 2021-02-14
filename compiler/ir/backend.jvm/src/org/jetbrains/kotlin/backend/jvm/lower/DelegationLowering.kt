@@ -25,10 +25,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrNull
-import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
-import org.jetbrains.kotlin.ir.util.getSimpleFunction
-import org.jetbrains.kotlin.ir.util.isInterface
-import org.jetbrains.kotlin.ir.util.superTypes
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
@@ -65,7 +62,7 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
     }
 
     override fun visitProperty(declaration: IrProperty) {
-        if (!declaration.isDelegated) {
+        if (!declaration.isDelegated || declaration.isFakeOverride) {
             super.visitProperty(declaration)
             return
         }
@@ -94,7 +91,9 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
             }
             is IrBlock -> backingFieldExpression.type.takeIf { it is IrClassSymbol }?.classOrNull?.owner ?: return
             is IrConst<*> -> return
-            else -> TODO("Backing field was initialize with ${backingFieldExpression::class.simpleName}")
+            is IrGetObjectValue -> backingFieldExpression.symbol.owner
+            is IrPropertyReference -> TODO()
+            else -> TODO("Backing field was initialize with ${backingFieldExpression::class.simpleName}\n${backingFieldExpression.dumpKotlinLike()}")
         }
 
         if (delegateClass.isInterface)
@@ -105,10 +104,10 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
         }
 
         if (!get.used && declaration.getter != null && get.newF != null) {
-            declaration.getter!!.replaceCallInReturn(get.newF!!)
+            declaration.getter!!.replaceCallInReturn(get.newF)
         }
         if (!set.used && declaration.setter != null && set.newF != null) {
-            declaration.setter!!.replaceCallInReturn(set.newF!!)
+            declaration.setter!!.replaceCallInReturn(set.newF)
         }
     }
 
