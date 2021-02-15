@@ -12,10 +12,17 @@ class Delegate2: ReadOnlyProperty<Any, String> {
     override operator fun getValue(instance: Any, property: KProperty<*>) = property.name
 }
 
+fun another(a: Boolean): ReadOnlyProperty<Any, String> {
+    return if (a) {
+        Delegate1()
+    } else {
+        Delegate2()
+    }
+}
 
 fun delegate(a: Boolean): ReadOnlyProperty<Any, String> {
     return if (a) {
-        Delegate1()
+        another(!a)
     } else {
         Delegate2()
     }

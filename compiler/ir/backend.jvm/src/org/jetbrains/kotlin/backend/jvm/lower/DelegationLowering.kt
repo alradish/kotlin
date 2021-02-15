@@ -87,15 +87,52 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
         analyzeAndReplaceCalls(declaration, delegateClass)
     }
 
-    // TODO Убрать аннотацию когда реализую хотя бы один из случаев
-    @Suppress("UNREACHABLE_CODE")
     private fun IrCall.getDelegatedClassFromCall(): IrClass? {
         val function = symbol.owner
+
+        val returnExpressionsCollector = object : IrElementVisitorVoid {
+            val returns = mutableListOf<IrExpression>()
+            var currentScope: IrFunction = function
+
+            override fun visitElement(element: IrElement) {
+                element.acceptChildrenVoid(this)
+            }
+
+            override fun visitReturn(expression: IrReturn) {
+                val value = expression.value
+                val expressions = checkExpression(value)
+                expressions.forEach(returns::add)
+            }
+
+            private fun checkExpression(expression: IrExpression): List<IrExpression> {
+                return when (expression) {
+                    is IrWhen -> expression.branches.flatMap { checkExpression(it.result) }
+                    is IrBlock -> checkExpression(expression.statements.last() as IrExpression)
+                    is IrCall -> expression.symbol.owner.let { f ->
+                        if (f == currentScope) {
+                            emptyList()
+                        } else {
+                            val old = currentScope
+                            currentScope = f
+                            emptyList<IrExpression>().also {
+                                f.accept(this, null)
+                                currentScope = old
+                            }
+                        }
+                    }
+                    else -> listOf(expression)
+                }
+            }
+        }
+
         val expressions: List<IrExpression> = when {
             function.isOperator && function.name.identifier == "provideDelegate" -> TODO("Обработать случай с provideDelegate")
-            else -> TODO("Обработать случай с делегированием через функцию")
+            else -> {
+                function.accept(returnExpressionsCollector, null)
+                returnExpressionsCollector.returns
+            }
         }
-        return if (expressions.isNotEmpty() && expressions.same { (it.type as? IrConstructorCall)?.type }) {
+        return if (expressions.isNotEmpty() && expressions.same { (it as? IrConstructorCall)?.type }) {
             (expressions.first() as IrConstructorCall).annotationClass
         } else {
             null
@@ -232,23 +269,5 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
         return analyzer.apply {
             visitFunction(function)
         }.used
-    }
-}
-
-private class ReturnConstructorCollector : IrElementVisitorVoid {
-    val returns = mutableListOf<IrExpression>()
-
-
-    override fun visitElement(element: IrElement) {
-        element.acceptChildrenVoid(this)
-    }
-
-    override fun visitReturn(expression: IrReturn) {
-        val value = expression.value
-        if (value is IrCall) {
-            value.symbol.owner.accept(this, null)
-        } else {
-            returns.add(value)
-        }
     }
 }
