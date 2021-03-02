@@ -21,7 +21,12 @@ import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.test.KotlinTestUtils.DoTest
+import org.jetbrains.kotlin.test.TargetBackend
+import org.jetbrains.kotlin.test.TestMetadata
 import java.io.File
+import java.lang.Exception
+import java.util.regex.Pattern
 import kotlin.system.measureTimeMillis
 
 
@@ -134,7 +139,6 @@ class PropertyDelegateTest : AbstractIrTextTestCase() {
         )
     }
 
-
     // TODO На первый взгляд это можно оптимизировать. НО. Делегирование происходит через переменную(Call) ->
     //  переменная должна возвращать IrConstructorCall, но в процессе оптимизаций инициализацию делегата кладут в приватную перменную.
     fun testTwoPropByOneDelegete() {
@@ -143,6 +147,30 @@ class PropertyDelegateTest : AbstractIrTextTestCase() {
             this::doTest,
             this,
             "compiler/testData/ir/irOptimization/twoPropByOneDelegete.kt"
+        )
+    }
+
+    fun testGenericDelegateUncheckedCast1() {
+        KotlinTestUtils.runTest(
+            this::doTest,
+            this,
+            "compiler/testData/ir/irOptimization/genericDelegateUncheckedCast1.kt"
+        )
+    }
+
+    fun testFunctionRefDelefate() {
+        KotlinTestUtils.runTest(
+            this::doTest,
+            this,
+            "compiler/testData/ir/irOptimization/functionRefDelefate.kt"
+        )
+    }
+
+    fun testGenericSetValueViaSyntheticAccessor() {
+        KotlinTestUtils.runTest(
+            this::doTest,
+            this,
+            "compiler/testData/ir/irOptimization/genericSetValueViaSyntheticAccessor.kt"
         )
     }
 }

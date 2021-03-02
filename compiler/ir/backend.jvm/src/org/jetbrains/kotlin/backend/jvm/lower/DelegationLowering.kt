@@ -81,6 +81,7 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
             is IrBlock -> backingFieldExpression.type.takeIf { it is IrClassSymbol }?.classOrNull?.owner ?: return
             is IrConst<*> -> return
             is IrPropertyReference -> return // TODO Подробнее изучить случай делегирования проперти. Есть предположение что там всё само оптимизируется. Проверить что с именем
+            is IrGetValue -> backingFieldExpression.type.classOrNull?.owner ?: return
             else -> TODO("Backing field was initialize with ${backingFieldExpression::class.simpleName}\n${backingFieldExpression.dumpKotlinLike()}")
         }
 
@@ -137,7 +138,9 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
         }
 
         val delegate =
-            if (expressions.isNotEmpty() && expressions.map { it as? IrConstructorCall }
+            if (expressions.size == 1 && expressions.first() is IrGetField) {
+                (expressions.first() as IrGetField).type.classOrNull?.owner
+            } else if (expressions.isNotEmpty() && expressions.map { it as? IrConstructorCall }
                     .same { it?.type } && expressions.first() is IrConstructorCall) {
                 (expressions.first() as IrConstructorCall).annotationClass
             } else {
