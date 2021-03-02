@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.backend.jvm.codegen.AnnotationCodegen.Companion.anno
 import org.jetbrains.kotlin.backend.jvm.codegen.representativeUpperBound
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.declarations.addFunction
 import org.jetbrains.kotlin.ir.builders.declarations.addTypeParameter
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
+import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrReturnImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
@@ -165,14 +167,14 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
         }
 
         if (!get.used && delegatedProperty.getter != null && get.newF != null) {
-            delegatedProperty.getter!!.replaceAllCalls(get.function!!, get.newF)
+            delegatedProperty.getter!!.replaceAllCalls(get.function!!, get.newF, delegatedProperty.name.asString())
         }
         if (!set.used && delegatedProperty.setter != null && set.newF != null) {
-            delegatedProperty.setter!!.replaceAllCalls(set.function!!, set.newF)
+            delegatedProperty.setter!!.replaceAllCalls(set.function!!, set.newF, delegatedProperty.name.asString())
         }
     }
 
-    private fun IrElement.replaceAllCalls(oldCall: IrSimpleFunction, newCall: IrSimpleFunction) {
+    private fun IrElement.replaceAllCalls(oldCall: IrSimpleFunction, newCall: IrSimpleFunction, name: String) {
         val symbols = oldCall.overriddenSymbols + oldCall.symbol
         transform(object : IrElementTransformerVoidWithContext() {
             override fun visitCall(expression: IrCall): IrExpression {
@@ -187,6 +189,16 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
                                     val valueArgument = call.getValueArgument(i)
                                     if (i != 1) {
                                         putValueArgument(indexOfNewArg++, valueArgument)
+                                    } else {
+                                        putValueArgument(
+                                            indexOfNewArg++,
+                                            IrConstImpl.string(
+                                                UNDEFINED_OFFSET,
+                                                UNDEFINED_OFFSET,
+                                                context.irBuiltIns.stringType,
+                                                name
+                                            )
+                                        )
                                     }
                                 }
                             }
@@ -197,26 +209,6 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
             }
         }, null)
     }
-
-    private fun IrSimpleFunction.replaceCallInReturn(newCall: IrSimpleFunction) {
-        transform(object : IrElementTransformerVoidWithContext() {
-            override fun visitReturn(expression: IrReturn): IrExpression {
-                return context.createIrBuilder(currentScope!!.scope.scopeOwnerSymbol, expression.startOffset, expression.endOffset).run {
-                    irReturn(irCall(newCall as IrFunction).apply {
-                        val call = expression.value as IrCall
-                        dispatchReceiver = call.dispatchReceiver
-                        var indexOfNewArg = 0
-                        (0 until call.valueArgumentsCount).forEach { i ->
-                            val valueArgument = call.getValueArgument(i)
-                            if (i != 1)
-                                putValueArgument(indexOfNewArg++, valueArgument)
-                        }
-                    })
-                }
-            }
-        }, null)
-    }
-
 
     private fun analyzeAndCopyOperator(delegate: IrClass, name: String): KPropertyUsageInFun {
         return analyzeAndCopyOperator(delegate, delegate.getSimpleFunction(name))
@@ -302,15 +294,19 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
 //            dispatchReceiverParameter = delegate.thisReceiver?.copyTo(this, type = delegate.defaultType)
 
             function.valueParameters.forEach { valueArgument ->
-                if (valueArgument.index != 1 && valueArgument.index != -1) {
-                    addValueParameter(valueArgument.name.identifier, valueArgument.type)
+                when {
+                    valueArgument.index == 1 -> addValueParameter("name", context.irBuiltIns.stringType)
+                    valueArgument.index != 1 && valueArgument.index != -1 -> addValueParameter(
+                        valueArgument.name.identifier,
+                        valueArgument.type
+                    )
                 }
             }
-
+            val nameParameter = valueParameters[1]
 
             val oldParameters = function.valueParameters + function.dispatchReceiverParameter!!
             val newParameters = valueParameters.toMutableList<IrValueParameter?>().apply {
-                add(1, null)
+                set(1, null)
                 add(dispatchReceiverParameter)
             }
             val oldSymbols: List<IrSymbol> = listOf(function.symbol)
@@ -322,11 +318,28 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
                 .toMap()
                 .plus(parameterMapping.mapNotNull { (k, v) -> v?.let { k.symbol to v.symbol } })
 
-            val parameterTransformer = object : IrElementTransformerVoid() {
+            val parameterTransformer = object : IrElementTransformerVoidWithContext() {
                 override fun visitGetValue(expression: IrGetValue): IrGetValue {
                     return parameterMapping[expression.symbol.owner]?.let {
                         expression.run { IrGetValueImpl(startOffset, endOffset, type, it.symbol, origin) }
                     } ?: expression
+                }
+
+                override fun visitCall(expression: IrCall): IrExpression {
+                    val dispatchReceiver = expression.dispatchReceiver as? IrGetValue ?: return super.visitCall(expression)
+                    return if (dispatchReceiver.symbol == function.valueParameters[1].symbol && expression.symbol.owner.name.asString() == "<get-name>") {
+                        expression.run {
+                            IrGetValueImpl(
+                                startOffset,
+                                endOffset,
+                                nameParameter.type,
+                                nameParameter.symbol,
+                                origin
+                            )
+                        }
+                    } else {
+                        super.visitCall(expression)
+                    }
                 }
 
                 override fun visitReturn(expression: IrReturn): IrExpression {
@@ -371,6 +384,17 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
             var used = false
             override fun visitElement(element: IrElement) {
                 element.acceptChildrenVoid(this)
+            }
+
+            override fun visitCall(expression: IrCall) {
+                val dispatchReceiver = expression.dispatchReceiver as? IrGetValue ?: return super.visitCall(expression)
+                if (dispatchReceiver.symbol == kPropertySymbol) {
+                    if (expression.symbol.owner.name.asString() != "<get-name>") {
+                        used = true
+                    }
+                } else {
+                    super.visitCall(expression)
+                }
             }
 
             override fun visitGetValue(expression: IrGetValue) {

@@ -66,13 +66,34 @@ class PropertyDelegateTest : AbstractIrTextTestCase() {
         )
     }
 
+    private fun runTest(testDataFilePath: String) {
+        KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
+    }
+
+    fun testAllFilesPresentInIrOptimization() {
+        KotlinTestUtils.assertAllTestsPresentByMetadataWithExcluded(
+            this.javaClass,
+            File("compiler/testData/ir/irOptimization"),
+            Pattern.compile("^(.+)\\.kt$"),
+            null,
+            TargetBackend.JVM_IR,
+            true
+        )
+    }
 
     fun testFile() {
         KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/test.kt")
     }
 
+    @TestMetadata("simple.kt")
     fun testSimple() {
-        KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/simple.kt")
+//        KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/simple.kt")
+        runTest("compiler/testData/ir/irOptimization/simple.kt")
+    }
+
+    @TestMetadata("simpleWithName.kt")
+    fun testSimpleWithName() {
+        runTest("compiler/testData/ir/irOptimization/simpleWithName.kt")
     }
 
     fun testSimpleWithProperty() {
