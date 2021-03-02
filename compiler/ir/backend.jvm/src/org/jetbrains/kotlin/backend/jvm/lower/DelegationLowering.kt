@@ -145,10 +145,12 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
             }
 
         if (delegate != null && function.isOperator && function.name.identifier == "provideDelegate") {
-            val provideDelegate = analyzeAndCopyOperator(function.parentAsClass, function)
-            if (provideDelegate.newF != null) {
-                property.replaceAllCalls(function, provideDelegate.newF)
-            }
+            // Не работаем с provideDelegate, т.к. предполагаем что kProperty необходима
+//            val provideDelegate = analyzeAndCopyOperator(function.parentAsClass, function)
+//            if (provideDelegate.newF != null) {
+//                property.replaceAllCalls(function, provideDelegate.newF)
+//            }
+            return null
         }
 
         return delegate
