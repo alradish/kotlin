@@ -25,6 +25,8 @@ import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrReturnImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrReturnTargetSymbol
+import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
@@ -306,8 +308,14 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
                 add(1, null)
                 add(dispatchReceiverParameter)
             }
+            val oldSymbols: List<IrSymbol> = listOf(function.symbol)
+            val newSymbols: List<IrSymbol> = listOf(this.symbol)
 
             val parameterMapping = oldParameters.zip(newParameters).toMap()
+            val symbolsMapping = oldSymbols
+                .zip(newSymbols)
+                .toMap()
+                .plus(parameterMapping.mapNotNull { (k, v) -> v?.let { k.symbol to v.symbol } })
 
             val parameterTransformer = object : IrElementTransformerVoid() {
                 override fun visitGetValue(expression: IrGetValue): IrGetValue {
@@ -323,7 +331,8 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
                                 startOffset,
                                 endOffset,
                                 type,
-                                this@apply.symbol,
+                                symbolsMapping[expression.returnTargetSymbol] as? IrReturnTargetSymbol
+                                    ?: expression.returnTargetSymbol,
                                 value
                             )
                         }
