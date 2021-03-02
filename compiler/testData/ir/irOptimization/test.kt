@@ -79,18 +79,18 @@ fun <T> delegate(initializer: () -> T): Delegate1 = Delegate1()
 var topLevelD by Delegate2()
 
 class A {
-    var a by Delegate1()
-    var b by Delegate2()
-    val c: String by delegate {
-        42
-    }
-    val x: Int by object {
-        operator fun getValue(thisRef: Any?, data: KProperty<*>): Nothing = null!!
-    }
+//    var a by Delegate1()
+//    var b by Delegate2()
+//    val c: String by delegate {
+//        42
+//    }
+//    val x: Int by object {
+//        operator fun getValue(thisRef: Any?, data: KProperty<*>): Nothing = null!!
+//    }
 
     var delegatedVar by Mut(2)
 
-    val i by simpleProvide()
-    val h by h()
+//    val i by simpleProvide()
+//    val h by h()
 
 }

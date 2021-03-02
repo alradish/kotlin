@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.io.File
+import kotlin.system.measureTimeMillis
 
 
 class PropertyDelegateTest : AbstractIrTextTestCase() {
@@ -36,17 +37,8 @@ class PropertyDelegateTest : AbstractIrTextTestCase() {
         printFakeOverridesStrategy = FakeOverridesStrategy.ALL
     )
 
-    override fun setupEnvironment(environment: KotlinCoreEnvironment) {
-        super.setupEnvironment(environment)
-//        val mockJdk = listOf(File(KotlinTestUtils.getHomeDirectory(), "compiler/testData/mockJDK/jre/lib/rt.jar"))
-//        environment.registerJavac(bootClasspath = mockJdk)
-//        environment.configuration.put(JVMConfigurationKeys.USE_JAVAC, true)
-    }
 
     override fun doTest(wholeFile: File, testFiles: List<TestFile>) {
-//        val mockJdk = listOf(File(KotlinTestUtils.getHomeDirectory(), "compiler/testData/mockJDK/jre/lib/rt.jar"))
-//        myEnvironment.registerJavac(bootClasspath = mockJdk)
-//        myEnvironment.configuration.put(JVMConfigurationKeys.USE_JAVAC, true)
         myEnvironment.configuration.put(JVMConfigurationKeys.IR, true)
 
         generationState = compileFiles(
@@ -58,9 +50,6 @@ class PropertyDelegateTest : AbstractIrTextTestCase() {
 
         val before = generateIrModule(false).dumpKotlinLike(kotlinLikeDumpOptions)
         val after = irModuleLower?.dumpKotlinLike(kotlinLikeDumpOptions) ?: ""
-
-//        println(irModuleLower?.dumpKotlinLike(kotlinLikeDumpOptions))
-
 
         FileUtil.writeToFile(
             File(wholeFile.parentFile.path, "before.kt"),
@@ -77,6 +66,14 @@ class PropertyDelegateTest : AbstractIrTextTestCase() {
         KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/test.kt")
     }
 
+    fun testSimple() {
+        KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/simple.kt")
+    }
+
+    fun testSimpleWithProperty() {
+        KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/simpleWithProperty.kt")
+    }
+
     fun testFakeOverride() {
         KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/fakeOverride.kt")
     }
@@ -85,12 +82,68 @@ class PropertyDelegateTest : AbstractIrTextTestCase() {
         KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/delegateToAnother.kt")
     }
 
+    fun testSimpleDelegapropertyte() {
+        KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/simpleDelegate.kt")
+    }
+
     fun testDelegate() {
         KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/delegate.kt")
     }
 
     fun testTwoClasses() {
         KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/twoClasses.kt")
+    }
+
+    fun testDelegateClassVarToInlineClassWithProvideDelegate() {
+        KotlinTestUtils.runTest(
+            this::doTest,
+            this,
+            "compiler/testData/ir/irOptimization/delegateClassVarToInlineClassWithProvideDelegate.kt"
+        )
+    }
+
+    fun testDelegateTopLevelVarToInlineClass() {
+        KotlinTestUtils.runTest(
+            this::doTest,
+            this,
+            "compiler/testData/ir/irOptimization/delegateTopLevelVarToInlineClass.kt"
+        )
+    }
+
+    fun testDelegatedPropertyOfInlineClassType() {
+        KotlinTestUtils.runTest(
+            this::doTest,
+            this,
+            "compiler/testData/ir/irOptimization/delegatedPropertyOfInlineClassType.kt"
+        )
+    }
+
+    fun testKPropertyForDelegatedProperty() {
+        KotlinTestUtils.runTest(
+            this::doTest,
+            this,
+            "compiler/testData/ir/irOptimization/kPropertyForDelegatedProperty.kt"
+        )
+    }
+
+    fun testValByMapDelegatedProperty() {
+        KotlinTestUtils.runTest(
+            this::doTest,
+            this,
+            "compiler/testData/ir/irOptimization/valByMapDelegatedProperty.kt"
+        )
+    }
+
+
+    // TODO На первый взгляд это можно оптимизировать. НО. Делегирование происходит через переменную(Call) ->
+    //  переменная должна возвращать IrConstructorCall, но в процессе оптимизаций инициализацию делегата кладут в приватную перменную.
+    fun testTwoPropByOneDelegete() {
+        assert(false)
+        KotlinTestUtils.runTest(
+            this::doTest,
+            this,
+            "compiler/testData/ir/irOptimization/twoPropByOneDelegete.kt"
+        )
     }
 }
 

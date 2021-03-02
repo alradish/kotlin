@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.backend.common.phaser.makeIrFilePhase
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.codegen.AnnotationCodegen.Companion.annotationClass
 import org.jetbrains.kotlin.backend.jvm.codegen.representativeUpperBound
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.builders.declarations.addFunction
 import org.jetbrains.kotlin.ir.builders.declarations.addTypeParameter
@@ -22,8 +23,8 @@ import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrReturnImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
-import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
@@ -74,10 +75,10 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
         val delegateClass = when (backingFieldExpression) {
             is IrConstructorCall -> backingFieldExpression.annotationClass
             is IrGetObjectValue -> backingFieldExpression.symbol.owner
-            is IrCall -> backingFieldExpression.getDelegatedClassFromCall() ?: return
+            is IrCall -> getDelegatedClassFromCall(backingFieldExpression, declaration) ?: return
             is IrBlock -> backingFieldExpression.type.takeIf { it is IrClassSymbol }?.classOrNull?.owner ?: return
             is IrConst<*> -> return
-            is IrPropertyReference -> TODO()
+            is IrPropertyReference -> return // TODO Подробнее изучить случай делегирования проперти. Есть предположение что там всё само оптимизируется. Проверить что с именем
             else -> TODO("Backing field was initialize with ${backingFieldExpression::class.simpleName}\n${backingFieldExpression.dumpKotlinLike()}")
         }
 
@@ -87,8 +88,8 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
         analyzeAndReplaceCalls(declaration, delegateClass)
     }
 
-    private fun IrCall.getDelegatedClassFromCall(): IrClass? {
-        val function = symbol.owner
+    private fun getDelegatedClassFromCall(call: IrCall, property: IrProperty): IrClass? {
+        val function = call.symbol.owner
 
         val returnExpressionsCollector = object : IrElementVisitorVoid {
             val returns = mutableListOf<IrExpression>()
@@ -120,23 +121,35 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
                             }
                         }
                     }
+//                    is IrGetField -> {
+//                        expression
+//                    }
                     else -> listOf(expression)
                 }
             }
         }
 
-        val expressions: List<IrExpression> = when {
-            function.isOperator && function.name.identifier == "provideDelegate" -> TODO("Обработать случай с provideDelegate")
-            else -> {
-                function.accept(returnExpressionsCollector, null)
-                returnExpressionsCollector.returns
+        val expressions = returnExpressionsCollector.let {
+            function.accept(returnExpressionsCollector, null)
+            it.returns
+        }
+
+        val delegate =
+            if (expressions.isNotEmpty() && expressions.map { it as? IrConstructorCall }
+                    .same { it?.type } && expressions.first() is IrConstructorCall) {
+                (expressions.first() as IrConstructorCall).annotationClass
+            } else {
+                null
+            }
+
+        if (delegate != null && function.isOperator && function.name.identifier == "provideDelegate") {
+            val provideDelegate = analyzeAndCopyOperator(function.parentAsClass, function)
+            if (provideDelegate.newF != null) {
+                property.replaceAllCalls(function, provideDelegate.newF)
             }
         }
-        return if (expressions.isNotEmpty() && expressions.same { (it as? IrConstructorCall)?.type }) {
-            (expressions.first() as IrConstructorCall).annotationClass
-        } else {
-            null
-        }
+
+        return delegate
     }
 
     private fun analyzeAndReplaceCalls(delegatedProperty: IrProperty, delegate: IrClass) {
@@ -145,11 +158,37 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
         }
 
         if (!get.used && delegatedProperty.getter != null && get.newF != null) {
-            delegatedProperty.getter!!.replaceCallInReturn(get.newF)
+            delegatedProperty.getter!!.replaceAllCalls(get.function!!, get.newF)
         }
         if (!set.used && delegatedProperty.setter != null && set.newF != null) {
-            delegatedProperty.setter!!.replaceCallInReturn(set.newF)
+            delegatedProperty.setter!!.replaceAllCalls(set.function!!, set.newF)
         }
+    }
+
+    private fun IrElement.replaceAllCalls(oldCall: IrSimpleFunction, newCall: IrSimpleFunction) {
+        val symbols = oldCall.overriddenSymbols + oldCall.symbol
+        transform(object : IrElementTransformerVoidWithContext() {
+            override fun visitCall(expression: IrCall): IrExpression {
+                if (expression.symbol in symbols) {
+                    return context.createIrBuilder(currentScope!!.scope.scopeOwnerSymbol, expression.startOffset, expression.endOffset)
+                        .run {
+                            irCall(newCall as IrFunction).apply {
+                                val call = expression
+                                dispatchReceiver = call.dispatchReceiver
+                                var indexOfNewArg = 0
+                                (0 until call.valueArgumentsCount).forEach { i ->
+                                    val valueArgument = call.getValueArgument(i)
+                                    if (i != 1) {
+                                        putValueArgument(indexOfNewArg++, valueArgument)
+                                    }
+                                }
+                            }
+                        }
+                } else {
+                    return super.visitCall(expression)
+                }
+            }
+        }, null)
     }
 
     private fun IrSimpleFunction.replaceCallInReturn(newCall: IrSimpleFunction) {
@@ -171,12 +210,28 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
         }, null)
     }
 
-    private fun analyzeDelegateAndGenerate(delegate: IrClass): KPropertyUsages {
-        // FIXME Нет доступа к операторам объявленым внешне(через экстеншн)
-        val getValue = delegate.symbol.getSimpleFunction("getValue")?.owner
-        val setValue = delegate.symbol.getSimpleFunction("setValue")?.owner
 
-        // FIXME Тело может быть пустым. Нужно как-то обработать это
+    private fun analyzeAndCopyOperator(delegate: IrClass, name: String): KPropertyUsageInFun {
+        return analyzeAndCopyOperator(delegate, delegate.getSimpleFunction(name))
+    }
+
+    private fun analyzeAndCopyOperator(delegate: IrClass, operator: IrSimpleFunction?): KPropertyUsageInFun {
+        val used = operator?.let { analyzeOperatorForKPropertyUsage(it) } ?: false
+        return KPropertyUsageInFun(
+            operator,
+            used,
+            if (!used && operator != null) {
+                copyFunWithoutProperty(delegate, operator)
+            } else {
+                null
+            }
+        )
+    }
+
+    private fun analyzeDelegateAndGenerate(delegate: IrClass): KPropertyUsages {
+        val getValue = delegate.getSimpleFunction("getValue")
+        val setValue = delegate.getSimpleFunction("setValue")
+
         val usedInGet = getValue?.let { analyzeOperatorForKPropertyUsage(it) } ?: false
         val usedInSet = setValue?.let { analyzeOperatorForKPropertyUsage(it) } ?: false
 
@@ -202,26 +257,45 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
     }
 
     private fun copyFunWithoutProperty(delegate: IrClass, function: IrSimpleFunction): IrSimpleFunction {
+        /*
+        delegate.addFunction {
+            this.startOffset = function.startOffset
+            this.endOffset = function.endOffset
+            this.name = Name.identifier(function.name.identifier)
+            this.returnType = function.returnType
+            this.modality = Modality.FINAL
+            this.visibility = function.visibility
+            this.isSuspend = function.isSuspend
+            this.isFakeOverride = false
+            this.isOperator = false
+        }
+         */
+
+//        return delegate.addFunction(
+//            function.name.identifier,
+//            function.returnType,
+//
+//        ).apply {
         return delegate.addFunction {
             this.startOffset = function.startOffset
             this.endOffset = function.endOffset
             this.name = Name.identifier(function.name.identifier)
             this.returnType = function.returnType
-            this.modality = function.modality
+            this.modality = Modality.FINAL
             this.visibility = function.visibility
             this.isSuspend = function.isSuspend
-            this.isFakeOverride = function.isFakeOverride
-            this.origin = function.origin
-            this.isOperator = false
+            this.isFakeOverride = false
+            this.origin = IrDeclarationOrigin.DEFINED
         }.apply {
             function.typeParameters.forEach {
                 addTypeParameter(it.name.identifier, it.representativeUpperBound, it.variance)
             }
 
             dispatchReceiverParameter = function.dispatchReceiverParameter?.copyTo(this)
+//            dispatchReceiverParameter = delegate.thisReceiver?.copyTo(this, type = delegate.defaultType)
 
             function.valueParameters.forEach { valueArgument ->
-                if (valueArgument.index != 1 && valueArgument.index != -1) { // FIXME определять по типу
+                if (valueArgument.index != 1 && valueArgument.index != -1) {
                     addValueParameter(valueArgument.name.identifier, valueArgument.type)
                 }
             }
@@ -241,17 +315,43 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
                         expression.run { IrGetValueImpl(startOffset, endOffset, type, it.symbol, origin) }
                     } ?: expression
                 }
+
+                override fun visitReturn(expression: IrReturn): IrExpression {
+                    return super.visitReturn(
+                        with(expression) {
+                            IrReturnImpl(
+                                startOffset,
+                                endOffset,
+                                type,
+                                this@apply.symbol,
+                                value
+                            )
+                        }
+                    )
+                }
             }
 
             body = function.body?.deepCopyWithSymbols(this)?.also {
                 it.transform(parameterTransformer, null)
             }
 
-            overriddenSymbols = function.overriddenSymbols.toList()
+//            body = IrFactoryImpl.createBlockBody(
+//                UNDEFINED_OFFSET,
+//                UNDEFINED_OFFSET,
+//                emptyList()
+//            )
+
+//            overriddenSymbols = function.overriddenSymbols.toList()
         }
     }
 
+    private fun IrClass.getSimpleFunction(name: String): IrSimpleFunction? {
+        // FIXME Нет доступа к операторам объявленым внешне(через экстеншн)
+        return symbol.getSimpleFunction(name)?.owner
+    }
+
     private fun analyzeOperatorForKPropertyUsage(function: IrFunction): Boolean {
+        // FIXME Тело может быть пустым. Нужно как-то обработать это
         val kPropertySymbol = function.valueParameters[1].symbol
         val analyzer = object : IrElementVisitorVoid {
             var used = false
