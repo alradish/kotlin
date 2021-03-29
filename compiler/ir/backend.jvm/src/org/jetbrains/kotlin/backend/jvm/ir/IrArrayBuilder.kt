@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.backend.jvm.ir
 
+import org.jetbrains.kotlin.backend.jvm.codegen.AnnotationCodegen.Companion.annotationClass
 import org.jetbrains.kotlin.backend.jvm.lower.inlineclasses.unboxInlineClass
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
@@ -99,7 +100,11 @@ class IrArrayBuilder(val builder: JvmIrBuilder, val arrayType: IrType) {
     // Copy a single spread expression, unless it refers to a newly constructed array.
     private fun copyArray(spread: IrExpression): IrExpression {
         if (spread is IrConstructorCall ||
-            (spread is IrFunctionAccessExpression && spread.symbol == builder.irSymbols.arrayOfNulls))
+            (spread is IrFunctionAccessExpression && spread.symbol == builder.irSymbols.arrayOfNulls) ||
+            (spread is IrFunctionAccessExpression && spread.symbol.owner.annotations.any {
+                it.annotationClass.name.asString() == "OwnedResult"
+            })
+        )
             return spread
 
         return builder.irBlock {

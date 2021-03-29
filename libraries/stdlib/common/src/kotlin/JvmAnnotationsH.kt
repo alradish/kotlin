@@ -8,6 +8,13 @@ package kotlin.jvm
 import kotlin.annotation.AnnotationTarget.*
 
 /**
+ * TODO
+ */
+@Target(AnnotationTarget.FUNCTION)
+@MustBeDocumented
+public annotation class OwnedResult()
+
+/**
  * Instructs the Kotlin compiler to generate overloads for this function that substitute default parameter values.
  *
  * If a method has N parameters and M of which have default values, M overloads are generated: the first one

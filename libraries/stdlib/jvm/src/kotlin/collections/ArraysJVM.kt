@@ -32,6 +32,7 @@ public inline fun ByteArray.toString(charset: Charset): String = String(this, ch
  * @sample samples.collections.Collections.Collections.collectionToTypedArray
  */
 @Suppress("UNCHECKED_CAST")
+@OwnedResult
 public actual inline fun <reified T> Collection<T>.toTypedArray(): Array<T> {
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     val thisCollection = this as java.util.Collection<T>
