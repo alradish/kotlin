@@ -1,5 +1,4 @@
-// WITH_RUNTIME
-// FILE: Delegate1.kt
+// WITH_REFLECT
 import kotlin.reflect.KProperty
 
 class Delegate1(var v: String = "s") {
@@ -13,8 +12,8 @@ class Delegate1(var v: String = "s") {
     }
 }
 
-// FILE: A.kt
-
 class A {
     var a by Delegate1()
 }
+
+// 1 CALL 'public final fun getValue (thisRef: kotlin.Any?, property: kotlin.reflect.KProperty<*>): kotlin.String [operator] declared in <root>.Delegate1' type=kotlin.String origin=null

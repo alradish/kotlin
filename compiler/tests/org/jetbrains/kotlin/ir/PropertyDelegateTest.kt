@@ -34,12 +34,9 @@ class PropertyDelegateTest : AbstractIrTextTestCase() {
 
     private var generationState: GenerationState? = null
     private val kotlinLikeDumpOptions = KotlinLikeDumpOptions(
-        printRegionsPerFile = true,
-        printFileName = true,
-        printFilePath = true,
-        useNamedArguments = true,
-        labelPrintingStrategy = LabelPrintingStrategy.ALWAYS,
-        printFakeOverridesStrategy = FakeOverridesStrategy.ALL
+        printFileName = false,
+        printFilePath = false,
+        printFakeOverridesStrategy = FakeOverridesStrategy.NONE
     )
 
 
@@ -70,15 +67,8 @@ class PropertyDelegateTest : AbstractIrTextTestCase() {
         KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
     }
 
-    fun testAllFilesPresentInIrOptimization() {
-        KotlinTestUtils.assertAllTestsPresentByMetadataWithExcluded(
-            this.javaClass,
-            File("compiler/testData/ir/irOptimization"),
-            Pattern.compile("^(.+)\\.kt$"),
-            null,
-            TargetBackend.JVM_IR,
-            true
-        )
+    fun testSpread() {
+        KotlinTestUtils.runTest(this::doTest, this, "compiler/testData/ir/irOptimization/spreadVararg.kt")
     }
 
     fun testFile() {
@@ -193,6 +183,16 @@ class PropertyDelegateTest : AbstractIrTextTestCase() {
             this,
             "compiler/testData/ir/irOptimization/genericSetValueViaSyntheticAccessor.kt"
         )
+    }
+
+    @TestMetadata("delegateTopLevelVarToInlineClass.kt")
+    fun testDelegateTopLevelToInlineClass() {
+        KotlinTestUtils.runTest(this::doTest, this,"compiler/testData/ir/irText/delegatedOperators/delegateTopLevelVarToInlineClass.kt")
+    }
+
+    @TestMetadata("annotations.kt")
+    fun testAnnotations() {
+        runTest("compiler/testData/ir/irText/delegatedOperators/annotations.kt")
     }
 }
 

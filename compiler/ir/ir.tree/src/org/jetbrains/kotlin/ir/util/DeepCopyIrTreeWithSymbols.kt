@@ -173,6 +173,9 @@ open class DeepCopyIrTreeWithSymbols(
             overriddenSymbols = declaration.overriddenSymbols.map {
                 symbolRemapper.getReferencedFunction(it) as IrSimpleFunctionSymbol
             }
+            correspondingPropertySymbol = declaration.correspondingPropertySymbol?.let {
+                symbolRemapper.getReferencedProperty(it)
+            }
             copyAttributes(declaration)
             transformFunctionChildren(declaration)
         }

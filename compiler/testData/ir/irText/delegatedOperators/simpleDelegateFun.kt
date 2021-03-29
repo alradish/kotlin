@@ -1,5 +1,4 @@
 // WITH_RUNTIME
-// FILE: ReadOnlyDelegate.kt
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
@@ -11,7 +10,10 @@ class RODelegate : ReadOnlyProperty<Any?, Int> {
 
 fun simpleProvide(): ReadOnlyProperty<Any?, Int> = RODelegate()
 
-// FILE: A.kt
 class A {
     val i by simpleProvide()
 }
+
+
+// 0 INVOKEVIRTUAL RODelegate.getValue \(Ljava/lang/Object;Lkotlin/reflect/KProperty;\)I;
+// 1 INVOKEVIRTUAL RODelegate.getValue \(Ljava/lang/Object;Ljava/lang/String;\)I

@@ -13,25 +13,28 @@ import org.jetbrains.kotlin.backend.common.phaser.makeIrFilePhase
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.codegen.AnnotationCodegen.Companion.annotationClass
 import org.jetbrains.kotlin.backend.jvm.codegen.representativeUpperBound
+import org.jetbrains.kotlin.backend.jvm.ir.createJvmIrBuilder
+import org.jetbrains.kotlin.codegen.state.getManglingSuffixBasedOnKotlinSignature
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
+import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.addFunction
 import org.jetbrains.kotlin.ir.builders.declarations.addTypeParameter
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
-import org.jetbrains.kotlin.ir.builders.irCall
-import org.jetbrains.kotlin.ir.builders.irReturn
+import org.jetbrains.kotlin.ir.builders.declarations.buildField
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrReturnImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrReturnTargetSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.util.*
-import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.name.Name
@@ -49,6 +52,7 @@ private data class KPropertyUsages(
 )
 
 private data class KPropertyUsageInFun(
+    val symbol: IrFunctionSymbol?,
     val function: IrSimpleFunction?,
     val used: Boolean,
     val newF: IrSimpleFunction?
@@ -59,6 +63,9 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
     val analyzedDelegates: MutableMap<IrClass, KPropertyUsages> = mutableMapOf()
 
     override fun lower(irFile: IrFile) {
+        return
+//        error("lowering")
+//        println("1")
         irFile.acceptChildrenVoid(this)
     }
 
@@ -70,6 +77,8 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
         if (!declaration.isDelegated || declaration.isFakeOverride) {
             return
         }
+//        error("stop")
+//        Thread.sleep(10000)
 
         val backingFieldExpression = declaration
             .backingField
@@ -126,9 +135,6 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
                             }
                         }
                     }
-//                    is IrGetField -> {
-//                        expression
-//                    }
                     else -> listOf(expression)
                 }
             }
@@ -158,6 +164,21 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
             return null
         }
 
+        if (delegate != null && delegate != property.backingField?.type?.classOrNull) {
+            val builder = context.createIrBuilder(property.symbol)
+            val backingField = property.backingField ?: return delegate
+            property.backingField = property.factory.buildField {
+                updateFrom(backingField)
+                name = Name.identifier(backingField.name.asString())
+                type = delegate.defaultType
+            }.apply {
+                initializer = context.createJvmIrBuilder(symbol).run {
+                    irExprBody(irImplicitCast(backingField.initializer!!.expression, delegate.defaultType))
+                }
+                parent = property.parent
+            }
+        }
+
         return delegate
     }
 
@@ -166,16 +187,35 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
             analyzeDelegateAndGenerate(delegate)
         }
 
+        // FIXME убрать аргумент name
         if (!get.used && delegatedProperty.getter != null && get.newF != null) {
-            delegatedProperty.getter!!.replaceAllCalls(get.function!!, get.newF, delegatedProperty.name.asString())
+            delegatedProperty.getter!!.replaceAllCalls(
+                get.symbol!!,
+                get.function!!,
+                get.newF,
+                delegatedProperty.name.asString(),
+                delegatedProperty
+            )
         }
         if (!set.used && delegatedProperty.setter != null && set.newF != null) {
-            delegatedProperty.setter!!.replaceAllCalls(set.function!!, set.newF, delegatedProperty.name.asString())
+            delegatedProperty.setter!!.replaceAllCalls(
+                set.symbol!!,
+                set.function!!,
+                set.newF,
+                delegatedProperty.name.asString(),
+                delegatedProperty
+            )
         }
     }
 
-    private fun IrElement.replaceAllCalls(oldCall: IrSimpleFunction, newCall: IrSimpleFunction, name: String) {
-        val symbols = oldCall.overriddenSymbols + oldCall.symbol
+    private fun IrElement.replaceAllCalls(
+        symbolToReplace: IrFunctionSymbol,
+        oldCall: IrSimpleFunction,
+        newCall: IrSimpleFunction,
+        name: String,
+        property: IrProperty
+    ) {
+        val symbols = oldCall.overriddenSymbols + oldCall.symbol + symbolToReplace
         transform(object : IrElementTransformerVoidWithContext() {
             override fun visitCall(expression: IrCall): IrExpression {
                 if (expression.symbol in symbols) {
@@ -183,7 +223,6 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
                         .run {
                             irCall(newCall as IrFunction).apply {
                                 val call = expression
-                                dispatchReceiver = call.dispatchReceiver
                                 var indexOfNewArg = 0
                                 (0 until call.valueArgumentsCount).forEach { i ->
                                     val valueArgument = call.getValueArgument(i)
@@ -201,6 +240,14 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
                                         )
                                     }
                                 }
+//                                dispatchReceiver = call.dispatchReceiver
+                                val oldDispatchReceiver = call.dispatchReceiver
+                                dispatchReceiver = if (oldDispatchReceiver is IrGetField && oldDispatchReceiver.receiver != null) {
+                                    val variable = oldDispatchReceiver.receiver as IrGetValue
+                                    irGetField(irGet(variable.type, variable.symbol), property.backingField!!)
+                                } else {
+                                    oldDispatchReceiver
+                                }
                             }
                         }
                 } else {
@@ -217,6 +264,7 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
     private fun analyzeAndCopyOperator(delegate: IrClass, operator: IrSimpleFunction?): KPropertyUsageInFun {
         val used = operator?.let { analyzeOperatorForKPropertyUsage(it) } ?: false
         return KPropertyUsageInFun(
+            operator?.symbol,
             operator,
             used,
             if (!used && operator != null) {
@@ -228,8 +276,18 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
     }
 
     private fun analyzeDelegateAndGenerate(delegate: IrClass): KPropertyUsages {
-        val getValue = delegate.getSimpleFunction("getValue")
-        val setValue = delegate.getSimpleFunction("setValue")
+        // FIXME Вложенность суперов может быть больше 1.
+        val (getSymbol, getValue) = delegate.getSimpleFunction("getValue")?.let {
+            if (it.isFakeOverride)
+                it.symbol to delegate.superTypes.mapNotNull { it.classOrNull?.getSimpleFunction("getValue")?.owner }.firstOrNull()
+            else it.symbol to it
+        } ?: null to null
+
+        val (setSymbol, setValue) = delegate.getSimpleFunction("setValue")?.let {
+            if (it.isFakeOverride)
+                it.symbol to delegate.superTypes.mapNotNull { it.classOrNull?.getSimpleFunction("setValue")?.owner }.firstOrNull()
+            else it.symbol to it
+        } ?: null to null
 
         val usedInGet = getValue?.let { analyzeOperatorForKPropertyUsage(it) } ?: false
         val usedInSet = setValue?.let { analyzeOperatorForKPropertyUsage(it) } ?: false
@@ -243,11 +301,13 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
 
         return KPropertyUsages(
             KPropertyUsageInFun(
+                getSymbol,
                 getValue,
                 usedInGet,
                 newGet
             ),
             KPropertyUsageInFun(
+                setSymbol,
                 setValue,
                 usedInSet,
                 newSet
@@ -256,25 +316,6 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
     }
 
     private fun copyFunWithoutProperty(delegate: IrClass, function: IrSimpleFunction): IrSimpleFunction {
-        /*
-        delegate.addFunction {
-            this.startOffset = function.startOffset
-            this.endOffset = function.endOffset
-            this.name = Name.identifier(function.name.identifier)
-            this.returnType = function.returnType
-            this.modality = Modality.FINAL
-            this.visibility = function.visibility
-            this.isSuspend = function.isSuspend
-            this.isFakeOverride = false
-            this.isOperator = false
-        }
-         */
-
-//        return delegate.addFunction(
-//            function.name.identifier,
-//            function.returnType,
-//
-//        ).apply {
         return delegate.addFunction {
             this.startOffset = function.startOffset
             this.endOffset = function.endOffset
@@ -290,8 +331,10 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
                 addTypeParameter(it.name.identifier, it.representativeUpperBound, it.variance)
             }
 
-            dispatchReceiverParameter = function.dispatchReceiverParameter?.copyTo(this)
-//            dispatchReceiverParameter = delegate.thisReceiver?.copyTo(this, type = delegate.defaultType)
+            // Я не знаю что лучше и чем они отличаются
+//            dispatchReceiverParameter = delegate.thisReceiver?.copyTo(this) // выдаёт ошибку если у делегата есть параметр типа
+            dispatchReceiverParameter = function.dispatchReceiverParameter?.copyTo(this) // РАБОТАЕТ В БОЛЬШИНСТВЕ СЛУЧАЕВ
+
 
             function.valueParameters.forEach { valueArgument ->
                 when {
@@ -362,18 +405,13 @@ private class DelegationLowering(val context: JvmBackendContext) : IrElementVisi
                 it.transform(parameterTransformer, null)
             }
 
-//            body = IrFactoryImpl.createBlockBody(
-//                UNDEFINED_OFFSET,
-//                UNDEFINED_OFFSET,
-//                emptyList()
-//            )
-
 //            overriddenSymbols = function.overriddenSymbols.toList()
         }
     }
 
     private fun IrClass.getSimpleFunction(name: String): IrSimpleFunction? {
         // FIXME Нет доступа к операторам объявленым внешне(через экстеншн)
+        // TODO попробовать заменить на findDeclaration
         return symbol.getSimpleFunction(name)?.owner
     }
 
