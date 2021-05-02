@@ -305,6 +305,9 @@ private val jvmFilePhases = listOf(
     remapObjectFieldAccesses,
     anonymousObjectSuperConstructorPhase,
     tailrecPhase,
+
+    rangeMinusOne,
+
     makePatchParentsPhase(1),
 
     jvmStandardLibraryBuiltInsPhase,
@@ -315,6 +318,8 @@ private val jvmFilePhases = listOf(
     jvmInlineClassPhase,
 
     makePatchParentsPhase(2),
+
+    testLowering,
 
     enumWhenPhase,
     singletonReferencesPhase,
@@ -404,5 +409,27 @@ class JvmLower(val context: JvmBackendContext) {
     fun lower(irModuleFragment: IrModuleFragment) {
         // TODO run lowering passes as callbacks in bottom-up visitor
         jvmPhases.invokeToplevel(context.phaseConfig, context, irModuleFragment)
+        /*
+        val file = irModuleFragment.files.first()
+val clazz = file.declarations.first() as IrClass
+val f = clazz.declarations.get(2) as IrFunction
+val call = (f.body.statements.first() as IrReturn).value as IrCall
+call.symbol.owner.dumpKotlinLike()
+
+inline fun <T : Any?, R : Any?> Iterable<T>.myFold(initial: R, operation: Function2<@ParameterName(name = "acc") R, T, R>): R {
+  val $i$f$myFold: Int = 0
+  var accumulator: R = initial
+  { // BLOCK
+    val tmp0_iterator: Iterator<T> = <this>.iterator()
+    Script$myFold$2@ while (tmp0_iterator.hasNext()) { // BLOCK
+      val element: T = tmp0_iterator.next()
+      accumulator = operation.invoke(p1 = accumulator, p2 = element)
+    }
+  }
+  return accumulator
+}
+
+
+         */
     }
 }
