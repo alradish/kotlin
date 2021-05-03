@@ -16,6 +16,9 @@ private val RANGE_SIMPLE = File("/home/alrai/projects/kotlin/compiler/testData/i
 private val RANGE_CODE_ARRAY = File("/home/alrai/projects/kotlin/compiler/testData/ir/irText/range/simpleArrayRange.kt")
     .readText()
 
+private val RANGE_CODE_LIST = File("/home/alrai/projects/kotlin/compiler/testData/ir/irText/range/simpleListRange.kt")
+    .readText()
+
 fun main() {
     val cp = listOf(
         "lib/kotlin-stdlib.jar",
@@ -28,7 +31,8 @@ fun main() {
 
 
 //    val runner = ExpressionRunner(RANGE_SIMPLE)
-    val runner = ExpressionRunner(RANGE_CODE_ARRAY)
+//    val runner = ExpressionRunner(RANGE_CODE_ARRAY)
+    val runner = ExpressionRunner(RANGE_CODE_LIST)
     runner.run(cp, listOf("-include-runtime", "-Xuse-ir"), emptyList(), compilerCp)
 }
 

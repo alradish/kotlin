@@ -38,6 +38,7 @@ class RangeUntilLowering(val context: JvmBackendContext) : IrElementTransformerV
         it.owner.name.asString() == "minus" && it.owner.valueParameters.first().type == context.irBuiltIns.intType
     }
     private val arraySize = context.irBuiltIns.arrayClass.getPropertyGetter("size")
+    private val collectionSize = context.irBuiltIns.collectionClass.getPropertyGetter("size")
     private val iterator = context.ir.symbols.iterable.functions.single { it.owner.name.asString() == "iterator" }
     private val intRangeTo = context.irBuiltIns.intClass.functions.single {
         it.owner.name.asString() == "rangeTo" && it.owner.valueParameters[0].type == context.irBuiltIns.intType
@@ -56,6 +57,7 @@ class RangeUntilLowering(val context: JvmBackendContext) : IrElementTransformerV
             if (!iteratorVariable.type.isSubtypeOfClass(context.ir.symbols.iterator)) {
                 return super.visitBlock(expression)
             }
+
 
             val iteratorCall = iteratorVariable.initializer as? IrCall
             val iterable = iteratorCall?.run {
@@ -97,7 +99,8 @@ class RangeUntilLowering(val context: JvmBackendContext) : IrElementTransformerV
                     val dispatchReceiver = to.dispatchReceiver
                     when {
                         dispatchReceiver is IrConst<*> -> TODO("Check if this is `good` constant")
-                        dispatchReceiver is IrCall && dispatchReceiver.symbol == arraySize -> {
+                        dispatchReceiver is IrCall &&
+                                (dispatchReceiver.symbol == arraySize || collectionSize in dispatchReceiver.symbol.owner.overriddenSymbols) -> {
                             dispatchReceiver
                         }
                         else -> return super.visitBlock(expression)
