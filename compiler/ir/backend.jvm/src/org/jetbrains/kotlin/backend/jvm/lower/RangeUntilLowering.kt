@@ -77,23 +77,21 @@ class RangeUntilLowering(val context: JvmBackendContext) : IrElementTransformerV
             } else {
                 return super.visitBlock(expression)
             }
-            val (classifier, newFrom) = when (from) {
+            val classifier = when (from) {
                 is IrConst<*> -> when (from.kind) {
-                    is IrConstKind.Int -> context.irBuiltIns.intClass to from.value as Int
-                    else -> TODO()
+                    is IrConstKind.Int -> context.irBuiltIns.intClass
+                    else -> return super.visitBlock(expression)
                 }
-                else -> TODO()
+                else -> return super.visitBlock(expression)
             }
-            println(newFrom)
             val newTo = when {
-                to is IrConst<*> -> TODO()
-
                 to is IrCall && to.symbol == intMinus -> {
                     val t = to.getValueArgument(0) as? IrConst<*> ?: return super.visitBlock(expression)
 
                     // Check if this is minus one pattern
                     val isMinusOne = t.kind == IrConstKind.Int && t.value as? Int == 1
-                    println(isMinusOne)
+                    if (!isMinusOne)
+                        return super.visitBlock(expression)
 
                     // Check if this is `array.size` or acceptable constant(without overflow)
                     val dispatchReceiver = to.dispatchReceiver
