@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.test.backend.ir.range
 
 import org.jetbrains.kotlin.test.runners.ir.AbstractIrTextTest
 import org.junit.jupiter.api.Test
+import org.jetbrains.kotlin.test.TestMetadata
 
 
 class RangeIrTextTest : AbstractIrTextTest() {
@@ -14,5 +15,11 @@ class RangeIrTextTest : AbstractIrTextTest() {
     @TestMetadata("simpleRange.kt")
     fun testSimpleRange() {
         runTest("compiler/testData/ir/irText/range/simpleRange.kt")
+    }
+
+    @Test
+    @TestMetadata("simpleArrayRange.kt")
+    fun testSimpleArrayRange() {
+        runTest("compiler/testData/ir/irText/range/simpleArrayRange.kt")
     }
 }

@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.ir.declarations.impl.IrVariableImpl
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.util.dump
+import org.jetbrains.kotlin.ir.util.dumpKotlinLike
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 
@@ -33,33 +34,29 @@ class RangeUntilLowering(val context: JvmBackendContext) : IrElementTransformerV
         irBody.transformChildrenVoid()
     }
 
-//    private val minusMatcher = createIrCallMatcher {
-//
-//    }
-
     private val intMinus = context.irBuiltIns.intClass.functions.single {
         it.owner.name.asString() == "minus" && it.owner.valueParameters.first().type == context.irBuiltIns.intType
     }
     private val arraySize = context.irBuiltIns.arrayClass.getPropertyGetter("size")
+    private val iterator = context.ir.symbols.iterable.functions.single { it.owner.name.asString() == "iterator" }
+    private val intRangeTo = context.irBuiltIns.intClass.functions.single {
+        it.owner.name.asString() == "rangeTo" && it.owner.valueParameters[0].type == context.irBuiltIns.intType
+    }
 
     override fun visitBlock(expression: IrBlock): IrExpression {
         if (expression.origin != IrStatementOrigin.FOR_LOOP) {
             return super.visitBlock(expression)  // Not a for-loop block.
         }
-
+        val old = expression.dumpKotlinLike()
         with(expression.statements) {
             assert(size == 2) { "Expected 2 statements in for-loop block, was:\n${expression.dump()}" }
             val iteratorVariable = get(0) as IrVariable
             assert(iteratorVariable.origin == IrDeclarationOrigin.FOR_LOOP_ITERATOR) { "Expected FOR_LOOP_ITERATOR origin for iterator variable, was:\n${iteratorVariable.dump()}" }
-//            val initializer = iteratorVariable.initializer ?: return super.visitBlock(expression)
 
             if (!iteratorVariable.type.isSubtypeOfClass(context.ir.symbols.iterator)) {
                 return super.visitBlock(expression)
             }
 
-            // Get the iterable expression, e.g., `someIterable` in the following loop variable declaration:
-            //
-            //   val it = someIterable.iterator()
             val iteratorCall = iteratorVariable.initializer as? IrCall
             val iterable = iteratorCall?.run {
                 if (extensionReceiver != null) {
@@ -69,8 +66,8 @@ class RangeUntilLowering(val context: JvmBackendContext) : IrElementTransformerV
                 }
             }
 
-            val (from, to) = if (iterable?.type?.isSubtypeOfClass(context.ir.symbols.intRange) == true) {
-                (iterable as IrCall).run {
+            val (from, to) = if ((iterable as? IrCall)?.symbol == intRangeTo) {
+                iterable.run {
                     if (extensionReceiver != null) {
                         extensionReceiver
                     } else {
@@ -111,7 +108,6 @@ class RangeUntilLowering(val context: JvmBackendContext) : IrElementTransformerV
                 else -> return super.visitBlock(expression)
             }
 
-//            val tmp = context.createJvmIrBuilder(iteratorCall.symbol).run {
             val tmp = JvmIrBuilder(context, iteratorCall.symbol, UNDEFINED_OFFSET, UNDEFINED_OFFSET).run {
                 val until = this@RangeUntilLowering.context.ir.symbols.untilByExtensionReceiver[classifier] ?: error("")
                 val newRange = irCall(until).apply {
@@ -119,12 +115,14 @@ class RangeUntilLowering(val context: JvmBackendContext) : IrElementTransformerV
                     putValueArgument(0, newTo)
                 }
 
-                irCall(this@RangeUntilLowering.context.ir.symbols.iterable.functions.single { it.owner.name.asString() == "iterator" }).apply {
+                irCall(iterator).apply {
                     dispatchReceiver = newRange
                 }
             }
             iteratorVariable.initializer = tmp
         }
+        val new = expression.dumpKotlinLike()
+        println("$old <> $new")
         return super.visitBlock(expression)
     }
 }

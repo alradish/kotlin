@@ -10,7 +10,7 @@ import java.net.URL
 
 private val KOTLIN_HOME = File("/home/alrai/projects/kotlin/dist/kotlinc")
 
-private val RANGE_CODE_SIMPLE = File("/home/alrai/projects/kotlin/compiler/testData/ir/irText/range/simpleRange.kt")
+private val RANGE_SIMPLE = File("/home/alrai/projects/kotlin/compiler/testData/ir/irText/range/simpleRange.kt")
     .readText()
 
 private val RANGE_CODE_ARRAY = File("/home/alrai/projects/kotlin/compiler/testData/ir/irText/range/simpleArrayRange.kt")
@@ -26,12 +26,10 @@ fun main() {
         "lib/kotlin-compiler.jar"
     ).map(::resolveKt)
 
-//    val runner = ScriptRunner("/home/alrai/projects/kotlin/compiler/cli/cli-runner/src/org/jetbrains/kotlin/runner/range.kt")
 
-//    val runner = ExpressionRunner(RANGE_CODE)
+//    val runner = ExpressionRunner(RANGE_SIMPLE)
     val runner = ExpressionRunner(RANGE_CODE_ARRAY)
     runner.run(cp, listOf("-include-runtime", "-Xuse-ir"), emptyList(), compilerCp)
-//    runner.run(cp, emptyList(), emptyList(), compilerCp)
 }
 
 private fun File.toURL2(): URL {
