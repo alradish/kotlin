@@ -30,9 +30,9 @@ fun main() {
     ).map(::resolveKt)
 
 
-//    val runner = ExpressionRunner(RANGE_SIMPLE)
+    val runner = ExpressionRunner(RANGE_SIMPLE)
 //    val runner = ExpressionRunner(RANGE_CODE_ARRAY)
-    val runner = ExpressionRunner(RANGE_CODE_LIST)
+//    val runner = ExpressionRunner(RANGE_CODE_LIST)
     runner.run(cp, listOf("-include-runtime", "-Xuse-ir"), emptyList(), compilerCp)
 }
 

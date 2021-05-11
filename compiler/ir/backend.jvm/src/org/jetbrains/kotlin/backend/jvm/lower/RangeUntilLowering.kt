@@ -95,10 +95,13 @@ class RangeUntilLowering(val context: JvmBackendContext) : IrElementTransformerV
                     if (!isMinusOne)
                         return super.visitBlock(expression)
 
-                    // Check if this is `array.size` or acceptable constant(without overflow)
+                    // Check if this is `array.size`(`collection.size`) or acceptable constant(without overflow)
                     val dispatchReceiver = to.dispatchReceiver
                     when {
-                        dispatchReceiver is IrConst<*> -> TODO("Check if this is `good` constant")
+//                        dispatchReceiver is IrConst<*> -> return super.visitBlock(expression) // FIXME Check if this is `good` constant
+                        dispatchReceiver is IrConst<*> -> {
+                            dispatchReceiver
+                        }
                         dispatchReceiver is IrCall &&
                                 (dispatchReceiver.symbol == arraySize || collectionSize in dispatchReceiver.symbol.owner.overriddenSymbols) -> {
                             dispatchReceiver
