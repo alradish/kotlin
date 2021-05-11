@@ -7,40 +7,42 @@
 
 ## DSL
 
-
 ### Матчер
 
+#### Основная идея
+
+Идея основывается на матчерах из пакета [`org.jetbrains.kotlin.backend.common.lower.matchers`](../lower/matchers)
+
+Создать иерархию матчеров которые умеют матчить свой Ir.
+
+Например, для `IrDeclaration` можно проверить `matchOrigin` и `matchParent`,
+и тогда для `IrFunction: IrDeclaraion` можно будет использовать `matchOrigin` и `matchParent`.
+
+![](IrFunction.png "Diagram for IrFunction class")
+
+#### Пример
 
 ```Kotlin
 matchFile {
     matchClass {
-        // Вместо отдельного блока под всё можно сделать универсальный `match {...}` 
-        // с ресивиром. В данном случае `IrClass`
-        config {
-            // Штуки чтобы вычислить нужный класс по тиму:
-            //    это интерфейс? Наследуется от? Типовые параметры? и т.д.
-            // Возможно блок конфиг не нужен
-            classKind { it == ClassKind.INTERFACE }
-            isCompanion()
-            isInner()
-            isData()
-            isExternal()
-            isInline()
-            isExpect()
-            isFun()
-            matchSuperTypes { ... }
-            matchThisReceiver { ... }
-            // и т.д.
-        }
+        matchClassKind { it == ClassKind.INTERFACE }
+        isCompanion()
+        isInner()
+        isData()
+        isExternal()
+        isInline()
+        isExpect()
+        isFun()
+        matchSuperTypes { }
+        matchThisReceiver { }
+        // и т.д.
 
         // Проматчить тело класса. Пока не понятно как лучше сделать
-        // 1)   Можно утвердить что внутри блока `matchClass` важен порядок и использовать констуркции вида
+        //      Можно утвердить что внутри блока `matchClass` важен порядок и использовать констуркции вида
         //      `matchConstructor` `matchProperty` `matchFunction` `matchCompanion` `anything`
-        // 2)   TODO Придумать другой способ
-        matchProperty {
+        matchDeclaration { // from IrDeclaration
             // TODO   
         }
-        anything()
         matchFuntion {
             isInline()
             isExternal()
@@ -59,26 +61,26 @@ matchFile {
 
 ### Трансформация
 
-## 1
+#### 1
 
 Можно было бы описывать новый код прямо после кода который нужно заменить.
 
-   Плюсы:
+Плюсы:
 
-   * Просто в реализации т.к. почти всё что может понадобиться для создания нового кода находится в скоупе(ссылка на класс, параметры функции и т.д.)
+* Просто в реализации т.к. почти всё что может понадобиться для создания нового кода находится в скоупе(ссылка на класс, параметры функции и т.д.)
 
-   Минусы:
-   * Может выглядеть запутанно
-   * Возможно не интуитивно. Функция замены будет находиться где-то в середине матчинга, 
-     хотя на самом деле она выполнится только если весь матчинг выполнился
+Минусы:
+* Может выглядеть запутанно
+* Возможно не интуитивно. Функция замены будет находиться где-то в середине матчинга,
+  хотя на самом деле она выполнится только если весь матчинг выполнился
 
 
-### 1.1
+##### 1.1
 ```Kotlin
 matchClass {
-   matchFunction {
+    matchFunction {
 
-   } replaceWith getNewFunction(this@IrClass)
+    } replaceWith getNewFunction(this@IrClass)
 }
 ```
 где
@@ -92,13 +94,13 @@ fun getNewFunction(clazz: IrClass, f: IrFunction): IrFunction {
 }
 ```
 
-### 1.2
+#### 1.2
 
 ```Kotlin
 matchClass {
-   matchFunction {
-       TODO()
-   } replaceWith<IrFunction> { getNewFun(this@IrClass, this) }
+    matchFunction {
+        TODO()
+    } replaceWith<IrFunction> { getNewFun(this@IrClass, this) }
 }
 ```
 где
@@ -112,23 +114,23 @@ fun getNewFunction(clazz: IrClass, f: IrFunction): IrFunction {
 }
 ```
 
-## 2
+#### 2
 
 На этапе матчинга можно оставлять именованные метки
 
-   Плюсы:
-   * 
+Плюсы:
+*
 
-   Минусы:
-   * Теряется информация о типах
-   * Как сообщать об ошибках?
+Минусы:
+* Теряется информация о типах
+* Как сообщать об ошибках?
 
 
 ```Kotlin
 matchClass {
-   matchFunction {
-       TODO()
-   } mark("f", ReplaceContext(this@IrClass))
+    matchFunction {
+        TODO()
+    } mark("f", ReplaceContext(this@IrClass))
 }
 ```
 
@@ -144,11 +146,11 @@ replace("f") { context: ReplaceContext ->
 
 ```Kotlin
 fun <F> Matcher<F>.mark(id: String, context: ReplaceContext) {
-   context.add(this.ir)
-   TODO()
+    context.add(this.ir)
+    TODO()
 }
 
 fun replace(id: String, newElement: (ReplaceContext) -> IrElement) {
-   TODO()
+    TODO()
 }
 ```
