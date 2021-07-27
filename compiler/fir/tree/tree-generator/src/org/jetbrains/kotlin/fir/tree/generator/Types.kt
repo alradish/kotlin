@@ -41,6 +41,7 @@ val annotationUseSiteTargetType = type(AnnotationUseSiteTarget::class)
 val operationKindType = type("fir.expressions", "LogicOperationKind")
 val coneKotlinTypeType = type(ConeKotlinType::class)
 val coneSimpleKotlinTypeType = type(ConeSimpleKotlinType::class)
+val collectionLiteralKindType = type("fir.expressions", "CollectionLiteralKind")
 
 val whenExpressionType = generatedType("expressions", "FirWhenExpression")
 val expressionType = generatedType("expressions", "FirExpression")

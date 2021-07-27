@@ -94,6 +94,8 @@ class Fir2IrImplicitCastInserter(
     // TODO: element-wise cast?
     override fun visitSpreadArgumentExpression(spreadArgumentExpression: FirSpreadArgumentExpression, data: IrElement): IrElement = data
 
+    override fun visitCollectionLiteral(collectionLiteral: FirCollectionLiteral, data: IrElement): IrElement = data
+
     // ==================================================================================
 
     override fun visitExpression(expression: FirExpression, data: IrElement): IrElement {
