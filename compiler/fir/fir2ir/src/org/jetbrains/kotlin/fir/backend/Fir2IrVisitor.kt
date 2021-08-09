@@ -322,14 +322,7 @@ class Fir2IrVisitor(
     // ==================================================================================
 
     override fun visitCollectionLiteral(collectionLiteral: FirCollectionLiteral, data: Any?): IrElement {
-        return collectionLiteral.convertWithOffsets { startOffset, endOffset ->
-            IrCollectionLiteralImpl(
-                startOffset, endOffset,
-                collectionLiteral.typeRef.toIrType(),
-                collectionLiteral.kind == CollectionLiteralKind.LIST_LITERAL,
-                collectionLiteral.expressions.map { it.accept(this, data) as IrExpression }
-            )
-        }
+        return super.visitCollectionLiteral(collectionLiteral, data)
     }
 
     override fun visitReturnExpression(returnExpression: FirReturnExpression, data: Any?): IrElement {
