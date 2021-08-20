@@ -101,7 +101,12 @@ object FirTreeBuilder : AbstractFirTreeBuilder() {
     val qualifiedAccess by element(Expression, resolvable, statement)
     val checkNotNullCall by element(Expression, expression, call, resolvable)
     val elvisExpression by element(Expression, expression, resolvable)
-    val collectionLiteral by element(Expresssion, expression)
+
+    val collectionLiteral by element(Expression, expression)
+    val collectionLiteralEntry by sealedElement(Expression)
+    val collectionLiteralEntrySingle by element(Expression, collectionLiteralEntry)
+    val collectionLiteralEntryPair by element(Expression, collectionLiteralEntry)
+
 
     val arrayOfCall by element(Expression, expression, call)
     val augmentedArraySetCall by element(Expression, statement)
