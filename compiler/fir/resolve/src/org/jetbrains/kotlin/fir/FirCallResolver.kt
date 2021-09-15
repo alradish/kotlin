@@ -109,13 +109,6 @@ class FirCallResolver(
         val resultExpression = functionCall.transformCalleeReference(StoreNameReference, nameReference)
         val candidate = (nameReference as? FirNamedReferenceWithCandidate)?.candidate
 
-//        if (hasCollectionLiteral) {
-//            functionCall.argumentList.transformArguments(
-//                transformer,
-//                ResolutionMode.WithExpectedArgumentsType(candidate?.argumentMapping ?: emptyMap())
-//            )
-//        }
-
         val resolvedReceiver = functionCall.explicitReceiver
         if (candidate != null && resolvedReceiver is FirResolvedQualifier) {
             resolvedReceiver.replaceResolvedToCompanionObject(candidate.isFromCompanionObjectTypeScope)
