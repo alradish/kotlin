@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.resolve
 
 import org.jetbrains.kotlin.fir.FirCallResolver
+import org.jetbrains.kotlin.fir.FirCollectionLiteralResolver
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.FirCallableReferenceAccess
@@ -44,6 +45,7 @@ abstract class BodyResolveComponents : SessionHolder {
     abstract val samResolver: FirSamResolver
     abstract val callResolver: FirCallResolver
     abstract val callCompleter: FirCallCompleter
+    abstract val collectionLiteralResolver: FirCollectionLiteralResolver
     abstract val doubleColonExpressionResolver: FirDoubleColonExpressionResolver
     abstract val syntheticCallGenerator: FirSyntheticCallGenerator
     abstract val dataFlowAnalyzer: FirDataFlowAnalyzer<*>

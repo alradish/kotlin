@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.ConeStubDiagnostic
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildArgumentList
-import org.jetbrains.kotlin.fir.expressions.builder.buildConstExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildResolvedReifiedParameterReference
 import org.jetbrains.kotlin.fir.references.*
 import org.jetbrains.kotlin.fir.references.builder.buildBackingFieldReference
@@ -37,7 +36,6 @@ import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.fir.types.builder.buildImplicitTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildStarProjection
 import org.jetbrains.kotlin.fir.types.builder.buildTypeProjectionWithVariance
@@ -48,7 +46,6 @@ import org.jetbrains.kotlin.resolve.calls.results.TypeSpecificityComparator
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
 import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
-import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -175,19 +172,11 @@ class FirCallResolver(
             collectionLiteral,
             CallKind.CollectionLiteral,
             when (collectionLiteral.kind) {
-                CollectionLiteralKind.LIST_LITERAL -> OperatorNameConventions.BUILD_LIST_CL
-                CollectionLiteralKind.MAP_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
+                CollectionLiteralKind.SEQ_LITERAL -> OperatorNameConventions.BUILD_LIST_CL
+                CollectionLiteralKind.DICT_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
             },
             null,
-            buildArgumentList {
-                // TODO size and init
-                when (collectionLiteral.kind) {
-                    CollectionLiteralKind.LIST_LITERAL -> this.arguments.addAll(
-                        collectionLiteral.expressions.map { (it as FirCollectionLiteralEntrySingle).expression }
-                    )
-                    CollectionLiteralKind.MAP_LITERAL -> TODO()
-                }
-            },
+            buildArgumentList(),
             isPotentialQualifierPart = false,
             isImplicitInvoke = false,
             emptyList(),

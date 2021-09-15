@@ -9,6 +9,10 @@ import org.jetbrains.kotlin.fir.FirCallResolver
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.PrivateForInline
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.FirCollectionLiteralResolver
+import org.jetbrains.kotlin.fir.declarations.FirDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirFile
+import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.calls.ResolutionContext
 import org.jetbrains.kotlin.fir.resolve.calls.ResolutionStageRunner
@@ -69,6 +73,7 @@ abstract class FirAbstractBodyResolveTransformer(phase: FirResolvePhase) : FirAb
     protected inline val typeResolverTransformer: FirSpecificTypeResolverTransformer get() = components.typeResolverTransformer
     protected inline val callResolver: FirCallResolver get() = components.callResolver
     protected inline val callCompleter: FirCallCompleter get() = components.callCompleter
+    protected inline val collectionLiteralResolver: FirCollectionLiteralResolver get() = components.collectionLiteralResolver
     protected inline val dataFlowAnalyzer: FirDataFlowAnalyzer<*> get() = components.dataFlowAnalyzer
     protected inline val scopeSession: ScopeSession get() = components.scopeSession
     protected inline val file: FirFile get() = components.file
@@ -106,6 +111,7 @@ abstract class FirAbstractBodyResolveTransformer(phase: FirResolvePhase) : FirAb
             session
         )
         override val callCompleter: FirCallCompleter = FirCallCompleter(transformer, this)
+        override val collectionLiteralResolver: FirCollectionLiteralResolver = FirCollectionLiteralResolver(transformer, this)
         override val dataFlowAnalyzer: FirDataFlowAnalyzer<*> =
             FirDataFlowAnalyzer.createFirDataFlowAnalyzer(this, context.dataFlowAnalyzerContext)
         override val syntheticCallGenerator: FirSyntheticCallGenerator = FirSyntheticCallGenerator(this)

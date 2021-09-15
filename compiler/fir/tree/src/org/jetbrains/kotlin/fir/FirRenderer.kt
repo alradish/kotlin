@@ -1369,7 +1369,14 @@ open class FirRenderer(builder: StringBuilder, protected val mode: RenderMode = 
         collectionLiteral.typeRef.accept(this)
         print(" [")
         collectionLiteral.expressions.forEach {
-            it.accept(this)
+            when (it) {
+                is FirCollectionLiteralEntryPair -> {
+                    it.key.accept(this)
+                    print(" : ")
+                    it.value.accept(this)
+                }
+                is FirCollectionLiteralEntrySingle -> it.expression.accept(this)
+            }
             print(", ")
         }
         print("] ")

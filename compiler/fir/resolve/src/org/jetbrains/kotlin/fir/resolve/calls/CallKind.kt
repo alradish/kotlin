@@ -88,7 +88,6 @@ sealed class CallKind(vararg resolutionSequence: ResolutionStage) {
     )
 
     object CollectionLiteral : CallKind(
-        // TODO CL add more checks
         CheckVisibility,
 //        MapArguments,
         MapTypeArguments,
