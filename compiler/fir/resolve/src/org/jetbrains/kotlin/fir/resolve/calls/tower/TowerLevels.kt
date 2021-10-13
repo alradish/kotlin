@@ -221,6 +221,7 @@ class ScopeTowerLevel(
     val scope: FirScope,
     val extensionReceiver: ReceiverValue?,
     private val extensionsOnly: Boolean,
+    private val consumeBoth: Boolean,
     private val includeInnerConstructors: Boolean
 ) : SessionBasedTowerLevel(session) {
 
@@ -287,7 +288,7 @@ class ScopeTowerLevel(
     ) {
         val candidateReceiverTypeRef = candidate.fir.receiverTypeRef
         val receiverExpected = extensionsOnly || extensionReceiver != null
-        if (candidateReceiverTypeRef == null == receiverExpected) return
+        if (candidateReceiverTypeRef == null == receiverExpected && !consumeBoth) return
         val dispatchReceiverValue = dispatchReceiverValue(candidate)
         if (dispatchReceiverValue == null && shouldSkipCandidateWithInconsistentExtensionReceiver(candidate)) {
             return
