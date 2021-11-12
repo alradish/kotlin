@@ -29,44 +29,33 @@ package org.jetbrains.kotlin.runner
 //}
 
 //import kotlin.collections.Set.Companion.build
-//import kotlin.collections.CollectionLiteralBuilder
+//import kotlin.collections.SeqCollectionLiteralBuilder
 //import java.io.File
 
 
 
 //class A {
 //    companion object {
-//        fun <T> build(size: Int, ianit: CollectionLiteralBuilder<A, T>.() -> Unit = {}): A {
+//        fun <T> build(size: Int, ianit: SeqCollectionLiteralBuilder<A, T>.() -> Unit = {}): A {
 //            return TODO()
 //        }
 //    }
 //}
 //
-fun <T> Int.Companion.buildSeq(size: Int, init: CollectionLiteralBuilder<Int, T>.() -> Unit = {}) : Int {
+fun <T> Int.Companion.buildSeq(size: Int, init: SeqCollectionLiteralBuilder<Int, T>.() -> Unit = {}) : Int {
     return TODO()
 }
 //
-//fun <T> Double.Companion.buildSeq(size: Int, init: CollectionLiteralBuilder<Double, T>.() -> Unit = {}) : Double {
+//fun <T> Double.Companion.buildSeq(size: Int, init: SeqCollectionLiteralBuilder<Double, T>.() -> Unit = {}) : Double {
 //    return TODO()
 //}
 //
-fun <T> Set.Companion.buildSeq(size: Int, init: CollectionLiteralBuilder<Set<T>, T>.() -> Unit = {}): Set<T> {
+fun <T> Set.Companion.buildSeq(size: Int, init: SeqCollectionLiteralBuilder<Set<T>, T>.() -> Unit = {}): Set<T> {
     return TODO()
 }
 
-fun <T> List.Companion.buildSeq(size: Int, init: CollectionLiteralBuilder<List<T>, T>.() -> Unit = {}): List<T> {
+fun <T> List.Companion.buildSeq(size: Int, init: SeqCollectionLiteralBuilder<List<T>, T>.() -> Unit = {}): List<T> {
     return TODO()
-//    return object : CollectionLiteralBuilder<List<T>, T> {
-//        private val buf = mutableSetOf<T>()
-//
-//        override fun add(element: T) {
-//            buf.add(element)
-//        }
-//
-//        override fun build(): List<T> {
-//            return buf
-//        }
-//    }.apply(init).build()
 }
 //
 interface A
@@ -76,7 +65,7 @@ open class B : A {
     }
 }
 
-fun <T> B.Companion.buildSeq(size: Int, init: CollectionLiteralBuilder<B, T>.() -> Unit = {}): B {
+fun <T> B.Companion.buildSeq(size: Int, init: SeqCollectionLiteralBuilder<B, T>.() -> Unit = {}): B {
     TODO()
 }
 open class C : A {
@@ -85,7 +74,7 @@ open class C : A {
     }
 }
 
-fun <T> C.Companion.buildSeq(size: Int, init: CollectionLiteralBuilder<C, T>.() -> Unit = {}): C {
+fun <T> C.Companion.buildSeq(size: Int, init: SeqCollectionLiteralBuilder<C, T>.() -> Unit = {}): C {
     TODO()
 }
 
@@ -93,8 +82,9 @@ fun <T> C.Companion.buildSeq(size: Int, init: CollectionLiteralBuilder<C, T>.() 
 //
 //}
 
-fun <T> foo(c: Set<T>) {}
+//fun <T> foo(c: Set<T>) {}
 //fun foo(b: B) {}
+//fun f(set: Set<Int>) {}
 
 //fun <T: A> a(): T = TODO()
 //fun foo(s: Set<Int>, i: String, l: List<Int>) {
@@ -105,14 +95,19 @@ fun <T> foo(c: Set<T>) {}
 //fun <T: Int> foo(a: T) { }
 
 //fun <T> a(a: T): T = a
-
+fun f(set: Set<Int>) {}
+fun <Z> b(): Z {
+    return TODO()
+}
 fun main() {
 //    val a: Set<Int> = [1, 2, 3]
 //    val a = [1, 2, 3]
 //    val a = [1, 2, 3.0]
 //    listOf(1, 2, 3)
 //    listOf(listOf(1, 2, 3), setOf(4, 5, 6))
-    foo([1, 2, 3])
+//    f([1, 2, 3])
+//    val a: List<Int> = listOf(b(), 1)
+    val a: List<Int> = [b(), 1]
 //    foo(a())
 //    foo([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 //    foo([listOf(), setOf()])

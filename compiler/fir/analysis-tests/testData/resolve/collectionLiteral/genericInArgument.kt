@@ -22,5 +22,5 @@ fun <T> b(): T {
 }
 
 fun main() {
-    val a: List<Int> =[b(), 1]
+    val a: List<Int> = [b(), 1]
 }

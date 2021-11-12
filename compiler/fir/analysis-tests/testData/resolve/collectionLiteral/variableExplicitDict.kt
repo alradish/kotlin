@@ -8,15 +8,7 @@ fun <K, V> Double.Companion.buildDict(size: Int, init: DictCollectionLiteralBuil
 
 
 fun main() {
-    val a: Int = Int.buildDict<Int, Int>(3) {
-        add(1, 1)
-        add(2, 2)
-        add(3, 3)
-    }
+    val a: Int = [1: 1, 2: 2, 3: 3]
     val b: Map<Int, Int> = <!NO_BUILDERS_FOR_COLLECTION_LITERAL!>[1: 1, 2: 2, 3: 3]<!>
-    val c: Double = Double.buildDict<String, Int>(3) {
-        add("1", 1)
-        add("2", 2)
-        add("3", 3)
-    }
+    val c: Double = ["1": 1, "2": 2, "3": 3]
 }

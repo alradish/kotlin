@@ -55,7 +55,11 @@ data class CallInfo(
     // Four properties for callable references only
     val expectedType: ConeKotlinType? = null,
     val outerCSBuilder: ConstraintSystemBuilder? = null,
-    val lhs: DoubleColonLHS? = null
+    val lhs: DoubleColonLHS? = null,
+
+    // Collection literal arguments
+    val keyExpressions: List<FirExpression> = emptyList(),
+    val valueExpressions: List<FirExpression> = emptyList(),
 ) {
     val arguments: List<FirExpression> get() = argumentList.arguments
 
