@@ -169,13 +169,31 @@ class FirCallResolver(
                 CollectionLiteralKind.DICT_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
             },
             null,
-            buildArgumentList(),
+            buildArgumentList {
+                for (expression in collectionLiteral.expressions) {
+                    when (expression) {
+                        is FirCollectionLiteralEntryPair -> {
+                            arguments.add(expression.key)
+                            arguments.add(expression.value)
+                        }
+                        is FirCollectionLiteralEntrySingle -> arguments.add(expression.expression)
+                    }
+                }
+            },
             isPotentialQualifierPart = false,
             isImplicitInvoke = false,
             emptyList(),
             session,
             components.file,
-            transformer.components.containingDeclarations
+            transformer.components.containingDeclarations,
+            keyExpressions = when (collectionLiteral.kind) {
+                CollectionLiteralKind.SEQ_LITERAL -> emptyList()
+                CollectionLiteralKind.DICT_LITERAL -> collectionLiteral.expressions.map { (it as FirCollectionLiteralEntryPair).key }
+            },
+            valueExpressions = when (collectionLiteral.kind) {
+                CollectionLiteralKind.SEQ_LITERAL -> collectionLiteral.expressions.map { (it as FirCollectionLiteralEntrySingle).expression }
+                CollectionLiteralKind.DICT_LITERAL -> collectionLiteral.expressions.map { (it as FirCollectionLiteralEntryPair).value }
+            }
         )
         towerResolver.reset()
         val result = towerResolver.runResolver(

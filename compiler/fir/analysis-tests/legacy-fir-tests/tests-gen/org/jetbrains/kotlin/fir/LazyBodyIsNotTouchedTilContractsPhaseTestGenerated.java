@@ -1036,6 +1036,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
             runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/genericInArgument.kt");
         }
 
+        @TestMetadata("methodOn.kt")
+        public void testMethodOn() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/methodOn.kt");
+        }
+
         @TestMetadata("nestedCollectionLiterals.kt")
         public void testNestedCollectionLiterals() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/nestedCollectionLiterals.kt");

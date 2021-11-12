@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.resolve.calls
 
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirFunction
+import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.FirTypedDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.expressions.*
@@ -625,4 +626,30 @@ private fun ConeKotlinType.hasSupertypeWithGivenClassId(classId: ClassId, contex
             it is ConeClassLikeLookupTag && it.classId == classId
         }
     }
+}
+
+private fun findTypeArguments(candidate: Candidate): Array<out ConeTypeProjection> {
+    val function = candidate.symbol.fir as FirSimpleFunction
+    require(function.valueParameters.size == 2)
+    val initLambdaParameter = function.valueParameters.last()
+    val lambdaType = initLambdaParameter.returnTypeRef as FirResolvedTypeRef
+    require(lambdaType.type.typeArguments.size == 2)
+    val builderTypeArgument = lambdaType.type.typeArguments.first()
+    return (builderTypeArgument as ConeClassLikeType).typeArguments
+}
+
+fun Candidate.getKeyValueTypeOfCollectionLiteral(): Pair<ConeKotlinType, ConeKotlinType> {
+    val typeArguments = findTypeArguments(this)
+//    val resType = typeArguments[0]
+    val keyType = typeArguments[1] as ConeKotlinType
+    val valueType = typeArguments[2] as ConeKotlinType
+    return keyType to valueType
+}
+
+fun Candidate.getValueTypeOfCollectionLiteral(): ConeKotlinType {
+    val typeArguments = findTypeArguments(this)
+//    val resType = typeArguments.first()
+    val argumentType = typeArguments.last()
+//    require(resType == (function.returnTypeRef as FirResolvedTypeRef).type)
+    return argumentType as ConeKotlinType
 }

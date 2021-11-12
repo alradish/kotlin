@@ -423,6 +423,11 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
                     processedCL as FirCollectionLiteral,
                     data.expectedType
                 )
+            data is ResolutionMode.ContextIndependent ->
+                collectionLiteralResolver.replaceCollectionLiteral(
+                    processedCL as FirCollectionLiteral,
+                    buildImplicitTypeRef()
+                )
             else -> processedCL
         }
     }
