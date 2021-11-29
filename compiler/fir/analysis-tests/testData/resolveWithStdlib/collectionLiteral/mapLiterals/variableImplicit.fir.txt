@@ -1,4 +1,4 @@
-FILE: variableImplicitDict.kt
+FILE: variableImplicit.kt
     public final fun <K, V> R|kotlin/Int.Companion|.buildDict(size: R|kotlin/Int|, init: R|kotlin/collections/DictCollectionLiteralBuilder<kotlin/Int, K, V>.() -> kotlin/Unit| = fun R|kotlin/collections/DictCollectionLiteralBuilder<kotlin/Int, K, V>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
         ^ Unit
     }

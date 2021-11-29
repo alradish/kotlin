@@ -1,4 +1,4 @@
-FILE: functionVariableWithUpperBoundDict.kt
+FILE: functionVariableWithUpperBound.kt
     public abstract interface A : R|kotlin/Any| {
     }
     public open class B : R|A| {
