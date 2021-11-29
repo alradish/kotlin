@@ -77,6 +77,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_CHANGE_ACC
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_INFER_PARAMETER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_OVERRIDE_INVISIBLE_MEMBER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_WEAKEN_ACCESS_PRIVILEGE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANT_CHOOSE_BUILDER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CAN_BE_REPLACED_WITH_OPERATOR_ASSIGNMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CAN_BE_VAL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CAPTURED_MEMBER_VAL_INITIALIZATION
@@ -287,6 +288,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NOT_NULL_ASSERTIO
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_ACTUAL_FOR_EXPECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NOT_YET_SUPPORTED_IN_INLINE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_BUILDERS_FOR_COLLECTION_LITERAL
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_BUILDER_FOR_COLLECTION_LITERAL_OF_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_COMPANION_OBJECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_ELSE_IN_WHEN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_GET_METHOD
@@ -513,6 +516,11 @@ class FirDefaultErrorMessages {
 //            map.put(UNKNOWN_CALLABLE_KIND, ...) // &
 //            map.put(MISSING_STDLIB_CLASS, ...) // &
             map.put(NO_THIS, "'this' is not defined in this context")
+
+            // Collection Literal
+            map.put(NO_BUILDERS_FOR_COLLECTION_LITERAL, "Collection literal has no builders in the current scope")
+            map.put(CANT_CHOOSE_BUILDER, "Cant choose builder")
+            map.put(NO_BUILDER_FOR_COLLECTION_LITERAL_OF_TYPE, "Collection literal has no builder for {0} in the current scope", TO_STRING)
 
             // Super
             map.put(SUPER_IS_NOT_AN_EXPRESSION, "Super cannot be a callee")

@@ -93,6 +93,14 @@ internal class CantChooseBuilderImpl(
     override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
+internal class NoBuilderForCollectionLiteralOfTypeImpl(
+    override val type: String,
+    firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.NoBuilderForCollectionLiteralOfType(), KtAbstractFirDiagnostic<PsiElement> {
+    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
+}
+
 internal class UnsupportedImpl(
     override val unsupported: String,
     firDiagnostic: FirPsiDiagnostic,

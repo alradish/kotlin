@@ -1121,118 +1121,6 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
         }
 
         @Nested
-        @TestMetadata("compiler/fir/analysis-tests/testData/resolve/collectionLiteral")
-        @TestDataPath("$PROJECT_ROOT")
-        public class CollectionLiteral {
-            @Test
-            public void testAllFilesPresentInCollectionLiteral() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/collectionLiteral"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
-            }
-
-            @Test
-            @TestMetadata("findAllBuilders.kt")
-            public void testFindAllBuilders() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/findAllBuilders.kt");
-            }
-
-            @Test
-            @TestMetadata("findAllBuildersModule.kt")
-            public void testFindAllBuildersModule() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/findAllBuildersModule.kt");
-            }
-
-            @Test
-            @TestMetadata("functionAmbiguity.kt")
-            public void testFunctionAmbiguity() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/functionAmbiguity.kt");
-            }
-
-            @Test
-            @TestMetadata("functionAmbiguityDict.kt")
-            public void testFunctionAmbiguityDict() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/functionAmbiguityDict.kt");
-            }
-
-            @Test
-            @TestMetadata("functionExplicit.kt")
-            public void testFunctionExplicit() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/functionExplicit.kt");
-            }
-
-            @Test
-            @TestMetadata("functionExplicitDict.kt")
-            public void testFunctionExplicitDict() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/functionExplicitDict.kt");
-            }
-
-            @Test
-            @TestMetadata("functionVariable.kt")
-            public void testFunctionVariable() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/functionVariable.kt");
-            }
-
-            @Test
-            @TestMetadata("functionVariableDict.kt")
-            public void testFunctionVariableDict() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/functionVariableDict.kt");
-            }
-
-            @Test
-            @TestMetadata("functionVariableWithUpperBound.kt")
-            public void testFunctionVariableWithUpperBound() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/functionVariableWithUpperBound.kt");
-            }
-
-            @Test
-            @TestMetadata("functionVariableWithUpperBoundDict.kt")
-            public void testFunctionVariableWithUpperBoundDict() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/functionVariableWithUpperBoundDict.kt");
-            }
-
-            @Test
-            @TestMetadata("genericInArgument.kt")
-            public void testGenericInArgument() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/genericInArgument.kt");
-            }
-
-            @Test
-            @TestMetadata("methodOn.kt")
-            public void testMethodOn() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/methodOn.kt");
-            }
-
-            @Test
-            @TestMetadata("nestedCollectionLiterals.kt")
-            public void testNestedCollectionLiterals() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/nestedCollectionLiterals.kt");
-            }
-
-            @Test
-            @TestMetadata("variableExplicit.kt")
-            public void testVariableExplicit() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/variableExplicit.kt");
-            }
-
-            @Test
-            @TestMetadata("variableExplicitDict.kt")
-            public void testVariableExplicitDict() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/variableExplicitDict.kt");
-            }
-
-            @Test
-            @TestMetadata("variableImplicit.kt")
-            public void testVariableImplicit() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/variableImplicit.kt");
-            }
-
-            @Test
-            @TestMetadata("variableImplicitDict.kt")
-            public void testVariableImplicitDict() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteral/variableImplicitDict.kt");
-            }
-        }
-
-        @Nested
         @TestMetadata("compiler/fir/analysis-tests/testData/resolve/constVal")
         @TestDataPath("$PROJECT_ROOT")
         public class ConstVal {
@@ -4680,6 +4568,138 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
                 @TestMetadata("withGenericFun.kt")
                 public void testWithGenericFun() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/callableReferences/fromBasicDiagnosticTests/withGenericFun.kt");
+                }
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral")
+        @TestDataPath("$PROJECT_ROOT")
+        public class CollectionLiteral {
+            @Test
+            public void testAllFilesPresentInCollectionLiteral() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+            }
+
+            @Nested
+            @TestMetadata("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals")
+            @TestDataPath("$PROJECT_ROOT")
+            public class ListLiterals {
+                @Test
+                public void testAllFilesPresentInListLiterals() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+                }
+
+                @Test
+                @TestMetadata("findAllBuilders.kt")
+                public void testFindAllBuilders() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/findAllBuilders.kt");
+                }
+
+                @Test
+                @TestMetadata("findAllBuildersModule.kt")
+                public void testFindAllBuildersModule() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/findAllBuildersModule.kt");
+                }
+
+                @Test
+                @TestMetadata("functionAmbiguity.kt")
+                public void testFunctionAmbiguity() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/functionAmbiguity.kt");
+                }
+
+                @Test
+                @TestMetadata("functionExplicit.kt")
+                public void testFunctionExplicit() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/functionExplicit.kt");
+                }
+
+                @Test
+                @TestMetadata("functionVariable.kt")
+                public void testFunctionVariable() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/functionVariable.kt");
+                }
+
+                @Test
+                @TestMetadata("functionVariableWithUpperBound.kt")
+                public void testFunctionVariableWithUpperBound() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/functionVariableWithUpperBound.kt");
+                }
+
+                @Test
+                @TestMetadata("genericInArgument.kt")
+                public void testGenericInArgument() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/genericInArgument.kt");
+                }
+
+                @Test
+                @TestMetadata("methodOn.kt")
+                public void testMethodOn() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/methodOn.kt");
+                }
+
+                @Test
+                @TestMetadata("nestedCollectionLiterals.kt")
+                public void testNestedCollectionLiterals() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/nestedCollectionLiterals.kt");
+                }
+
+                @Test
+                @TestMetadata("variableExplicit.kt")
+                public void testVariableExplicit() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/variableExplicit.kt");
+                }
+
+                @Test
+                @TestMetadata("variableImplicit.kt")
+                public void testVariableImplicit() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/variableImplicit.kt");
+                }
+            }
+
+            @Nested
+            @TestMetadata("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/mapLiterals")
+            @TestDataPath("$PROJECT_ROOT")
+            public class MapLiterals {
+                @Test
+                public void testAllFilesPresentInMapLiterals() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/mapLiterals"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+                }
+
+                @Test
+                @TestMetadata("functionAmbiguity.kt")
+                public void testFunctionAmbiguity() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/mapLiterals/functionAmbiguity.kt");
+                }
+
+                @Test
+                @TestMetadata("functionExplicit.kt")
+                public void testFunctionExplicit() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/mapLiterals/functionExplicit.kt");
+                }
+
+                @Test
+                @TestMetadata("functionVariable.kt")
+                public void testFunctionVariable() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/mapLiterals/functionVariable.kt");
+                }
+
+                @Test
+                @TestMetadata("functionVariableWithUpperBound.kt")
+                public void testFunctionVariableWithUpperBound() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/mapLiterals/functionVariableWithUpperBound.kt");
+                }
+
+                @Test
+                @TestMetadata("variableExplicit.kt")
+                public void testVariableExplicit() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/mapLiterals/variableExplicit.kt");
+                }
+
+                @Test
+                @TestMetadata("variableImplicit.kt")
+                public void testVariableImplicit() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/mapLiterals/variableImplicit.kt");
                 }
             }
         }

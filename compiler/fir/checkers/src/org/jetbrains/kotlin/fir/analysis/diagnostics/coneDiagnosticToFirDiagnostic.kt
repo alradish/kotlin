@@ -94,6 +94,7 @@ private fun ConeDiagnostic.toFirDiagnostic(
         runIf(variable.isLocalMember) { FirErrors.VARIABLE_WITH_NO_TYPE_NO_INITIALIZER.createOn(source) }
     is ConeUnderscoreIsReserved -> FirErrors.UNDERSCORE_IS_RESERVED.createOn(this.source)
     is ConeUnderscoreUsageWithoutBackticks -> FirErrors.UNDERSCORE_USAGE_WITHOUT_BACKTICKS.createOn(this.source)
+    is ConeNoBuilderForCollectionLiteralOfType -> FirErrors.NO_BUILDER_FOR_COLLECTION_LITERAL_OF_TYPE.createOn(source, this.type)
     else -> throw IllegalArgumentException("Unsupported diagnostic type: ${this.javaClass}")
 }
 

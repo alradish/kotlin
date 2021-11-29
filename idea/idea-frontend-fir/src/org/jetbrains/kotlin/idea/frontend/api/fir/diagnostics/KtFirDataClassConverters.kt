@@ -79,6 +79,13 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.NO_BUILDER_FOR_COLLECTION_LITERAL_OF_TYPE) { firDiagnostic ->
+        NoBuilderForCollectionLiteralOfTypeImpl(
+            firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.UNSUPPORTED) { firDiagnostic ->
         UnsupportedImpl(
             firDiagnostic.a,

@@ -167,6 +167,10 @@ class ConeLocalVariableNoTypeOrInitializer(val variable: FirVariable) : ConeDiag
     override val reason: String get() = "Cannot infer variable type without initializer / getter / delegate"
 }
 
+class ConeNoBuilderForCollectionLiteralOfType(val type: String): ConeDiagnostic() {
+    override val reason: String get() = "Collection literal has no builder for $type in the current scope"
+}
+
 private fun describeSymbol(symbol: FirBasedSymbol<*>): String {
     return when (symbol) {
         is FirClassLikeSymbol<*> -> symbol.classId.asString()
