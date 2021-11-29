@@ -42,6 +42,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
     val CollectionLiteralsErrors by object : DiagnosticGroup("Collection literals") {
         val NO_BUILDERS_FOR_COLLECTION_LITERAL by error<PsiElement>()
         val CANT_CHOOSE_BUILDER by error<PsiElement>()
+        val NO_BUILDER_FOR_COLLECTION_LITERAL_OF_TYPE by error<PsiElement> {
+            parameter<String>("type")
+        }
     }
 
     val MetaErrors by object : DiagnosticGroup("Meta-errors") {
@@ -961,6 +964,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val EXPECTED_ENUM_CONSTRUCTOR by error<KtConstructor<*>>()
         val EXPECTED_ENUM_ENTRY_WITH_BODY by error<KtEnumEntry>()
         val EXPECTED_PROPERTY_INITIALIZER by error<KtExpression>()
+
         // TODO: need to cover `by` as well as delegate expression
         val EXPECTED_DELEGATED_PROPERTY by error<KtExpression>()
         val EXPECTED_LATEINIT_PROPERTY by error<KtModifierListOwner>(PositioningStrategy.LATEINIT_MODIFIER)

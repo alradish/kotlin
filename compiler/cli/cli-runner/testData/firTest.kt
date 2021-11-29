@@ -50,13 +50,13 @@ fun <T> Int.Companion.buildSeq(size: Int, init: SeqCollectionLiteralBuilder<Int,
 //    return TODO()
 //}
 //
-fun <T> Set.Companion.buildSeq(size: Int, init: SeqCollectionLiteralBuilder<Set<T>, T>.() -> Unit = {}): Set<T> {
-    return TODO()
-}
-
-fun <T> List.Companion.buildSeq(size: Int, init: SeqCollectionLiteralBuilder<List<T>, T>.() -> Unit = {}): List<T> {
-    return TODO()
-}
+//fun <T> Set.Companion.buildSeq(size: Int, init: SeqCollectionLiteralBuilder<Set<T>, T>.() -> Unit = {}): Set<T> {
+//    return TODO()
+//}
+//
+//fun <T> List.Companion.buildSeq(size: Int, init: SeqCollectionLiteralBuilder<List<T>, T>.() -> Unit = {}): List<T> {
+//    return TODO()
+//}
 //
 interface A
 open class B : A {

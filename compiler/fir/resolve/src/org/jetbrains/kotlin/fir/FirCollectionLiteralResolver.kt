@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.calls.candidate
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeNoBuilderForCollectionLiteralOfType
 import org.jetbrains.kotlin.fir.resolve.inference.ConeComposedSubstitutor
 import org.jetbrains.kotlin.fir.resolve.inference.InferenceComponents
 import org.jetbrains.kotlin.fir.resolve.inference.csBuilder
@@ -56,7 +57,6 @@ class FirCollectionLiteralResolver(
     private val session: FirSession get() = components.session
     private inline val inferenceComponents: InferenceComponents get() = session.inferenceComponents
 
-//    private val buildersForCollectionLiteral: MutableMap<FirCollectionLiteral, MutableMap<ClassId, Pair<Candidate, ConeKotlinType>>> =
     private val buildersForCollectionLiteral: MutableMap<FirCollectionLiteral, MutableMap<ClassId, Candidate>> =
         mutableMapOf()
 
@@ -207,10 +207,10 @@ class FirCollectionLiteralResolver(
     private fun cantFindBuilder(cl: FirCollectionLiteral, classId: ClassId): FirStatement {
         return buildErrorExpression(
             cl.source,
-            ConeSimpleDiagnostic(
-                "Collection literal has no builder for ${classId.shortClassName} in the current scope",
-                DiagnosticKind.NoBuildersForCollectionLiteralFound
+            ConeNoBuilderForCollectionLiteralOfType(
+                classId.shortClassName.identifier
             )
+//                "Collection literal has no builder for ${classId.shortClassName} in the current scope",
         )
     }
 

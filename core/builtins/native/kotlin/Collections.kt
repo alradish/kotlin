@@ -449,12 +449,12 @@ public interface MutableMap<K, V> : Map<K, V> {
     }
 }
 
-public interface SeqCollectionLiteralBuilder<T, E> {
-    public fun add(element: E)
-    public fun build(): T
-}
-
-public interface DictCollectionLiteralBuilder<T, K, V> {
-    public fun add(key: K, value: V)
-    public fun build(): T
-}
+//public interface SeqCollectionLiteralBuilder<T, E> {
+//    public fun add(element: E)
+//    public fun build(): T
+//}
+//
+//public interface DictCollectionLiteralBuilder<T, K, V> {
+//    public fun add(key: K, value: V)
+//    public fun build(): T
+//}
