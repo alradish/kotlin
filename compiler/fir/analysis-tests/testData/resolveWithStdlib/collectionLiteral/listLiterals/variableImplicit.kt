@@ -9,6 +9,5 @@ fun <T> Double.Companion.buildSeq(size: Int, init: SeqCollectionLiteralBuilder<D
 
 
 fun main() {
-    val a: Int = [1, 2, 3]
-    val b: Set<Int> = <!NO_BUILDERS_FOR_COLLECTION_LITERAL!>[1, 2, 3]<!>
+    val a = <!NO_BUILDER_FOR_COLLECTION_LITERAL_OF_TYPE!>[1, 2, 3]<!>
 }
