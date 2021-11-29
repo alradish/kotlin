@@ -4763,6 +4763,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
                 }
 
                 @Test
+                @TestMetadata("sameVariableForKeyValue.kt")
+                public void testSameVariableForKeyValue() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/mapLiterals/sameVariableForKeyValue.kt");
+                }
+
+                @Test
                 @TestMetadata("variableExplicit.kt")
                 public void testVariableExplicit() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/mapLiterals/variableExplicit.kt");

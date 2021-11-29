@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir
 
 import org.jetbrains.kotlin.fir.builder.buildLabel
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
+import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.builder.buildAnonymousFunction
 import org.jetbrains.kotlin.fir.declarations.utils.classId
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBod
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
 import org.jetbrains.kotlin.fir.resolve.transformers.firClassLike
+import org.jetbrains.kotlin.fir.scopes.impl.toConeType
 import org.jetbrains.kotlin.fir.symbols.impl.FirAnonymousFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.types.*
@@ -127,7 +129,12 @@ class FirCollectionLiteralResolver(
     private fun fixTypeVariable(builder: Candidate, type: ConeKotlinType): ConeKotlinType {
         val typeVariableType = builder.substitutor.substituteOrSelf(type) as ConeTypeVariableType
         val system = builder.system.getBuilder()
-        val variableWithConstraints = system.notFixedTypeVariables[typeVariableType.typeConstructor(system)] ?: error("")
+        val typeConstructor = typeVariableType.typeConstructor(system)
+        if (typeConstructor in system.fixedTypeVariables) {
+            return system.fixedTypeVariables[typeConstructor] as ConeKotlinType
+        }
+        val variableWithConstraints = system.notFixedTypeVariables[typeConstructor]
+            ?: error("Can't find type=$typeConstructor neither in fixed nor in not fixed variables")
         val typeVariable = variableWithConstraints.typeVariable
         val resultType = inferenceComponents.resultTypeResolver.findResultType(
             system,
@@ -400,54 +407,15 @@ class FirCollectionLiteralResolver(
                     CollectionLiteralKind.MAP_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
                 }
             }
-            when (cl.kind) {
-                CollectionLiteralKind.LIST_LITERAL -> {
-                    val argumentType =
-                        builder.substitutor.substituteOrSelf(builder.getValueTypeOfCollectionLiteral())
-                    typeArguments.add(buildTypeProjectionWithVariance {
-                        typeRef = buildResolvedTypeRef {
-                            type = argumentType
-                        }
-                        variance = Variance.INVARIANT
-                    })
+            val function = builder.symbol.fir as FirSimpleFunction
+            typeArguments.addAll(function.typeParameters.map {
+                buildTypeProjectionWithVariance {
+                    typeRef = buildResolvedTypeRef {
+                        type = builder.substitutor.substituteOrSelf(it.toConeType())
+                    }
+                    variance = Variance.INVARIANT
                 }
-                CollectionLiteralKind.MAP_LITERAL -> {
-                    val (keyType, valueType) = builder.getKeyValueTypeOfCollectionLiteral()
-                    typeArguments.add(buildTypeProjectionWithVariance {
-                        typeRef = buildResolvedTypeRef {
-                            type = builder.substitutor.substituteOrSelf(keyType)
-                        }
-                        variance = Variance.INVARIANT
-                    })
-                    typeArguments.add(buildTypeProjectionWithVariance {
-                        typeRef = buildResolvedTypeRef {
-                            type = builder.substitutor.substituteOrSelf(valueType)
-                        }
-                        variance = Variance.INVARIANT
-                    })
-                }
-            }
-//            if (cl.argumentType != null) {
-//                cl.argumentType?.let {
-//                    typeArguments.add(buildTypeProjectionWithVariance {
-//                        typeRef = it
-//                        variance = Variance.INVARIANT
-//                    })
-//                }
-//            } else if (cl.keyArgumentType != null && cl.valueArgumentType != null) {
-//                cl.keyArgumentType?.let {
-//                    typeArguments.add(buildTypeProjectionWithVariance {
-//                        typeRef = it
-//                        variance = Variance.INVARIANT
-//                    })
-//                }
-//                cl.valueArgumentType?.let {
-//                    typeArguments.add(buildTypeProjectionWithVariance {
-//                        typeRef = it
-//                        variance = Variance.INVARIANT
-//                    })
-//                }
-//            }
+            })
             argumentList = buildBinaryArgumentList(
                 buildConstExpression(null, ConstantValueKind.Int, cl.expressions.size),
                 lambda
