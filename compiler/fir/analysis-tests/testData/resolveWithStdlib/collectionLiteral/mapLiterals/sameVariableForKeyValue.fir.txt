@@ -1,0 +1,60 @@
+FILE: main.kt
+    public final fun main(): R|kotlin/Unit| {
+        lval a: R|mylist/MyList<kotlin/Int>| = Q|mylist/MyList|.R|mylist/MyList.Companion.buildMap|<R|kotlin/Int|>(Int(3), <L> = buildMap@fun R|kotlin/collections/MapCollectionLiteralBuilder<mylist/MyList<kotlin/Int>, kotlin/Int, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/MapCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(1), Int(1))
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/MapCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(2), Int(2))
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/MapCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(3), Int(3))
+        }
+        )
+    }
+FILE: MyList.kt
+    public final class MyList<T> : R|kotlin/Any| {
+        public constructor<T>(): R|mylist/MyList<T>| {
+            super<R|kotlin/Any|>()
+        }
+
+        private final val content: R|kotlin/collections/MutableList<T>| = R|kotlin/collections/mutableListOf|<R|T|>()
+            private get(): R|kotlin/collections/MutableList<T>|
+
+        public final val size: R|kotlin/Int|
+            public get(): R|kotlin/Int| {
+                ^ this@R|mylist/MyList|.R|mylist/MyList.content|.R|kotlin/collections/List.size|
+            }
+
+        public final fun add(element: R|T|): R|kotlin/Unit| {
+            this@R|mylist/MyList|.R|mylist/MyList.content|.R|SubstitutionOverride<kotlin/collections/MutableList.add: R|kotlin/Boolean|>|(R|<local>/element|)
+        }
+
+        public final companion object Companion : R|kotlin/Any| {
+            private constructor(): R|mylist/MyList.Companion| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final fun <T> buildMap(size: R|kotlin/Int|, conf: R|kotlin/collections/MapCollectionLiteralBuilder<mylist/MyList<T>, T, T>.() -> kotlin/Unit| = fun R|kotlin/collections/MapCollectionLiteralBuilder<mylist/MyList<T>, T, T>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+                ^ Unit
+            }
+            ): R|mylist/MyList<T>| {
+                ^buildMap object : R|kotlin/collections/MapCollectionLiteralBuilder<mylist/MyList<T>, T, T>| {
+                    private constructor(): R|<anonymous><T>| {
+                        super<R|kotlin/Any|>()
+                    }
+
+                    private final val buf: R|mylist/MyList<T>| = R|mylist/MyList.MyList|<R|T|>()
+                        private get(): R|mylist/MyList<T>|
+
+                    public final override fun add(element: R|T|, value: R|T|): R|kotlin/Unit| {
+                        this@R|/<anonymous>|.R|/<anonymous>.buf|.R|SubstitutionOverride<mylist/MyList.add: R|kotlin/Unit|>|(R|<local>/element|)
+                        this@R|/<anonymous>|.R|/<anonymous>.buf|.R|SubstitutionOverride<mylist/MyList.add: R|kotlin/Unit|>|(R|<local>/value|)
+                    }
+
+                    public final override fun build(): R|mylist/MyList<T>| {
+                        ^build this@R|/<anonymous>|.R|/<anonymous>.buf|
+                    }
+
+                }
+                .R|kotlin/apply|<R|<anonymous><T>|>(R|<local>/conf|).R|/<anonymous>.build|()
+            }
+
+        }
+
+    }
