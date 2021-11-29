@@ -1,13 +1,13 @@
 
-fun <T> List.Companion.buildSeq(size: Int, init: CollectionLiteralBuilder<List<T>, T>.() -> Unit = {}): List<T> {
+fun <T> List.Companion.buildList(size: Int, init: CollectionLiteralBuilder<List<T>, T>.() -> Unit = {}): List<T> {
     return TODO()
 }
 
-fun <T> Int.Companion.buildSeq(size: Int, init: CollectionLiteralBuilder<Int, T>.() -> Unit = {}) : Int {
+fun <T> Int.Companion.buildList(size: Int, init: CollectionLiteralBuilder<Int, T>.() -> Unit = {}) : Int {
     return TODO()
 }
 
-fun <T> Double.Companion.buildSeq(size: Int, init: CollectionLiteralBuilder<Double, T>.() -> Unit = {}) : Double {
+fun <T> Double.Companion.buildList(size: Int, init: CollectionLiteralBuilder<Double, T>.() -> Unit = {}) : Double {
     return TODO()
 }
 

@@ -6,5 +6,5 @@
 package org.jetbrains.kotlin.fir.expressions
 
 enum class CollectionLiteralKind {
-    SEQ_LITERAL, DICT_LITERAL
+    LIST_LITERAL, MAP_LITERAL
 }

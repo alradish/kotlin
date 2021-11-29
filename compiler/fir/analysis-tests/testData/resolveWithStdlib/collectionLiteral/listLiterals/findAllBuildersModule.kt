@@ -2,13 +2,13 @@
 
 package builders
 
-fun <T> List.Companion.buildSeq(size: Int, init: SeqCollectionLiteralBuilder<List<T>, T>.() -> Unit = {}): List<T> {
+fun <T> List.Companion.buildList(size: Int, init: ListCollectionLiteralBuilder<List<T>, T>.() -> Unit = {}): List<T> {
     return TODO()
 }
 
 class B {
     companion object {
-        fun <T> buildSeq(size: Int, init: SeqCollectionLiteralBuilder<B, T>.() -> Unit = {}): B {
+        fun <T> buildList(size: Int, init: ListCollectionLiteralBuilder<B, T>.() -> Unit = {}): B {
             return TODO()
         }
     }
@@ -18,19 +18,19 @@ class B {
 
 package main
 
-import main.A.Companion.buildSeq
-import main.buildSeq
-import builders.buildSeq
+import main.A.Companion.buildList
+import main.buildList
+import builders.buildList
 import builders.B
-import builders.B.Companion.buildSeq
+import builders.B.Companion.buildList
 
-fun <T> Set.Companion.buildSeq(size: Int, init: SeqCollectionLiteralBuilder<Set<T>, T>.() -> Unit = {}): Set<T> {
+fun <T> Set.Companion.buildList(size: Int, init: ListCollectionLiteralBuilder<Set<T>, T>.() -> Unit = {}): Set<T> {
     return TODO()
 }
 
 class A {
     companion object {
-        fun <T> buildSeq(size: Int, init: SeqCollectionLiteralBuilder<A, T>.() -> Unit = {}): A {
+        fun <T> buildList(size: Int, init: ListCollectionLiteralBuilder<A, T>.() -> Unit = {}): A {
             return TODO()
         }
     }
