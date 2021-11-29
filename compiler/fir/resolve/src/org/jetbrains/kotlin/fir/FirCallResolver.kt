@@ -165,8 +165,8 @@ class FirCallResolver(
             collectionLiteral,
             CallKind.CollectionLiteral,
             when (collectionLiteral.kind) {
-                CollectionLiteralKind.SEQ_LITERAL -> OperatorNameConventions.BUILD_LIST_CL
-                CollectionLiteralKind.DICT_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
+                CollectionLiteralKind.LIST_LITERAL -> OperatorNameConventions.BUILD_LIST_CL
+                CollectionLiteralKind.MAP_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
             },
             null,
             buildArgumentList {
@@ -187,12 +187,12 @@ class FirCallResolver(
             components.file,
             transformer.components.containingDeclarations,
             keyExpressions = when (collectionLiteral.kind) {
-                CollectionLiteralKind.SEQ_LITERAL -> emptyList()
-                CollectionLiteralKind.DICT_LITERAL -> collectionLiteral.expressions.map { (it as FirCollectionLiteralEntryPair).key }
+                CollectionLiteralKind.LIST_LITERAL -> emptyList()
+                CollectionLiteralKind.MAP_LITERAL -> collectionLiteral.expressions.map { (it as FirCollectionLiteralEntryPair).key }
             },
             valueExpressions = when (collectionLiteral.kind) {
-                CollectionLiteralKind.SEQ_LITERAL -> collectionLiteral.expressions.map { (it as FirCollectionLiteralEntrySingle).expression }
-                CollectionLiteralKind.DICT_LITERAL -> collectionLiteral.expressions.map { (it as FirCollectionLiteralEntryPair).value }
+                CollectionLiteralKind.LIST_LITERAL -> collectionLiteral.expressions.map { (it as FirCollectionLiteralEntrySingle).expression }
+                CollectionLiteralKind.MAP_LITERAL -> collectionLiteral.expressions.map { (it as FirCollectionLiteralEntryPair).value }
             }
         )
         towerResolver.reset()

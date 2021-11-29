@@ -1,17 +1,17 @@
 
-fun <K, V> Set.Companion.buildDict(size: Int, init: DictCollectionLiteralBuilder<Set<V>, K, V>.() -> Unit = {}): Set<V> {
+fun <K, V> Set.Companion.buildMap(size: Int, init: MapCollectionLiteralBuilder<Set<V>, K, V>.() -> Unit = {}): Set<V> {
     return TODO()
 }
 
-fun <K, V> List.Companion.buildDict(size: Int, init: DictCollectionLiteralBuilder<List<V>, K, V>.() -> Unit = {}): List<V> {
+fun <K, V> List.Companion.buildMap(size: Int, init: MapCollectionLiteralBuilder<List<V>, K, V>.() -> Unit = {}): List<V> {
     return TODO()
 }
 
-fun <K, V> Int.Companion.buildDict(size: Int, init: DictCollectionLiteralBuilder<Int, K, V>.() -> Unit = {}) : Int {
+fun <K, V> Int.Companion.buildMap(size: Int, init: MapCollectionLiteralBuilder<Int, K, V>.() -> Unit = {}) : Int {
     return TODO()
 }
 
-fun <K, V> Double.Companion.buildDict(size: Int, init: DictCollectionLiteralBuilder<Double, K, V>.() -> Unit = {}) : Double {
+fun <K, V> Double.Companion.buildMap(size: Int, init: MapCollectionLiteralBuilder<Double, K, V>.() -> Unit = {}) : Double {
     return TODO()
 }
 

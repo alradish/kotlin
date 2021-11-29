@@ -4,7 +4,7 @@ open class B : A {
     companion object
 }
 
-fun <T> B.Companion.buildSeq(size: Int, init: SeqCollectionLiteralBuilder<B, T>.() -> Unit = {}): B {
+fun <T> B.Companion.buildList(size: Int, init: ListCollectionLiteralBuilder<B, T>.() -> Unit = {}): B {
     TODO()
 }
 
@@ -12,7 +12,7 @@ open class C : A {
     companion object
 }
 
-fun <T> C.Companion.buildSeq(size: Int, init: SeqCollectionLiteralBuilder<C, T>.() -> Unit = {}): C {
+fun <T> C.Companion.buildList(size: Int, init: ListCollectionLiteralBuilder<C, T>.() -> Unit = {}): C {
     TODO()
 }
 

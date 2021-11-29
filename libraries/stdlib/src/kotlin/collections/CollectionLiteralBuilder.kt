@@ -5,13 +5,13 @@
 
 package kotlin.collections
 
-public interface SeqCollectionLiteralBuilder<T, E> {
+public interface ListCollectionLiteralBuilder<T, E> {
     public abstract fun add(element: E): kotlin.Unit
 
     public abstract fun build(): T
 }
 
-public interface DictCollectionLiteralBuilder<T, K, V> {
+public interface MapCollectionLiteralBuilder<T, K, V> {
     public abstract fun add(key: K, value: V): kotlin.Unit
 
     public abstract fun build(): T

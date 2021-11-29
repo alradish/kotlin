@@ -402,8 +402,8 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
         // check if
 
         val processedCL = when (collectionLiteral.kind) {
-            CollectionLiteralKind.SEQ_LITERAL -> collectionLiteralResolver.processSequenceLiteral(collectionLiteral)
-            CollectionLiteralKind.DICT_LITERAL -> collectionLiteralResolver.processDictionaryLiteral(collectionLiteral)
+            CollectionLiteralKind.LIST_LITERAL -> collectionLiteralResolver.processListLiteral(collectionLiteral)
+            CollectionLiteralKind.MAP_LITERAL -> collectionLiteralResolver.processMapLiteral(collectionLiteral)
         }
         if (processedCL is FirErrorExpression) {
             return processedCL

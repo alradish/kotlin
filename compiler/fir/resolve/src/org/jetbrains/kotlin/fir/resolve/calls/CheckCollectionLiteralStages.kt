@@ -45,8 +45,8 @@ internal object CheckCollectionLiteralArgumentsStage : CheckerStage() {
         candidate.symbol.ensureResolved(FirResolvePhase.STATUS)
 
         when ((callInfo.callSite as FirCollectionLiteral).kind) {
-            CollectionLiteralKind.SEQ_LITERAL -> processSeqArguments(candidate, callInfo, sink, context)
-            CollectionLiteralKind.DICT_LITERAL -> processDictArguments(candidate, callInfo, sink, context)
+            CollectionLiteralKind.LIST_LITERAL -> processSeqArguments(candidate, callInfo, sink, context)
+            CollectionLiteralKind.MAP_LITERAL -> processDictArguments(candidate, callInfo, sink, context)
         }
     }
 

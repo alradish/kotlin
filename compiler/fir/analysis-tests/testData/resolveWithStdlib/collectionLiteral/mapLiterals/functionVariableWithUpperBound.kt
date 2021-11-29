@@ -4,7 +4,7 @@ open class B : A {
     companion object
 }
 
-fun <K, V> B.Companion.buildDict(size: Int, init: DictCollectionLiteralBuilder<B, K, V>.() -> Unit = {}): B {
+fun <K, V> B.Companion.buildMap(size: Int, init: MapCollectionLiteralBuilder<B, K, V>.() -> Unit = {}): B {
     TODO()
 }
 
@@ -12,7 +12,7 @@ open class C : A {
     companion object
 }
 
-fun <K, V> C.Companion.buildDict(size: Int, init: DictCollectionLiteralBuilder<C, K, V>.() -> Unit = {}): C {
+fun <K, V> C.Companion.buildMap(size: Int, init: MapCollectionLiteralBuilder<C, K, V>.() -> Unit = {}): C {
     TODO()
 }
 

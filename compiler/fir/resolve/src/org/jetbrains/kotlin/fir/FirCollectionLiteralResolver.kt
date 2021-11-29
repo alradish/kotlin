@@ -100,10 +100,10 @@ class FirCollectionLiteralResolver(
             val initialType = components.initialTypeOfCandidate(builder)
 //            val argumentType = when (cl.kind) {
             when (cl.kind) {
-                CollectionLiteralKind.SEQ_LITERAL -> fixTypeOfSeqCL(builder)
-                CollectionLiteralKind.DICT_LITERAL -> {
+                CollectionLiteralKind.LIST_LITERAL -> fixTypeOfListCL(builder)
+                CollectionLiteralKind.MAP_LITERAL -> {
 //                    val (_, valueType) = fixTypeOfDictCL(builder)
-                    fixTypeOfDictCL(builder)
+                    fixTypeOfMapCL(builder)
 //                    valueType
                 }
             }
@@ -138,7 +138,7 @@ class FirCollectionLiteralResolver(
         return resultType as ConeKotlinType
     }
 
-    private fun fixTypeOfSeqCL(builder: Candidate): ConeKotlinType {
+    private fun fixTypeOfListCL(builder: Candidate): ConeKotlinType {
         val valueType = builder.getValueTypeOfCollectionLiteral()
 
         val valueResultType = fixTypeVariable(builder, valueType)
@@ -148,7 +148,7 @@ class FirCollectionLiteralResolver(
         return valueResultType
     }
 
-    private fun fixTypeOfDictCL(builder: Candidate): Pair<ConeKotlinType, ConeKotlinType> {
+    private fun fixTypeOfMapCL(builder: Candidate): Pair<ConeKotlinType, ConeKotlinType> {
         val (keyType, valueType) = builder.getKeyValueTypeOfCollectionLiteral()
 
         val keyResultType = fixTypeVariable(builder, keyType)
@@ -159,17 +159,17 @@ class FirCollectionLiteralResolver(
         return keyResultType to valueResultType
     }
 
-    fun processSequenceLiteral(cl: FirCollectionLiteral): FirStatement {
-        require(cl.kind == CollectionLiteralKind.SEQ_LITERAL)
+    fun processListLiteral(cl: FirCollectionLiteral): FirStatement {
+        require(cl.kind == CollectionLiteralKind.LIST_LITERAL)
 
-        val fixedArgumentType = typeOfArgumentsSequence(cl)
+        val fixedArgumentType = typeOfArgumentsList(cl)
         return processLiteral(cl, listOf(fixedArgumentType))
     }
 
-    fun processDictionaryLiteral(cl: FirCollectionLiteral): FirStatement {
-        require(cl.kind == CollectionLiteralKind.DICT_LITERAL)
+    fun processMapLiteral(cl: FirCollectionLiteral): FirStatement {
+        require(cl.kind == CollectionLiteralKind.MAP_LITERAL)
 
-        val fixedArgumentsType = typeOfArgumentsDictionary(cl)
+        val fixedArgumentsType = typeOfArgumentsMap(cl)
         return processLiteral(cl, listOf(fixedArgumentsType.first, fixedArgumentsType.second))
     }
 
@@ -287,15 +287,15 @@ class FirCollectionLiteralResolver(
         return buildersForCollectionLiteral[cl]?.get(clType.classId!!)
     }
 
-    fun typeOfArgumentsSequence(cl: FirCollectionLiteral): FixedArgument {
-        require(cl.kind == CollectionLiteralKind.SEQ_LITERAL)
+    fun typeOfArgumentsList(cl: FirCollectionLiteral): FixedArgument {
+        require(cl.kind == CollectionLiteralKind.LIST_LITERAL)
 
         val expressions = cl.expressions.map { (it as FirCollectionLiteralEntrySingle).expression }
         return fixTypeOfExpressions(expressions, "T")
     }
 
-    fun typeOfArgumentsDictionary(cl: FirCollectionLiteral): Pair<FixedArgument, FixedArgument> {
-        require(cl.kind == CollectionLiteralKind.DICT_LITERAL)
+    fun typeOfArgumentsMap(cl: FirCollectionLiteral): Pair<FixedArgument, FixedArgument> {
+        require(cl.kind == CollectionLiteralKind.MAP_LITERAL)
 
         val expressions = cl
             .expressions
@@ -348,14 +348,14 @@ class FirCollectionLiteralResolver(
             buildFunctionCall {
                 calleeReference = buildSimpleNamedReference { name = Name.identifier("add") }
                 argumentList = when (cl.kind) {
-                    CollectionLiteralKind.SEQ_LITERAL -> {
+                    CollectionLiteralKind.LIST_LITERAL -> {
                         it as FirCollectionLiteralEntrySingle
                         val expression = it.expression
                         buildUnaryArgumentList(
                             expression
                         )
                     }
-                    CollectionLiteralKind.DICT_LITERAL -> (it as FirCollectionLiteralEntryPair).let { entry ->
+                    CollectionLiteralKind.MAP_LITERAL -> (it as FirCollectionLiteralEntryPair).let { entry ->
                         buildBinaryArgumentList(entry.key, entry.value)
                     }
                 }
@@ -376,8 +376,8 @@ class FirCollectionLiteralResolver(
                     label = buildLabel {
                         // TODO check for name of candidate
                         name = when (cl.kind) {
-                            CollectionLiteralKind.SEQ_LITERAL -> OperatorNameConventions.BUILD_LIST_CL
-                            CollectionLiteralKind.DICT_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
+                            CollectionLiteralKind.LIST_LITERAL -> OperatorNameConventions.BUILD_LIST_CL
+                            CollectionLiteralKind.MAP_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
                         }.identifier
                     }
 
@@ -396,12 +396,12 @@ class FirCollectionLiteralResolver(
             this.explicitReceiver = explicitReceiver
             calleeReference = buildSimpleNamedReference {
                 name = when (cl.kind) {
-                    CollectionLiteralKind.SEQ_LITERAL -> OperatorNameConventions.BUILD_LIST_CL
-                    CollectionLiteralKind.DICT_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
+                    CollectionLiteralKind.LIST_LITERAL -> OperatorNameConventions.BUILD_LIST_CL
+                    CollectionLiteralKind.MAP_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
                 }
             }
             when (cl.kind) {
-                CollectionLiteralKind.SEQ_LITERAL -> {
+                CollectionLiteralKind.LIST_LITERAL -> {
                     val argumentType =
                         builder.substitutor.substituteOrSelf(builder.getValueTypeOfCollectionLiteral())
                     typeArguments.add(buildTypeProjectionWithVariance {
@@ -411,7 +411,7 @@ class FirCollectionLiteralResolver(
                         variance = Variance.INVARIANT
                     })
                 }
-                CollectionLiteralKind.DICT_LITERAL -> {
+                CollectionLiteralKind.MAP_LITERAL -> {
                     val (keyType, valueType) = builder.getKeyValueTypeOfCollectionLiteral()
                     typeArguments.add(buildTypeProjectionWithVariance {
                         typeRef = buildResolvedTypeRef {
