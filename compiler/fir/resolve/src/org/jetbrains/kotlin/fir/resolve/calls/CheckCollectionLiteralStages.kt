@@ -31,7 +31,7 @@ internal object CheckCollectionLiteralBuilderStage : CheckerStage() {
         val classIdIsSame = if (receiverClassId.shortClassName == Name.identifier("Companion")) {
             receiverClassId.relativeClassName.parent().shortName() == returnTypeClassId.shortClassName
         } else {
-            TODO()
+            TODO("Not companion")
         }
         if (!classIdIsSame) {
             return sink.reportDiagnostic(InapplicableCandidate)

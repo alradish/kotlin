@@ -4717,6 +4717,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("overloadResolution.kt")
+                public void testOverloadResolution() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/overloadResolution.kt");
+                }
+
+                @Test
                 @TestMetadata("variableExplicit.kt")
                 public void testVariableExplicit() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/variableExplicit.kt");

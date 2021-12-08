@@ -62,30 +62,7 @@ class FirCollectionLiteralResolver(
     private val buildersForCollectionLiteral: MutableMap<FirCollectionLiteral, MutableMap<ClassId, Candidate>> =
         mutableMapOf()
 
-    private fun processLiteral(cl: FirCollectionLiteral, fixedArguments: List<FixedArgument>): FirExpression {
-        when (fixedArguments.size) {
-            1 -> {
-                cl.replaceArgumentType(
-                    (fixedArguments.single().fixedType as? ConeKotlinType)?.toFirResolvedTypeRef(cl.source)
-                        ?: error("cant infer type of CL arguments")
-                )
-            }
-            2 -> {
-                cl.replaceKeyArgumentType(
-                    (fixedArguments.first().fixedType as? ConeKotlinType)?.toFirResolvedTypeRef(cl.source)
-                        ?: error("cant infer type of CL keys")
-                )
-                cl.replaceValueArgumentType(
-                    (fixedArguments.last().fixedType as? ConeKotlinType)?.toFirResolvedTypeRef(cl.source)
-                        ?: error("cant infer type of CL values")
-                )
-            }
-            else -> {
-                error("illegal state")
-            }
-        }
-
-
+    private fun processLiteral(cl: FirCollectionLiteral, @Suppress("UNUSED_PARAMETER") fixedArguments: List<FixedArgument>): FirExpression {
         val builders = components.callResolver.collectAvailableBuildersForCollectionLiteral(cl)
 
         if (builders.isEmpty()) {
@@ -192,7 +169,8 @@ class FirCollectionLiteralResolver(
             }
 
             override fun transformCollectionLiteral(collectionLiteral: FirCollectionLiteral, data: Unit): FirStatement {
-                val param = argumentMapping[collectionLiteral]!!
+                val param = argumentMapping[collectionLiteral]
+                    ?: error("Empty argument mapping for $collectionLiteral in ${candidate.symbol.fir.render()}")
                 val builder = chooseBuilder(candidate, collectionLiteral, param.returnTypeRef)
                     ?: return cantChooseBuilder(collectionLiteral).also {
                         argumentMapping[it as FirExpression] = param
@@ -248,15 +226,15 @@ class FirCollectionLiteralResolver(
             is FirResolvedTypeRef -> {
                 val coneType = expectedType.coneType
                 if (coneType is ConeTypeParameterType) {
-                    error("")
+                    TODO("$coneType is ConeTypeParameterType in expected type while replace $collectionLiteral")
                 } else {
-                    val classId = coneType.classId!!
+                    val classId = coneType.classId ?: error("Class ID for $coneType is null")
 //                    buildersForCollectionLiteral[collectionLiteral]?.get(classId)?.first
                     buildersForCollectionLiteral[collectionLiteral]?.get(classId)
                         ?: return cantFindBuilder(collectionLiteral, classId)
                 }
             }
-            is FirTypeRefWithNullability -> TODO()
+            is FirTypeRefWithNullability -> TODO("expected type $expectedType is FirTypeRefWithNullability while replace $collectionLiteral")
         }
         return createFunctionCallForCollectionLiteral(builder, collectionLiteral).transformSingle(
             transformer,
@@ -274,7 +252,7 @@ class FirCollectionLiteralResolver(
                 notFixed,
                 TypeVariableDirectionCalculator.ResolveDirection.TO_SUBTYPE
             )
-            val it = resultType as? ConeIntersectionType ?: error("not it type")
+            val it = resultType as? ConeIntersectionType ?: error("$resultType is not ConeIntersectionType")
             val clType = it.alternativeType
             if (clType !in it.intersectedTypes) {
                 return null
@@ -289,7 +267,7 @@ class FirCollectionLiteralResolver(
             clType
         } else {
             substituted
-        } ?: error("")
+        } ?: error("Null collection literal type when choosing builder")
 //        return buildersForCollectionLiteral[cl]?.get(clType.classId!!)?.first
         return buildersForCollectionLiteral[cl]?.get(clType.classId!!)
     }
@@ -395,8 +373,8 @@ class FirCollectionLiteralResolver(
             calleeReference = buildSimpleNamedReference {
                 val fir = (builder.symbol as FirNamedFunctionSymbol).fir
                 name = fir.receiverTypeRef?.let { it.firClassLike(session)?.classId?.relativeClassName?.parent()?.shortName() }
-                    ?: fir.dispatchReceiverType?.classId?.relativeClassName?.parent()?.shortName() ?: error("")
-//                name = receiverName
+                    ?: fir.dispatchReceiverType?.classId?.relativeClassName?.parent()?.shortName()
+                            ?: error("Cant find name for explicit receiver")
             }
         }
         return buildFunctionCall {
