@@ -259,8 +259,7 @@ private fun ConeKotlinType.mapToCanonicalString(session: FirSession): String {
         is ConeClassLikeType -> mapToCanonicalString(session)
         is ConeTypeVariableType, is ConeFlexibleType, is ConeCapturedType,
         is ConeDefinitelyNotNullType, is ConeIntersectionType, is ConeStubType,
-        is ConeIntegerLiteralType, is ConeCollectionLiteralType ->
-            error("Unexpected type: $this [${this::class}]")
+        is ConeIntegerLiteralType -> error("Unexpected type: $this [${this::class}]")
         is ConeLookupTagBasedType -> lookupTag.name.asString()
     }
 }

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.builder.buildAnonymousFunction
 import org.jetbrains.kotlin.fir.declarations.utils.classId
+import org.jetbrains.kotlin.fir.diagnostics.ConeNoBuilderForCollectionLiteralOfType
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
@@ -18,7 +19,7 @@ import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.calls.candidate
-import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeNoBuilderForCollectionLiteralOfType
+import org.jetbrains.kotlin.fir.resolve.firClassLike
 import org.jetbrains.kotlin.fir.resolve.inference.ConeComposedSubstitutor
 import org.jetbrains.kotlin.fir.resolve.inference.InferenceComponents
 import org.jetbrains.kotlin.fir.resolve.inference.csBuilder
@@ -29,7 +30,6 @@ import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
-import org.jetbrains.kotlin.fir.resolve.transformers.firClassLike
 import org.jetbrains.kotlin.fir.scopes.impl.toConeType
 import org.jetbrains.kotlin.fir.symbols.impl.FirAnonymousFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
@@ -96,7 +96,7 @@ class FirCollectionLiteralResolver(
             }
         }
 
-        val type = ConeTypeIntersector.intersectTypes(session.inferenceComponents.ctx, possibleTypes)
+        val type = ConeTypeIntersector.intersectTypes(session.typeContext, possibleTypes)
 
         cl.resultType = cl.resultType.resolvedTypeFromPrototype(type)
 
@@ -351,6 +351,7 @@ class FirCollectionLiteralResolver(
                 anonymousFunction = buildAnonymousFunction {
                     origin = FirDeclarationOrigin.Synthetic
                     moduleData = session.moduleData
+                    hasExplicitParameterList = false
                     body = buildBlock {
                         statements.addAll(adds)
                     }
@@ -369,7 +370,7 @@ class FirCollectionLiteralResolver(
                 }
             }
         }
-        val explicitReceiver = buildQualifiedAccessExpression {
+        val explicitReceiver = buildPropertyAccessExpression {
             calleeReference = buildSimpleNamedReference {
                 val fir = (builder.symbol as FirNamedFunctionSymbol).fir
                 name = fir.receiverTypeRef?.let { it.firClassLike(session)?.classId?.relativeClassName?.parent()?.shortName() }

@@ -82,6 +82,10 @@ import org.jetbrains.kotlin.fir.expressions.FirWhenBranch
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccess
 import org.jetbrains.kotlin.fir.expressions.FirCheckNotNullCall
 import org.jetbrains.kotlin.fir.expressions.FirElvisExpression
+import org.jetbrains.kotlin.fir.expressions.FirCollectionLiteral
+import org.jetbrains.kotlin.fir.expressions.FirCollectionLiteralEntry
+import org.jetbrains.kotlin.fir.expressions.FirCollectionLiteralEntrySingle
+import org.jetbrains.kotlin.fir.expressions.FirCollectionLiteralEntryPair
 import org.jetbrains.kotlin.fir.expressions.FirArrayOfCall
 import org.jetbrains.kotlin.fir.expressions.FirAugmentedArraySetCall
 import org.jetbrains.kotlin.fir.expressions.FirClassReferenceExpression
@@ -205,6 +209,12 @@ abstract class FirDefaultVisitor<out R, in D> : FirVisitor<R, D>() {
     override fun visitComparisonExpression(comparisonExpression: FirComparisonExpression, data: D): R  = visitExpression(comparisonExpression, data)
 
     override fun visitAssignmentOperatorStatement(assignmentOperatorStatement: FirAssignmentOperatorStatement, data: D): R  = visitStatement(assignmentOperatorStatement, data)
+
+    override fun visitCollectionLiteral(collectionLiteral: FirCollectionLiteral, data: D): R  = visitExpression(collectionLiteral, data)
+
+    override fun visitCollectionLiteralEntrySingle(collectionLiteralEntrySingle: FirCollectionLiteralEntrySingle, data: D): R  = visitCollectionLiteralEntry(collectionLiteralEntrySingle, data)
+
+    override fun visitCollectionLiteralEntryPair(collectionLiteralEntryPair: FirCollectionLiteralEntryPair, data: D): R  = visitCollectionLiteralEntry(collectionLiteralEntryPair, data)
 
     override fun visitAugmentedArraySetCall(augmentedArraySetCall: FirAugmentedArraySetCall, data: D): R  = visitStatement(augmentedArraySetCall, data)
 

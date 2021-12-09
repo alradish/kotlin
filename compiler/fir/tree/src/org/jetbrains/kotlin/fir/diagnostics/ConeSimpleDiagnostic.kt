@@ -29,6 +29,11 @@ class ConeAmbiguousSuper(val candidateTypes: List<ConeKotlinType>) : ConeDiagnos
         get() = "Ambiguous supertype"
 }
 
+class ConeNoBuilderForCollectionLiteralOfType(val type: String): ConeDiagnostic {
+    override val reason: String
+        get() = "Collection literal has no builder for $type in the current scope"
+}
+
 enum class DiagnosticKind {
     Syntax,
     ExpressionExpected,

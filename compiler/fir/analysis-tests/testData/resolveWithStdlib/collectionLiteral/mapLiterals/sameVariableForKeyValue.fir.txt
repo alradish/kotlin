@@ -1,4 +1,6 @@
 FILE: main.kt
+    package main
+
     public final fun main(): R|kotlin/Unit| {
         lval a: R|mylist/MyList<kotlin/Int>| = Q|mylist/MyList|.R|mylist/MyList.Companion.buildMap|<R|kotlin/Int|>(Int(3), <L> = buildMap@fun R|kotlin/collections/MapCollectionLiteralBuilder<mylist/MyList<kotlin/Int>, kotlin/Int, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
             this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/MapCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(1), Int(1))
@@ -8,6 +10,8 @@ FILE: main.kt
         )
     }
 FILE: MyList.kt
+    package mylist
+
     public final class MyList<T> : R|kotlin/Any| {
         public constructor<T>(): R|mylist/MyList<T>| {
             super<R|kotlin/Any|>()
@@ -18,7 +22,7 @@ FILE: MyList.kt
 
         public final val size: R|kotlin/Int|
             public get(): R|kotlin/Int| {
-                ^ this@R|mylist/MyList|.R|mylist/MyList.content|.R|kotlin/collections/List.size|
+                ^ this@R|mylist/MyList|.R|mylist/MyList.content|.R|SubstitutionOverride<kotlin/collections/MutableList.size: R|kotlin/Int|>|
             }
 
         public final fun add(element: R|T|): R|kotlin/Unit| {

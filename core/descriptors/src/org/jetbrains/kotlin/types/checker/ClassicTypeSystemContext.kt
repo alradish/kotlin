@@ -39,11 +39,6 @@ interface ClassicTypeSystemContext : TypeSystemInferenceExtensionContext, TypeSy
         return this is IntegerLiteralTypeConstructor
     }
 
-    override fun TypeConstructorMarker.isCollectionLiteralTypeConstructor(): Boolean {
-        require(this is TypeConstructor, this::errorMessage)
-        return false
-    }
-
     override fun TypeConstructorMarker.isLocalType(): Boolean {
         require(this is TypeConstructor, this::errorMessage)
         return declarationDescriptor?.classId?.isLocal == true
@@ -59,10 +54,6 @@ interface ClassicTypeSystemContext : TypeSystemInferenceExtensionContext, TypeSy
         val typeConstructor = typeConstructor()
         require(typeConstructor is IntegerLiteralTypeConstructor, this::errorMessage)
         return typeConstructor.possibleTypes
-    }
-
-    override fun SimpleTypeMarker.possibleTypesOfCollectionLiteral(): Collection<KotlinTypeMarker> {
-        TODO("not implemented for $this")
     }
 
     override fun SimpleTypeMarker.withNullability(nullable: Boolean): SimpleTypeMarker {

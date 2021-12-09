@@ -107,7 +107,12 @@ fun main() {
 //    listOf(listOf(1, 2, 3), setOf(4, 5, 6))
 //    f([1, 2, 3])
 //    val a: List<Int> = listOf(b(), 1)
-    val a: List<Int> = [b(), 1]
+//    val a: List<Int> = [b(), 1]
+    val a: List<Int> = Int.buildList(3) {
+        add(1)
+        add(2)
+        add(3)
+    }
 //    foo(a())
 //    foo([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 //    foo([listOf(), setOf()])

@@ -256,33 +256,6 @@ object AbstractTypeChecker {
         return isSubtypeOfForSingleClassifierType(state, preparedSubType.lowerBoundIfFlexible(), preparedSuperType.upperBoundIfFlexible())
     }
 
-    private fun checkSubtypeForCollectionLiteralType(
-        context: AbstractTypeCheckerContext,
-        subType: SimpleTypeMarker,
-        superType: SimpleTypeMarker
-    ): Boolean? = with(context.typeSystemContext) {
-        if (!subType.isCollectionLiteralType() && !superType.isCollectionLiteralType()) return null
-
-        when {
-            subType.isCollectionLiteralType() && superType.isCollectionLiteralType() -> {
-                TODO()
-            }
-
-            subType.isCollectionLiteralType() -> {
-                if (subType.possibleTypesOfCollectionLiteral().any { possibleType ->
-                        (possibleType.typeConstructor() == superType.typeConstructor()) || (isSubtypeOf(context, possibleType, superType))
-                    }) return true
-            }
-
-            superType.isCollectionLiteralType() -> {
-                // Here we also have to check supertypes for intersection types: { Int & String } <: IntegerLiteralTypes
-                TODO()
-            }
-        }
-
-        return null
-    }
-
     private fun checkSubtypeForIntegerLiteralType(
         state: TypeCheckerState,
         subType: SimpleTypeMarker,

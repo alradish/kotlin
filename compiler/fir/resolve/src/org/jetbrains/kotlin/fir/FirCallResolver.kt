@@ -180,7 +180,6 @@ class FirCallResolver(
                     }
                 }
             },
-            isPotentialQualifierPart = false,
             isImplicitInvoke = false,
             emptyList(),
             session,

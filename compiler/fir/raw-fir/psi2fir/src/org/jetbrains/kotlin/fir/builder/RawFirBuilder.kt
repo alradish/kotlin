@@ -2505,7 +2505,7 @@ open class RawFirBuilder(
                 }
             }
             return buildCollectionLiteral {
-                source = expression.toFirPsiSourceElement()
+                source = expression.toFirSourceElement()
                 kind = firKind
                 expressions.addAll(
                     newExpressions

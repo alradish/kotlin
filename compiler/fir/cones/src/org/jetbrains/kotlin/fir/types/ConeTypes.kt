@@ -407,26 +407,3 @@ abstract class ConeIntegerLiteralType(
 fun ConeIntegerLiteralType.canBeInt(): Boolean {
     return value in Int.MIN_VALUE..Int.MAX_VALUE
 }
-
-abstract class ConeCollectionLiteralType() : ConeSimpleKotlinType(), TypeConstructorMarker {
-    abstract val possibleTypes: Set<ConeKotlinType> // TODO возможно лучше ConeClassLikeType
-    override val typeArguments: Array<out ConeTypeProjection> = emptyArray()
-
-    abstract var argumentType: ConeKotlinType?
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as ConeCollectionLiteralType
-
-        if (possibleTypes != other.possibleTypes) return false
-        if (nullability != other.nullability) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return 31 * possibleTypes.hashCode() + nullability.hashCode()
-    }
-}

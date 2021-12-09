@@ -87,6 +87,22 @@ import org.jetbrains.kotlin.types.Variance
  * DO NOT MODIFY IT MANUALLY
  */
 
+internal class NoBuildersForCollectionLiteralImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.NoBuildersForCollectionLiteral(), KtAbstractFirDiagnostic<PsiElement>
+
+internal class CantChooseBuilderImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.CantChooseBuilder(), KtAbstractFirDiagnostic<PsiElement>
+
+internal class NoBuilderForCollectionLiteralOfTypeImpl(
+    override val type: String,
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.NoBuilderForCollectionLiteralOfType(), KtAbstractFirDiagnostic<PsiElement>
+
 internal class UnsupportedImpl(
     override val unsupported: String,
     override val firDiagnostic: KtPsiDiagnostic,

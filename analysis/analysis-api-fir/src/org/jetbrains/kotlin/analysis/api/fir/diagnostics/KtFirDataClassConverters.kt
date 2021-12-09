@@ -72,6 +72,25 @@ import org.jetbrains.kotlin.psi.KtWhenExpression
  */
 
 internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConverter {
+    add(FirErrors.NO_BUILDERS_FOR_COLLECTION_LITERAL) { firDiagnostic ->
+        NoBuildersForCollectionLiteralImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.CANT_CHOOSE_BUILDER) { firDiagnostic ->
+        CantChooseBuilderImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.NO_BUILDER_FOR_COLLECTION_LITERAL_OF_TYPE) { firDiagnostic ->
+        NoBuilderForCollectionLiteralOfTypeImpl(
+            firDiagnostic.a,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.UNSUPPORTED) { firDiagnostic ->
         UnsupportedImpl(
             firDiagnostic.a,

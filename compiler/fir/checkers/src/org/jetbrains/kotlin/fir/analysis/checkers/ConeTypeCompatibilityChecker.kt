@@ -255,8 +255,7 @@ object ConeTypeCompatibilityChecker {
             is ConeIntersectionType -> intersectedTypes.flatMap { it.collectUpperBounds() }.toSet()
             is ConeFlexibleType -> upperBound.collectUpperBounds()
             is ConeCapturedType -> constructor.supertypes?.flatMap { it.collectUpperBounds() }?.toSet().orEmpty()
-            is ConeStubType, is ConeIntegerLiteralType,
-            is ConeCollectionLiteralType -> throw IllegalStateException("$this should not reach here")
+            is ConeStubType, is ConeIntegerLiteralType -> throw IllegalStateException("$this should not reach here")
         }
     }
 
@@ -279,8 +278,7 @@ object ConeTypeCompatibilityChecker {
             is ConeIntersectionType -> intersectedTypes.flatMap { it.collectLowerBounds() }.toSet()
             is ConeFlexibleType -> lowerBound.collectLowerBounds()
             is ConeCapturedType -> constructor.supertypes?.flatMap { it.collectLowerBounds() }?.toSet().orEmpty()
-            is ConeStubType, is ConeIntegerLiteralType,
-            is ConeCollectionLiteralType -> throw IllegalStateException("$this should not reach here")
+            is ConeStubType, is ConeIntegerLiteralType -> throw IllegalStateException("$this should not reach here")
         }
     }
 

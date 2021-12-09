@@ -1,0 +1,27 @@
+FILE: overloadResolution.kt
+    public final fun <T> R|kotlin/collections/Set.Companion|.buildList(size: R|kotlin/Int|, init: R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/Set<T>, T>.() -> kotlin/Unit| = fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/Set<T>, T>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+        ^ Unit
+    }
+    ): R|kotlin/collections/Set<T>| {
+        ^buildList R|kotlin/TODO|()
+    }
+    public final fun <T> R|kotlin/collections/List.Companion|.buildList(size: R|kotlin/Int|, init: R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<T>, T>.() -> kotlin/Unit| = fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<T>, T>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+        ^ Unit
+    }
+    ): R|kotlin/collections/List<T>| {
+        ^buildList R|kotlin/TODO|()
+    }
+    public final fun <T> f(a: R|kotlin/collections/Iterable<T>|): R|kotlin/Unit| {
+    }
+    public final fun <T> f(a: R|kotlin/collections/Collection<T>|): R|kotlin/Unit| {
+    }
+    public final fun <T> f(a: R|kotlin/collections/Set<T>|): R|kotlin/Unit| {
+    }
+    public final fun main(): R|kotlin/Unit| {
+        R|/f|<R|kotlin/Int|>(Q|kotlin/collections/Set|.R|/buildList|<R|kotlin/Int|>(Int(3), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/Set<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(1))
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(2))
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(3))
+        }
+        ))
+    }

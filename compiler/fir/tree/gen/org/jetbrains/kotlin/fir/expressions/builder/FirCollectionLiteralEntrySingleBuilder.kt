@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.fir.expressions.builder
 
 import kotlin.contracts.*
-import org.jetbrains.kotlin.fir.FirSourceElement
+import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.fir.builder.FirBuilderDsl
 import org.jetbrains.kotlin.fir.expressions.FirCollectionLiteralEntrySingle
 import org.jetbrains.kotlin.fir.expressions.FirExpression
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.fir.visitors.*
 
 @FirBuilderDsl
 class FirCollectionLiteralEntrySingleBuilder {
-    var source: FirSourceElement? = null
+    var source: KtSourceElement? = null
     lateinit var expression: FirExpression
 
     fun build(): FirCollectionLiteralEntrySingle {

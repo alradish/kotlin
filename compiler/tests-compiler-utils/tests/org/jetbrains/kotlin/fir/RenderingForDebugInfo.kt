@@ -41,7 +41,6 @@ fun ConeKotlinType.renderForDebugInfo(): String {
         }
         is ConeStubType -> "Stub: $variable"
         is ConeIntegerLiteralType -> "ILT: $value"
-        is ConeCollectionLiteralType -> "CLT: [${possibleTypes.joinToString() { it.renderForDebugInfo() }}]"
     } + nullabilitySuffix
 }
 
