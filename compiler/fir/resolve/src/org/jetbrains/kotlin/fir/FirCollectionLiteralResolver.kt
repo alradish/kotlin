@@ -62,7 +62,7 @@ class FirCollectionLiteralResolver(
     private val buildersForCollectionLiteral: MutableMap<FirCollectionLiteral, MutableMap<ClassId, Candidate>> =
         mutableMapOf()
 
-    private fun processLiteral(cl: FirCollectionLiteral, @Suppress("UNUSED_PARAMETER") fixedArguments: List<FixedArgument>): FirExpression {
+    private fun processLiteral(cl: FirCollectionLiteral): FirExpression {
         val builders = components.callResolver.collectAvailableBuildersForCollectionLiteral(cl)
 
         if (builders.isEmpty()) {
@@ -146,15 +146,15 @@ class FirCollectionLiteralResolver(
     fun processListLiteral(cl: FirCollectionLiteral): FirStatement {
         require(cl.kind == CollectionLiteralKind.LIST_LITERAL)
 
-        val fixedArgumentType = typeOfArgumentsList(cl)
-        return processLiteral(cl, listOf(fixedArgumentType))
+//        val fixedArgumentType = typeOfArgumentsList(cl)
+        return processLiteral(cl)
     }
 
     fun processMapLiteral(cl: FirCollectionLiteral): FirStatement {
         require(cl.kind == CollectionLiteralKind.MAP_LITERAL)
 
-        val fixedArgumentsType = typeOfArgumentsMap(cl)
-        return processLiteral(cl, listOf(fixedArgumentsType.first, fixedArgumentsType.second))
+//        val fixedArgumentsType = typeOfArgumentsMap(cl)
+        return processLiteral(cl)
     }
 
     fun replaceCollectionLiterals(call: FirFunctionCall): FirFunctionCall {

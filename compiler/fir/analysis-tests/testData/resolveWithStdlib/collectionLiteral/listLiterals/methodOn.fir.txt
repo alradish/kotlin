@@ -1,4 +1,6 @@
 FILE: methodOn.kt
+    package main
+
     public final fun <T> R|kotlin/collections/List.Companion|.buildList(size: R|kotlin/Int|, init: R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<T>, T>.() -> kotlin/Unit| = fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<T>, T>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
         ^ Unit
     }
@@ -10,5 +12,5 @@ FILE: methodOn.kt
             this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(1))
             this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(2))
         }
-        ).R|kotlin/collections/List.size|
+        ).R|SubstitutionOverride<kotlin/collections/List.size: R|kotlin/Int|>|
     }

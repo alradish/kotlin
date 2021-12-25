@@ -997,7 +997,7 @@ public class KotlinExpressionParsing extends AbstractKotlinParsing {
      *   ;
      */
     private void parseArrayAccess() {
-        parseAsCollectionLiteralExpression(INDICES, false, "Expecting an index element");
+        parseAsCollectionLiteralExpression(INDICES, false, true,"Expecting an index element");
     }
 
     /*
@@ -1006,10 +1006,10 @@ public class KotlinExpressionParsing extends AbstractKotlinParsing {
      *   ;
      */
     private void parseCollectionLiteralExpression() {
-        parseAsCollectionLiteralExpression(COLLECTION_LITERAL_EXPRESSION, true, "Expecting an element");
+        parseAsCollectionLiteralExpression(COLLECTION_LITERAL_EXPRESSION, true, false,"Expecting an element");
     }
 
-    private void parseAsCollectionLiteralExpression(IElementType nodeType, boolean canBeEmpty, String missingElementErrorMessage) {
+    private void parseAsCollectionLiteralExpression(IElementType nodeType, boolean canBeEmpty, boolean onlyList, String missingElementErrorMessage) {
         assert _at(LBRACKET);
 
         PsiBuilder.Marker innerExpressions = mark();

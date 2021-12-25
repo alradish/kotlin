@@ -397,8 +397,6 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
     override fun transformCollectionLiteral(collectionLiteral: FirCollectionLiteral, data: ResolutionMode): FirStatement {
         collectionLiteral.transformChildren(transformer, ResolutionMode.ContextDependent)
 
-        // check if
-
         val processedCL = when (collectionLiteral.kind) {
             CollectionLiteralKind.LIST_LITERAL -> collectionLiteralResolver.processListLiteral(collectionLiteral)
             CollectionLiteralKind.MAP_LITERAL -> collectionLiteralResolver.processMapLiteral(collectionLiteral)

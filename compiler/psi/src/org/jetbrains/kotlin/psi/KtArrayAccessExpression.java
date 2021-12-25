@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class KtArrayAccessExpression extends KtExpressionImpl implements KtReferenceExpression {
     public KtArrayAccessExpression(@NotNull ASTNode node) {
@@ -47,7 +48,12 @@ public class KtArrayAccessExpression extends KtExpressionImpl implements KtRefer
 
     @NotNull
     public List<KtExpression> getIndexExpressions() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(getIndicesNode(), KtExpression.class);
+        //return PsiTreeUtil.getChildrenOfTypeAsList(getIndicesNode(), KtExpression.class);
+        return PsiTreeUtil.getChildrenOfTypeAsList(getIndicesNode(), KtCollectionLiteralEntry.class).stream()
+                .map(entry -> {
+                    assert entry instanceof KtCollectionLiteralEntrySingle : "Can't use map style in array access";
+                    return ((KtCollectionLiteralEntrySingle) entry).getExpression();
+                }).collect(Collectors.toList());
     }
 
     @NotNull

@@ -4723,6 +4723,18 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
                 }
 
                 @Test
+                @TestMetadata("specType.kt")
+                public void testSpecType() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/specType.kt");
+                }
+
+                @Test
+                @TestMetadata("typeNotation.kt")
+                public void testTypeNotation() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/typeNotation.kt");
+                }
+
+                @Test
                 @TestMetadata("variableExplicit.kt")
                 public void testVariableExplicit() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/variableExplicit.kt");
