@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.diagnostics.*
-import org.jetbrains.kotlin.fir.declarations.builder.buildAnonymousFunction
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.ConeStubDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
@@ -33,7 +32,6 @@ import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.dfa.unwrapSmartcastExpression
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
 import org.jetbrains.kotlin.fir.resolve.inference.FirStubInferenceSession
-import org.jetbrains.kotlin.fir.resolve.inference.inferenceComponents
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.transformers.InvocationKindTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.StoreReceiver
@@ -53,6 +51,7 @@ import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
+import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransformer) : FirPartialBodyResolveTransformer(transformer) {
@@ -394,29 +393,96 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
         return completeInference
     }
 
+    private fun resolveLikeGetCall(collectionLiteral: FirCollectionLiteral): FirFunctionCall? {
+        return collectionLiteral.receiverExpression?.let { arrayExpression ->
+            if (collectionLiteral.kind == CollectionLiteralKind.LIST_LITERAL) {
+                val getCall = buildFunctionCall {
+                    source = collectionLiteral.source
+                    calleeReference = buildSimpleNamedReference {
+                        source = collectionLiteral.source!!.fakeElement(KtFakeSourceElementKind.ArrayAccessNameReference)
+                        name = OperatorNameConventions.GET
+                    }
+                    explicitReceiver = arrayExpression
+                    argumentList = buildArgumentList {
+                        val expressions = collectionLiteral.expressions
+                            .map { entry -> (entry as FirCollectionLiteralEntrySingle).expression }
+                        for (indexExpression in expressions) {
+                            arguments += indexExpression
+                        }
+                    }
+                    origin = FirFunctionCallOrigin.Operator
+                }
+                val inferenceSession = object : FirStubInferenceSession() {
+                    override fun <T> shouldRunCompletion(call: T): Boolean where T : FirStatement, T : FirResolvable = false
+                }
+                val resolvedGetCall = dataFlowAnalyzer.withIgnoreFunctionCalls {
+                    callResolver.withNoArgumentsTransform {
+                        context.withInferenceSession(inferenceSession) {
+                            getCall.transformSingle(this, ResolutionMode.ContextDependent)
+                        }
+                    }
+                }
+
+                val getCallReference = resolvedGetCall.calleeReference as? FirNamedReferenceWithCandidate
+                val getIsSuccessful = getCallReference?.isError == false
+                if (getIsSuccessful) {
+                    dataFlowAnalyzer.enterFunctionCall(resolvedGetCall)
+                    callCompleter.completeCall(resolvedGetCall, noExpectedType)
+                    dataFlowAnalyzer.exitFunctionCall(resolvedGetCall, callCompleted = true)
+                    resolvedGetCall
+                } else {
+                    null
+                }
+            } else {
+                null
+            }
+        }
+    }
+
     override fun transformCollectionLiteral(collectionLiteral: FirCollectionLiteral, data: ResolutionMode): FirStatement {
         collectionLiteral.transformChildren(transformer, ResolutionMode.ContextDependent)
 
-        val processedCL = when (collectionLiteral.kind) {
-            CollectionLiteralKind.LIST_LITERAL -> collectionLiteralResolver.processListLiteral(collectionLiteral)
-            CollectionLiteralKind.MAP_LITERAL -> collectionLiteralResolver.processMapLiteral(collectionLiteral)
-        }
-        if (processedCL is FirErrorExpression) {
-            return processedCL
-        }
+        val resolvedGetCall = resolveLikeGetCall(collectionLiteral)
 
-        return when {
-            data is ResolutionMode.WithExpectedType ->
-                collectionLiteralResolver.replaceCollectionLiteral(
-                    processedCL as FirCollectionLiteral,
-                    data.expectedType
-                )
-            data is ResolutionMode.ContextIndependent ->
-                collectionLiteralResolver.replaceCollectionLiteral(
-                    processedCL as FirCollectionLiteral,
-                    buildImplicitTypeRef()
-                )
-            else -> processedCL
+        when {
+            resolvedGetCall != null -> return resolvedGetCall
+            else -> {
+                val processedCL = when (collectionLiteral.kind) {
+                    CollectionLiteralKind.LIST_LITERAL -> collectionLiteralResolver.processListLiteral(collectionLiteral)
+                    CollectionLiteralKind.MAP_LITERAL -> collectionLiteralResolver.processMapLiteral(collectionLiteral)
+                }
+                if (processedCL is FirErrorExpression) {
+                    return processedCL
+                }
+
+                val expectedTypeFromReceiver = collectionLiteral.receiverExpression?.let { receiver ->
+                    if (receiver.typeRef.coneType.classId?.shortClassName?.identifier?.equals("Companion") == true) {
+                        receiver.typeRef.coneType.classId?.parentClassId?.defaultType(emptyList())?.let {
+                            buildResolvedTypeRef {
+                                type = it
+                            }
+                        }
+                    } else {
+                        null
+                    }
+                }
+
+                return when {
+                    expectedTypeFromReceiver != null -> collectionLiteralResolver.replaceCollectionLiteral(
+                        processedCL as FirCollectionLiteral,
+                        expectedTypeFromReceiver
+                    )
+                    data is ResolutionMode.WithExpectedType -> collectionLiteralResolver.replaceCollectionLiteral(
+                        processedCL as FirCollectionLiteral,
+                        data.expectedType
+                    )
+                    data is ResolutionMode.ContextIndependent -> collectionLiteralResolver.replaceCollectionLiteral(
+                        processedCL as FirCollectionLiteral,
+                        buildImplicitTypeRef()
+                    )
+                    else -> processedCL
+                }
+            }
         }
     }
 

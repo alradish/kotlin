@@ -2333,27 +2333,71 @@ open class RawFirBuilder(
             }.build()
         }
 
+        private fun buildCollectionLiteral(
+            kind: KtCollectionLiteralKind,
+            ktExpressions: List<KtCollectionLiteralEntry>,
+            source: KtSourceElement,
+            receiver: KtExpression? = null
+        ): FirCollectionLiteral {
+            val literalKind = when (kind) {
+                KtCollectionLiteralKind.LIST -> CollectionLiteralKind.LIST_LITERAL
+                KtCollectionLiteralKind.MAP -> CollectionLiteralKind.MAP_LITERAL
+            }
+            val newExpressions = ktExpressions.map {
+                when (it) {
+                    is KtCollectionLiteralEntrySingle -> buildCollectionLiteralEntrySingle {
+                        this.expression = it.expression.toFirExpression("Incorrect collection literal entry")
+                    }
+                    is KtCollectionLiteralEntryPair -> buildCollectionLiteralEntryPair {
+                        key = it.key.toFirExpression("Incorrect key of collection literal pair entry")
+                        value = it.value.toFirExpression("Incorrect value of collection literal pair entry")
+                    }
+                }
+            }
+            return buildCollectionLiteral {
+                this.source = source
+                this.kind = literalKind
+                this.expressions.addAll(
+                    newExpressions
+                )
+                receiver?.let {
+                    this.receiverExpression = it.toFirExpression("Incorrect receiver expression")
+                }
+            }
+        }
+
         override fun visitArrayAccessExpression(expression: KtArrayAccessExpression, data: Unit): FirElement {
             val arrayExpression = expression.arrayExpression
             val setArgument = context.arraySetArgument.remove(expression)
-            return buildFunctionCall {
-                val isGet = setArgument == null
-                source = (if (isGet) expression else expression.parent).toFirSourceElement()
-                calleeReference = buildSimpleNamedReference {
-                    source = expression.toFirSourceElement().fakeElement(KtFakeSourceElementKind.ArrayAccessNameReference)
-                    name = if (isGet) OperatorNameConventions.GET else OperatorNameConventions.SET
+
+            if (setArgument != null) {
+                if (expression.literalKind != KtCollectionLiteralKind.LIST) {
+                    error("Can't use map literal in array access")
                 }
-                explicitReceiver = arrayExpression.toFirExpression("No array expression")
-                argumentList = buildArgumentList {
-                    for (indexExpression in expression.indexExpressions) {
-                        arguments += indexExpression.toFirExpression("Incorrect index expression")
+                return buildFunctionCall {
+                    source = expression.parent.toFirSourceElement()
+                    calleeReference = buildSimpleNamedReference {
+                        source = expression.toFirSourceElement().fakeElement(KtFakeSourceElementKind.ArrayAccessNameReference)
+                        name = OperatorNameConventions.SET
                     }
-                    if (setArgument != null) {
+                    explicitReceiver = arrayExpression.toFirExpression("No array expression")
+                    argumentList = buildArgumentList {
+                        for (indexExpression in expression.indexExpressions) {
+                            arguments += indexExpression.toFirExpression("Incorrect index expression")
+                        }
                         arguments += setArgument
                     }
+                    origin = FirFunctionCallOrigin.Operator
                 }
-                origin = FirFunctionCallOrigin.Operator
             }
+
+            return buildCollectionLiteral(
+                expression.literalKind,
+                expression.innerEntries,
+                arrayExpression!!.toFirSourceElement(), // TODO source = (if (isGet) expression else expression.parent).toFirSourceElement()
+                expression.arrayExpression
+            )
+
         }
 
         override fun visitQualifiedExpression(expression: KtQualifiedExpression, data: Unit): FirElement {
@@ -2489,28 +2533,11 @@ open class RawFirBuilder(
         }
 
         override fun visitCollectionLiteralExpression(expression: KtCollectionLiteralExpression, data: Unit): FirElement {
-            val firKind = when (expression.literalKind) {
-                KtCollectionLiteralKind.LIST -> CollectionLiteralKind.LIST_LITERAL
-                KtCollectionLiteralKind.MAP -> CollectionLiteralKind.MAP_LITERAL
-            }
-            val newExpressions = expression.getInnerEntries().map {
-                when (it) {
-                    is KtCollectionLiteralEntrySingle -> buildCollectionLiteralEntrySingle {
-                        this.expression = it.expression.toFirExpression("Incorrect collection literal entry")
-                    }
-                    is KtCollectionLiteralEntryPair -> buildCollectionLiteralEntryPair {
-                        key = it.key.toFirExpression("Incorrect key of collection literal pair entry")
-                        value = it.value.toFirExpression("Incorrect value of collection literal pair entry")
-                    }
-                }
-            }
-            return buildCollectionLiteral {
-                source = expression.toFirSourceElement()
-                kind = firKind
-                expressions.addAll(
-                    newExpressions
-                )
-            }
+            return buildCollectionLiteral(
+                expression.literalKind,
+                expression.getInnerEntries(),
+                expression.toFirSourceElement()
+            )
         }
 
         override fun visitExpression(expression: KtExpression, data: Unit): FirElement {

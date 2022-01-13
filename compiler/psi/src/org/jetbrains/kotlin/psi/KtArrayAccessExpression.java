@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class KtArrayAccessExpression extends KtExpressionImpl implements KtReferenceExpression {
     public KtArrayAccessExpression(@NotNull ASTNode node) {
@@ -44,6 +45,24 @@ public class KtArrayAccessExpression extends KtExpressionImpl implements KtRefer
     @Nullable @IfNotParsed
     public KtExpression getArrayExpression() {
         return findChildByClass(KtExpression.class);
+    }
+
+    public KtCollectionLiteralKind getLiteralKind() {
+        Stream<KtCollectionLiteralEntry> stream = getInnerEntries().stream();
+        if (stream.allMatch((entry) -> entry instanceof KtCollectionLiteralEntrySingle)) {
+            return KtCollectionLiteralKind.LIST;
+        }
+
+        if (stream.allMatch((entry) -> entry instanceof KtCollectionLiteralEntryPair)) {
+            return KtCollectionLiteralKind.MAP;
+        }
+
+        throw new IllegalStateException("The literal type cannot be determined");
+    }
+
+    @NotNull
+    public List<KtCollectionLiteralEntry> getInnerEntries() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(getIndicesNode(), KtCollectionLiteralEntry.class);
     }
 
     @NotNull

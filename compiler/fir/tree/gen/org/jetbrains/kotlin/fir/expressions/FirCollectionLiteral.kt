@@ -20,6 +20,7 @@ abstract class FirCollectionLiteral : FirExpression() {
     abstract override val typeRef: FirTypeRef
     abstract override val annotations: List<FirAnnotation>
     abstract val kind: CollectionLiteralKind
+    abstract val receiverExpression: FirExpression?
     abstract val argumentType: FirTypeRef?
     abstract val keyArgumentType: FirTypeRef?
     abstract val valueArgumentType: FirTypeRef?
@@ -32,6 +33,8 @@ abstract class FirCollectionLiteral : FirExpression() {
         transformer.transformCollectionLiteral(this, data) as E
 
     abstract override fun replaceTypeRef(newTypeRef: FirTypeRef)
+
+    abstract fun replaceReceiverExpression(newReceiverExpression: FirExpression?)
 
     abstract fun replaceArgumentType(newArgumentType: FirTypeRef?)
 

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.fir.expressions.CollectionLiteralKind
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirCollectionLiteral
 import org.jetbrains.kotlin.fir.expressions.FirCollectionLiteralEntry
+import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.types.impl.FirImplicitTypeRefImpl
 import org.jetbrains.kotlin.fir.visitors.*
@@ -23,6 +24,7 @@ internal class FirCollectionLiteralImpl(
     override val source: KtSourceElement?,
     override val annotations: MutableList<FirAnnotation>,
     override val kind: CollectionLiteralKind,
+    override var receiverExpression: FirExpression?,
     override var argumentType: FirTypeRef?,
     override var keyArgumentType: FirTypeRef?,
     override var valueArgumentType: FirTypeRef?,
@@ -33,6 +35,7 @@ internal class FirCollectionLiteralImpl(
     override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {
         typeRef.accept(visitor, data)
         annotations.forEach { it.accept(visitor, data) }
+        receiverExpression?.accept(visitor, data)
         argumentType?.accept(visitor, data)
         keyArgumentType?.accept(visitor, data)
         valueArgumentType?.accept(visitor, data)
@@ -42,6 +45,7 @@ internal class FirCollectionLiteralImpl(
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirCollectionLiteralImpl {
         typeRef = typeRef.transform(transformer, data)
         transformAnnotations(transformer, data)
+        receiverExpression = receiverExpression?.transform(transformer, data)
         argumentType = argumentType?.transform(transformer, data)
         keyArgumentType = keyArgumentType?.transform(transformer, data)
         valueArgumentType = valueArgumentType?.transform(transformer, data)
@@ -61,6 +65,10 @@ internal class FirCollectionLiteralImpl(
 
     override fun replaceTypeRef(newTypeRef: FirTypeRef) {
         typeRef = newTypeRef
+    }
+
+    override fun replaceReceiverExpression(newReceiverExpression: FirExpression?) {
+        receiverExpression = newReceiverExpression
     }
 
     override fun replaceArgumentType(newArgumentType: FirTypeRef?) {
