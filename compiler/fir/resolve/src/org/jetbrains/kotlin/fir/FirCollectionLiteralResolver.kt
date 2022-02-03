@@ -16,16 +16,11 @@ import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.*
 import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
-import org.jetbrains.kotlin.fir.resolve.ResolutionMode
+import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.calls.*
-import org.jetbrains.kotlin.fir.resolve.calls.candidate
-import org.jetbrains.kotlin.fir.resolve.firClassLike
-import org.jetbrains.kotlin.fir.resolve.inference.ConeComposedSubstitutor
-import org.jetbrains.kotlin.fir.resolve.inference.InferenceComponents
-import org.jetbrains.kotlin.fir.resolve.inference.csBuilder
-import org.jetbrains.kotlin.fir.resolve.inference.inferenceComponents
+import org.jetbrains.kotlin.fir.resolve.inference.*
+import org.jetbrains.kotlin.fir.resolve.inference.model.ConeExpectedTypeConstraintPosition
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeFixVariableConstraintPosition
-import org.jetbrains.kotlin.fir.resolve.initialTypeOfCandidate
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformer
@@ -39,16 +34,21 @@ import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildTypeProjectionWithVariance
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.transformSingle
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystemBuilder
 import org.jetbrains.kotlin.resolve.calls.inference.addSubtypeConstraintIfCompatible
+import org.jetbrains.kotlin.resolve.calls.inference.components.ConstraintSystemCompletionContext
+import org.jetbrains.kotlin.resolve.calls.inference.components.ConstraintSystemCompletionMode
 import org.jetbrains.kotlin.resolve.calls.inference.components.TypeVariableDirectionCalculator
-import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintStorage
+import org.jetbrains.kotlin.resolve.calls.inference.model.ExpectedTypeConstraintPosition
+import org.jetbrains.kotlin.resolve.calls.inference.model.NewConstraintSystemImpl
 import org.jetbrains.kotlin.resolve.calls.inference.model.SimpleConstraintSystemConstraintPosition
+import org.jetbrains.kotlin.resolve.calls.inference.model.VariableWithConstraints
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.model.KotlinTypeMarker
+import org.jetbrains.kotlin.types.model.safeSubstitute
 import org.jetbrains.kotlin.types.model.typeConstructor
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
@@ -59,15 +59,14 @@ class FirCollectionLiteralResolver(
     private val session: FirSession get() = components.session
     private inline val inferenceComponents: InferenceComponents get() = session.inferenceComponents
 
-    private val buildersForCollectionLiteral: MutableMap<FirCollectionLiteral, MutableMap<ClassId, Candidate>> =
-        mutableMapOf()
+    private val buildersCache: MutableMap<FirCollectionLiteral, MutableSet<Candidate>> = mutableMapOf()
 
-    private fun processLiteral(cl: FirCollectionLiteral): FirExpression {
-        val builders = components.callResolver.collectAvailableBuildersForCollectionLiteral(cl)
+    fun preprocessCollectionLiteral(collectionLiteral: FirCollectionLiteral, expectedType: FirTypeRef?): FirExpression {
+        val builders = components.callResolver.collectAvailableBuildersForCollectionLiteral(collectionLiteral)
 
         if (builders.isEmpty()) {
             return buildErrorExpression(
-                cl.source,
+                collectionLiteral.source,
                 ConeSimpleDiagnostic(
                     "Collection literal has no builders in the current scope",
                     DiagnosticKind.NoBuildersForCollectionLiteralFound
@@ -75,92 +74,170 @@ class FirCollectionLiteralResolver(
             )
         }
 
-        val possibleTypes = builders.map { builder ->
-            val initialType = components.initialTypeOfCandidate(builder)
-//            val argumentType = when (cl.kind) {
-            when (cl.kind) {
-                CollectionLiteralKind.LIST_LITERAL -> fixTypeOfListCL(builder)
-                CollectionLiteralKind.MAP_LITERAL -> {
-//                    val (_, valueType) = fixTypeOfDictCL(builder)
-                    fixTypeOfMapCL(builder)
-//                    valueType
+        buildersCache.getOrPut(collectionLiteral, ::mutableSetOf).addAll(builders)
+
+        val types = builders.map { builder ->
+            val c = inferenceComponents.createConstraintSystem()
+            c.addOtherSystem(builder.system.currentStorage())
+            if (collectionLiteral.expressions.isEmpty()) {
+//                c.addNothingConstraint(collectionLiteral, builder)
+                expectedType?.let {
+                    if (c.canDeduceArgumentTypeFromExpected(collectionLiteral, builder, expectedType)) {
+
+                    }
+                } ?: c.addNothingConstraint(collectionLiteral, builder)
+            }
+            fixVariables(c, components.initialTypeOfCandidate(builder))
+
+            c.buildCurrentSubstitutor().safeSubstitute(c, components.initialTypeOfCandidate(builder)) as ConeKotlinType
+        }
+        val type = ConeTypeIntersector.intersectTypes(
+            session.typeContext,
+            types
+//            builders.map { components.returnTypeCalculator.tryCalculateReturnType(it.symbol as FirCallableSymbol<*>).type }
+//            builders.map { components.initialTypeOfCandidate(it) }
+        )
+        collectionLiteral.resultType = collectionLiteral.resultType.resolvedTypeFromPrototype(type)
+
+        return collectionLiteral
+    }
+
+    private fun NewConstraintSystemImpl.canDeduceArgumentTypeFromExpected(
+        collectionLiteral: FirCollectionLiteral,
+        candidate: Candidate,
+        expectedType: FirTypeRef
+    ): Boolean {
+        return when (expectedType) {
+            is FirImplicitTypeRef -> false
+            is FirResolvedTypeRef -> {
+                when (collectionLiteral.kind) {
+                    CollectionLiteralKind.LIST_LITERAL -> {
+                        val valueType = candidate.getValueTypeOfCollectionLiteral()
+                        val valueTypeVariable = candidate.substitutor.substituteOrSelf(valueType)
+                        val initialType = components.initialTypeOfCandidate(candidate)
+                        addSubtypeConstraintIfCompatible(
+                            initialType,
+                            expectedType.type,
+                            ConeExpectedTypeConstraintPosition(false)
+                        )
+                        fixVariables(this, initialType)
+//                        fixVariables(this, expectedType.type)
+                        currentStorage().fixedTypeVariables.containsKey(valueTypeVariable.typeConstructor())
+                    }
+                    CollectionLiteralKind.MAP_LITERAL -> TODO()
                 }
             }
-            val resultType = builder.substitutor.substituteOrSelf(initialType)
+            is FirTypeRefWithNullability -> TODO()
+        }
+    }
 
-            resultType.also {
-                buildersForCollectionLiteral.getOrPut(cl) {
-                    mutableMapOf()
-//                }[resultType.classId!!] = builder to argumentType // TODO а точно оно тут нужно?
-                }[resultType.classId!!] = builder
+    private fun ConstraintSystemBuilder.addNothingConstraint(collectionLiteral: FirCollectionLiteral, candidate: Candidate): Boolean {
+        val nothingType = StandardClassIds.Nothing.defaultType(emptyList())
+        return when (collectionLiteral.kind) {
+            CollectionLiteralKind.LIST_LITERAL -> addSubtypeConstraintIfCompatible(
+                nothingType,
+                candidate.substitutor.substituteOrSelf(candidate.getValueTypeOfCollectionLiteral()),
+                SimpleConstraintSystemConstraintPosition
+            )
+            CollectionLiteralKind.MAP_LITERAL -> {
+                var (key, value) = candidate.getKeyValueTypeOfCollectionLiteral()
+                key = candidate.substitutor.substituteOrSelf(key)
+                value = candidate.substitutor.substituteOrSelf(value)
+                addSubtypeConstraintIfCompatible(nothingType, key, SimpleConstraintSystemConstraintPosition)
+                        || addSubtypeConstraintIfCompatible(nothingType, value, SimpleConstraintSystemConstraintPosition)
+            }
+        }
+    }
+
+    private fun chooseCandidates(
+        collectionLiteral: FirCollectionLiteral,
+        expectedType: ConeKotlinType,
+        otherSystem: NewConstraintSystemImpl? = null
+    ): List<Candidate> {
+        val acceptable = mutableListOf<Candidate>()
+        for (builder in buildersCache.getOrDefault(collectionLiteral, mutableSetOf())) {
+            otherSystem?.let {
+                builder.system.addOtherSystem(it.currentStorage())
+            }
+            val initialType = components.initialTypeOfCandidate(builder)
+            if (builder.system.addSubtypeConstraintIfCompatible(
+                    initialType,
+                    expectedType,
+                    ConeExpectedTypeConstraintPosition(true)
+                )
+            ) {
+                acceptable.add(builder)
             }
         }
 
-        val type = ConeTypeIntersector.intersectTypes(session.typeContext, possibleTypes)
-
-        cl.resultType = cl.resultType.resolvedTypeFromPrototype(type)
-
-        return cl
-    }
-
-    private fun fixTypeVariable(builder: Candidate, type: ConeKotlinType): ConeKotlinType {
-        val typeVariableType = builder.substitutor.substituteOrSelf(type) as ConeTypeVariableType
-        val system = builder.system.getBuilder()
-        val typeConstructor = typeVariableType.typeConstructor(system)
-        if (typeConstructor in system.fixedTypeVariables) {
-            return system.fixedTypeVariables[typeConstructor] as ConeKotlinType
+        if (acceptable.size == 0) {
+            return acceptable
         }
-        val variableWithConstraints = system.notFixedTypeVariables[typeConstructor]
-            ?: error("Can't find type=$typeConstructor neither in fixed nor in not fixed variables")
-        val typeVariable = variableWithConstraints.typeVariable
-        val resultType = inferenceComponents.resultTypeResolver.findResultType(
-            system,
-            variableWithConstraints,
-            TypeVariableDirectionCalculator.ResolveDirection.TO_SUBTYPE
-        )
-        system.fixVariable(typeVariable, resultType, ConeFixVariableConstraintPosition(typeVariable))
-        return resultType as ConeKotlinType
+
+        val min = acceptable.minOf { it.system.notFixedTypeVariables.size }
+        return acceptable.filter { it.system.notFixedTypeVariables.size == min }
     }
 
-    private fun fixTypeOfListCL(builder: Candidate): ConeKotlinType {
-        val valueType = builder.getValueTypeOfCollectionLiteral()
+    fun expandCollectionLiteral(
+        collectionLiteral: FirCollectionLiteral,
+//        expectedType: ConeKotlinType,
+        expectedType: FirTypeRef,
+        additionalSystem: NewConstraintSystemImpl? = null
+    ): FirExpression {
+        val type = expectedType.toResolved(collectionLiteral)
+        val candidates = chooseCandidates(collectionLiteral, type.type, additionalSystem)
 
-        val valueResultType = fixTypeVariable(builder, valueType)
-
-        val currentSubs = builder.substitutor
-        builder.substitutor = ConeComposedSubstitutor(builder.csBuilder.buildCurrentSubstitutor() as ConeSubstitutor, currentSubs)
-        return valueResultType
+        return when (candidates.size) {
+            0 -> return buildErrorExpression(
+                collectionLiteral.source,
+                ConeNoBuilderForCollectionLiteralOfType(expectedType.render())
+            )
+            1 -> {
+                val candidate = candidates.single()
+                if (collectionLiteral.expressions.isEmpty() && expectedType is FirImplicitTypeRef) {
+                    candidate.system.addNothingConstraint(collectionLiteral, candidate)
+                }
+                fixVariables(candidate)
+                expandWithCandidate(collectionLiteral, candidate)
+            }
+            else -> cantChooseBuilder(collectionLiteral)
+        }
     }
 
-    private fun fixTypeOfMapCL(builder: Candidate): Pair<ConeKotlinType, ConeKotlinType> {
-        val (keyType, valueType) = builder.getKeyValueTypeOfCollectionLiteral()
-
-        val keyResultType = fixTypeVariable(builder, keyType)
-        val valueResultType = fixTypeVariable(builder, valueType)
-
-        val currentSubs = builder.substitutor
-        builder.substitutor = ConeComposedSubstitutor(builder.csBuilder.buildCurrentSubstitutor() as ConeSubstitutor, currentSubs)
-        return keyResultType to valueResultType
+    private fun fixVariables(candidate: Candidate) {
+        fixVariables(candidate.system, components.initialTypeOfCandidate(candidate))
+        val currentSubs = candidate.substitutor
+        candidate.substitutor = ConeComposedSubstitutor(candidate.csBuilder.buildCurrentSubstitutor() as ConeSubstitutor, currentSubs)
     }
 
-    fun processListLiteral(cl: FirCollectionLiteral): FirStatement {
-        require(cl.kind == CollectionLiteralKind.LIST_LITERAL)
+    private fun fixVariables(system: NewConstraintSystemImpl, topLevelType: KotlinTypeMarker) {
+        while (true) {
+            val variableForFixation = inferenceComponents.variableFixationFinder.findFirstVariableForFixation(
+                system,
+                system.asConstraintSystemCompletionContext().notFixedTypeVariables.keys.toList(),
+                emptyList(),
+                ConstraintSystemCompletionMode.FULL,
+                topLevelType
+            ) ?: break
+            if (!variableForFixation.hasProperConstraint)
+                break
 
-//        val fixedArgumentType = typeOfArgumentsList(cl)
-        return processLiteral(cl)
+            val variableWithConstraints = system.notFixedTypeVariables.getValue(variableForFixation.variable)
+
+            fixVariable(system.asConstraintSystemCompletionContext(), topLevelType, variableWithConstraints, emptyList())
+        }
     }
 
-    fun processMapLiteral(cl: FirCollectionLiteral): FirStatement {
-        require(cl.kind == CollectionLiteralKind.MAP_LITERAL)
+    fun expandCollectionLiteralsInCall(functionCall: FirFunctionCall): FirFunctionCall {
+        if (!functionCall.argumentList.arguments.any { it is FirCollectionLiteral }) {
+            return functionCall
+        }
+        if (functionCall.calleeReference is FirErrorReferenceWithCandidate) {
+            return functionCall
+        }
 
-//        val fixedArgumentsType = typeOfArgumentsMap(cl)
-        return processLiteral(cl)
-    }
-
-    fun replaceCollectionLiterals(call: FirFunctionCall): FirFunctionCall {
-        val candidate = (call.calleeReference as? FirNamedReferenceWithCandidate)?.candidate ?: return call // .candidate()
+        val candidate = (functionCall.calleeReference as? FirNamedReferenceWithCandidate)?.candidate ?: error("")
         val argumentMapping = candidate.argumentMapping ?: error("cant get argument mapping for $candidate")
-        if (!argumentMapping.keys.any { it is FirCollectionLiteral }) return call
 
         val replacer = object : FirTransformer<Unit>() {
             override fun <E : FirElement> transformElement(element: E, data: Unit): E {
@@ -171,13 +248,18 @@ class FirCollectionLiteralResolver(
             override fun transformCollectionLiteral(collectionLiteral: FirCollectionLiteral, data: Unit): FirStatement {
                 val param = argumentMapping[collectionLiteral]
                     ?: error("Empty argument mapping for $collectionLiteral in ${candidate.symbol.fir.render()}")
-                val builder = chooseBuilder(candidate, collectionLiteral, param.returnTypeRef)
-                    ?: return cantChooseBuilder(collectionLiteral).also {
-                        argumentMapping[it as FirExpression] = param
-                        argumentMapping.remove(collectionLiteral)
-                    }
 
-                return createFunctionCallForCollectionLiteral(builder, collectionLiteral).transformSingle(
+                return when (val type = param.returnTypeRef) {
+                    is FirImplicitTypeRef -> TODO()
+                    is FirResolvedTypeRef -> {
+                        val clType = checkTypeOfParameter(candidate, type) ?: return cantChooseBuilder(collectionLiteral).also {
+                            argumentMapping[it] = param
+                            argumentMapping.remove(collectionLiteral)
+                        }
+                        expandCollectionLiteral(collectionLiteral, clType.toFirResolvedTypeRef(), candidate.system)
+                    }
+                    is FirTypeRefWithNullability -> TODO()
+                }.transformSingle(
                     transformer,
                     ResolutionMode.ContextDependent
                 ).also {
@@ -186,160 +268,17 @@ class FirCollectionLiteralResolver(
                 }
             }
         }
-        return call.transformSingle(replacer, Unit)
+        return functionCall.transformSingle(replacer, Unit)
     }
 
-    private fun cantFindBuilder(cl: FirCollectionLiteral, classId: ClassId): FirStatement {
-        return buildErrorExpression(
-            cl.source,
-            ConeNoBuilderForCollectionLiteralOfType(
-                classId.shortClassName.identifier
-            )
-//                "Collection literal has no builder for ${classId.shortClassName} in the current scope",
-        )
-    }
-
-    private fun cantChooseBuilder(cl: FirCollectionLiteral): FirStatement {
-        return buildErrorExpression(
-            cl.source,
-            ConeSimpleDiagnostic(
-                "Cant choose builder",
-                DiagnosticKind.CantChooseBuilder
-            )
-        )
-    }
-
-    fun replaceCollectionLiteral(collectionLiteral: FirCollectionLiteral, expectedType: FirTypeRef?): FirStatement {
-        expectedType ?: return collectionLiteral
-        val builder: Candidate = when (expectedType) {
-            is FirImplicitTypeRef -> {
-                val standard = if (collectionLiteral.expressions.any { it is FirCollectionLiteralEntrySingle }) {
-                    StandardClassIds.List
-                } else {
-                    StandardClassIds.Map
-                }
-//                val listBuilder = buildersForCollectionLiteral[collectionLiteral]?.get(standard)?.first
-                val listBuilder = buildersForCollectionLiteral[collectionLiteral]?.get(standard)
-                // TODO по идеи такого быть не может
-                listBuilder ?: return cantFindBuilder(collectionLiteral, standard)
-            }
-            is FirResolvedTypeRef -> {
-                val coneType = expectedType.coneType
-                if (coneType is ConeTypeParameterType) {
-                    TODO("$coneType is ConeTypeParameterType in expected type while replace $collectionLiteral")
-                } else {
-                    val classId = coneType.classId ?: error("Class ID for $coneType is null")
-//                    buildersForCollectionLiteral[collectionLiteral]?.get(classId)?.first
-                    buildersForCollectionLiteral[collectionLiteral]?.get(classId)
-                        ?: return cantFindBuilder(collectionLiteral, classId)
-                }
-            }
-            is FirTypeRefWithNullability -> TODO("expected type $expectedType is FirTypeRefWithNullability while replace $collectionLiteral")
-        }
-        return createFunctionCallForCollectionLiteral(builder, collectionLiteral).transformSingle(
-            transformer,
-            ResolutionMode.ContextDependent
-        )
-    }
-
-    private fun chooseBuilder(candidate: Candidate, cl: FirCollectionLiteral, type: FirTypeRef): Candidate? {
-        val substituted = candidate.substitutor.substituteOrSelf(type.coneType)
-        val typeConstructor = substituted.typeConstructor(candidate.system)
-        val notFixed = candidate.system.currentStorage().notFixedTypeVariables[typeConstructor]
-        val clType = if (notFixed != null) {
-            val resultType = inferenceComponents.resultTypeResolver.findResultType(
-                candidate.system,
-                notFixed,
-                TypeVariableDirectionCalculator.ResolveDirection.TO_SUBTYPE
-            )
-            val it = resultType as? ConeIntersectionType ?: error("$resultType is not ConeIntersectionType")
-            val clType = it.alternativeType
-            if (clType !in it.intersectedTypes) {
-                return null
-            }
-            clType?.let {
-                candidate.system.fixVariable(
-                    notFixed.typeVariable,
-                    it,
-                    ConeFixVariableConstraintPosition(notFixed.typeVariable)
-                )
-            }
-            clType
-        } else {
-            substituted
-        } ?: error("Null collection literal type when choosing builder")
-//        return buildersForCollectionLiteral[cl]?.get(clType.classId!!)?.first
-        return buildersForCollectionLiteral[cl]?.get(clType.classId!!)
-    }
-
-    fun typeOfArgumentsList(cl: FirCollectionLiteral): FixedArgument {
-        require(cl.kind == CollectionLiteralKind.LIST_LITERAL)
-
-        val expressions = cl.expressions.map { (it as FirCollectionLiteralEntrySingle).expression }
-        return fixTypeOfExpressions(expressions, "T")
-    }
-
-    fun typeOfArgumentsMap(cl: FirCollectionLiteral): Pair<FixedArgument, FixedArgument> {
-        require(cl.kind == CollectionLiteralKind.MAP_LITERAL)
-
-        val expressions = cl
-            .expressions
-            .associate { entry -> (entry as FirCollectionLiteralEntryPair).let { it.key to it.value } }
-
-        val keysType = fixTypeOfExpressions(expressions.keys, "K")
-        val valuesType = fixTypeOfExpressions(expressions.values, "V")
-        return keysType to valuesType
-    }
-
-    private fun fixTypeOfExpressions(expressions: Collection<FirExpression>, typeVariableName: String): FixedArgument {
-        val system = inferenceComponents.createConstraintSystem()
-//        system.addOtherSystem(components.context.inferenceSession.currentConstraintSystem)
-        system.addOtherSystem(ConstraintStorage.Empty)
-
-        // Создать typeVariable
-        val typeVariable = ConeTypeVariable(typeVariableName) // Возможно в будущем стоит заменить на какой-нибудь конкретный класс
-        system.registerVariable(typeVariable)
-
-        val upperType = typeVariable.defaultType
-        for (expression in expressions) {
-            val lowerType = expression.typeRef.coneTypeUnsafe<ConeKotlinType>()
-            if (expression is FirFunctionCall) {
-                expression.candidate()?.system?.asReadOnlyStorage()?.let {
-                    system.addOtherSystem(it)
-                }
-            }
-            system.addSubtypeConstraintIfCompatible(
-                lowerType,
-                upperType,
-                SimpleConstraintSystemConstraintPosition
-            )
-        }
-
-        // Зафиксировать (если возможно?) тип аргумента и вернуть его
-        val resultType = inferenceComponents.resultTypeResolver.findResultType(
-            system,
-            system.notFixedTypeVariables[typeVariable.typeConstructor]!!,
-            TypeVariableDirectionCalculator.ResolveDirection.TO_SUBTYPE
-        )
-        system.fixVariable(typeVariable, resultType, ConeFixVariableConstraintPosition(typeVariable))
-        return FixedArgument(typeVariable, resultType)
-    }
-
-    private fun createFunctionCallForCollectionLiteral(
-        builder: Candidate, // replace to fir function
-        cl: FirCollectionLiteral
-    ): FirFunctionCall {
-        val adds = cl.expressions.map {
+    fun expandWithCandidate(collectionLiteral: FirCollectionLiteral, candidate: Candidate): FirExpression {
+        val adds = collectionLiteral.expressions.map {
             buildFunctionCall {
                 calleeReference = buildSimpleNamedReference { name = Name.identifier("add") }
-                argumentList = when (cl.kind) {
-                    CollectionLiteralKind.LIST_LITERAL -> {
-                        it as FirCollectionLiteralEntrySingle
-                        val expression = it.expression
-                        buildUnaryArgumentList(
-                            expression
-                        )
-                    }
+                argumentList = when (collectionLiteral.kind) {
+                    CollectionLiteralKind.LIST_LITERAL -> buildUnaryArgumentList(
+                        (it as FirCollectionLiteralEntrySingle).expression
+                    )
                     CollectionLiteralKind.MAP_LITERAL -> (it as FirCollectionLiteralEntryPair).let { entry ->
                         buildBinaryArgumentList(entry.key, entry.value)
                     }
@@ -361,7 +300,7 @@ class FirCollectionLiteralResolver(
                     isLambda = true
                     label = buildLabel {
                         // TODO check for name of candidate
-                        name = when (cl.kind) {
+                        name = when (collectionLiteral.kind) {
                             CollectionLiteralKind.LIST_LITERAL -> OperatorNameConventions.BUILD_LIST_CL
                             CollectionLiteralKind.MAP_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
                         }.identifier
@@ -372,7 +311,7 @@ class FirCollectionLiteralResolver(
         }
         val explicitReceiver = buildPropertyAccessExpression {
             calleeReference = buildSimpleNamedReference {
-                val fir = (builder.symbol as FirNamedFunctionSymbol).fir
+                val fir = (candidate.symbol as FirNamedFunctionSymbol).fir
                 name = fir.receiverTypeRef?.let { it.firClassLike(session)?.classId?.relativeClassName?.parent()?.shortName() }
                     ?: fir.dispatchReceiverType?.classId?.relativeClassName?.parent()?.shortName()
                             ?: error("Cant find name for explicit receiver")
@@ -381,30 +320,83 @@ class FirCollectionLiteralResolver(
         return buildFunctionCall {
             this.explicitReceiver = explicitReceiver
             calleeReference = buildSimpleNamedReference {
-                name = when (cl.kind) {
+                name = when (collectionLiteral.kind) {
                     CollectionLiteralKind.LIST_LITERAL -> OperatorNameConventions.BUILD_LIST_CL
                     CollectionLiteralKind.MAP_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
                 }
             }
-            val function = builder.symbol.fir as FirSimpleFunction
+            val function = candidate.symbol.fir as FirSimpleFunction
             typeArguments.addAll(function.typeParameters.map {
                 buildTypeProjectionWithVariance {
                     typeRef = buildResolvedTypeRef {
-                        type = builder.substitutor.substituteOrSelf(it.toConeType())
+                        type = candidate.substitutor.substituteOrSelf(it.toConeType())
                     }
                     variance = Variance.INVARIANT
                 }
             })
             argumentList = buildBinaryArgumentList(
-                buildConstExpression(null, ConstantValueKind.Int, cl.expressions.size),
+                buildConstExpression(null, ConstantValueKind.Int, collectionLiteral.expressions.size),
                 lambda
             )
         }
     }
 
+    private fun fixVariable(
+        c: ConstraintSystemCompletionContext,
+        topLevelType: KotlinTypeMarker,
+        variableWithConstraints: VariableWithConstraints,
+        postponedResolveKtPrimitives: List<PostponedResolvedAtom>
+    ) {
+        val direction = TypeVariableDirectionCalculator(c, postponedResolveKtPrimitives, topLevelType).getDirection(variableWithConstraints)
+        val resultType = inferenceComponents.resultTypeResolver.findResultType(c, variableWithConstraints, direction)
+        val variable = variableWithConstraints.typeVariable
+        c.fixVariable(variable, resultType, ConeFixVariableConstraintPosition(variable)) // TODO: obtain atom for diagnostics
+    }
 
-    /*private*/ data class FixedArgument(
-        val typeVariable: ConeTypeVariable,
-        val fixedType: KotlinTypeMarker
-    )
+    private fun cantChooseBuilder(cl: FirCollectionLiteral): FirExpression {
+        return buildErrorExpression(
+            cl.source,
+            ConeSimpleDiagnostic(
+                "Cant choose builder",
+                DiagnosticKind.CantChooseBuilder
+            )
+        )
+    }
+
+    private fun checkTypeOfParameter(candidate: Candidate, type: FirResolvedTypeRef): ConeKotlinType? {
+        val substitute = candidate
+            .substitutor
+            .substituteOrSelf(type.type)
+        val typeConstructor = substitute
+            .typeConstructor(candidate.system)
+        val typeVariable = candidate.system.currentStorage().notFixedTypeVariables[typeConstructor]
+        return if (typeVariable != null) {
+            val resultType = inferenceComponents.resultTypeResolver.findResultType(
+                candidate.system,
+                typeVariable,
+                TypeVariableDirectionCalculator.ResolveDirection.TO_SUBTYPE
+            )
+            val intersectionType = resultType as? ConeIntersectionType ?: error("$resultType is not ConeIntersectionType")
+            val clType = intersectionType.alternativeType
+            if (clType !in intersectionType.intersectedTypes) {
+                return null
+            }
+            clType?.let {
+                candidate.system.fixVariable(
+                    typeVariable.typeVariable,
+                    it,
+                    ConeFixVariableConstraintPosition(typeVariable.typeVariable)
+                )
+            }
+            clType!!
+        } else substitute
+    }
+
+    private fun FirTypeRef.toResolved(collectionLiteral: FirCollectionLiteral): FirResolvedTypeRef = when (this) {
+        is FirImplicitTypeRef -> buildResolvedTypeRef {
+            type = collectionLiteral.kind.toClassId().constructClassLikeType(arrayOf(ConeStarProjection), false)
+        }
+        is FirResolvedTypeRef -> this
+        is FirTypeRefWithNullability -> TODO()
+    }
 }

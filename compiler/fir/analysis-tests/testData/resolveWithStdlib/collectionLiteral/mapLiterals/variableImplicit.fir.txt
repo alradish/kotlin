@@ -12,5 +12,5 @@ FILE: variableImplicit.kt
         ^buildMap R|kotlin/TODO|()
     }
     public final fun main(): R|kotlin/Unit| {
-        lval a: <ERROR TYPE REF: Collection literal has no builder for Map in the current scope> = ERROR_EXPR(Collection literal has no builder for Map in the current scope)
+        lval a: <ERROR TYPE REF: Collection literal has no builder for kotlin/collections/Map<*> in the current scope> = ERROR_EXPR(Collection literal has no builder for kotlin/collections/Map<*> in the current scope)
     }

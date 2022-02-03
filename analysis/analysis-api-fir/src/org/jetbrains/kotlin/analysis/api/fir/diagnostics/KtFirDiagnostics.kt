@@ -100,6 +100,10 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         abstract val type: String
     }
 
+    abstract class CantUseMapLiteralForGetCall : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = CantUseMapLiteralForGetCall::class
+    }
+
     abstract class Unsupported : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = Unsupported::class
         abstract val unsupported: String

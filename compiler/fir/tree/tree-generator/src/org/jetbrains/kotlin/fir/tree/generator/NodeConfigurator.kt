@@ -192,6 +192,8 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +field("argumentType", typeRef, nullable = true, withReplace = true)
             +field("keyArgumentType", typeRef, nullable = true, withReplace = true)
             +field("valueArgumentType", typeRef, nullable = true, withReplace = true)
+            +fieldList("builders", functionSymbolType, withReplace = true)
+//            +field("mapping", type("Map") to listOf(nameType, expression))
             +fieldList("expressions", collectionLiteralEntry).withTransform()
         }
 

@@ -4663,6 +4663,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
                 }
 
                 @Test
+                @TestMetadata("empty.kt")
+                public void testEmpty() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/empty.kt");
+                }
+
+                @Test
                 @TestMetadata("findAllBuilders.kt")
                 public void testFindAllBuilders() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/findAllBuilders.kt");
@@ -4684,6 +4690,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
                 @TestMetadata("functionExplicit.kt")
                 public void testFunctionExplicit() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/functionExplicit.kt");
+                }
+
+                @Test
+                @TestMetadata("functionReturn.kt")
+                public void testFunctionReturn() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/functionReturn.kt");
                 }
 
                 @Test

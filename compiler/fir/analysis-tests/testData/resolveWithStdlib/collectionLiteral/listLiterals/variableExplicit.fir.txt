@@ -18,5 +18,5 @@ FILE: variableExplicit.kt
             this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(3))
         }
         )
-        lval b: R|kotlin/collections/Set<kotlin/Int>| = ERROR_EXPR(Collection literal has no builder for Set in the current scope)
+        lval b: R|kotlin/collections/Set<kotlin/Int>| = ERROR_EXPR(Collection literal has no builder for kotlin/collections/Set<kotlin/Int> in the current scope)
     }

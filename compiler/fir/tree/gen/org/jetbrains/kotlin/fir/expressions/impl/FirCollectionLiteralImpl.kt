@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirCollectionLiteral
 import org.jetbrains.kotlin.fir.expressions.FirCollectionLiteralEntry
 import org.jetbrains.kotlin.fir.expressions.FirExpression
+import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.types.impl.FirImplicitTypeRefImpl
 import org.jetbrains.kotlin.fir.visitors.*
@@ -28,6 +29,7 @@ internal class FirCollectionLiteralImpl(
     override var argumentType: FirTypeRef?,
     override var keyArgumentType: FirTypeRef?,
     override var valueArgumentType: FirTypeRef?,
+    override val builders: MutableList<FirNamedFunctionSymbol>,
     override val expressions: MutableList<FirCollectionLiteralEntry>,
 ) : FirCollectionLiteral() {
     override var typeRef: FirTypeRef = FirImplicitTypeRefImpl(null)
@@ -81,5 +83,10 @@ internal class FirCollectionLiteralImpl(
 
     override fun replaceValueArgumentType(newValueArgumentType: FirTypeRef?) {
         valueArgumentType = newValueArgumentType
+    }
+
+    override fun replaceBuilders(newBuilders: List<FirNamedFunctionSymbol>) {
+        builders.clear()
+        builders.addAll(newBuilders)
     }
 }

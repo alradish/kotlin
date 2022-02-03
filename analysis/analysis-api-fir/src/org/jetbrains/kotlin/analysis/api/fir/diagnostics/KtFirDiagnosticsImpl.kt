@@ -103,6 +103,11 @@ internal class NoBuilderForCollectionLiteralOfTypeImpl(
     override val token: ValidityToken,
 ) : KtFirDiagnostic.NoBuilderForCollectionLiteralOfType(), KtAbstractFirDiagnostic<PsiElement>
 
+internal class CantUseMapLiteralForGetCallImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.CantUseMapLiteralForGetCall(), KtAbstractFirDiagnostic<PsiElement>
+
 internal class UnsupportedImpl(
     override val unsupported: String,
     override val firDiagnostic: KtPsiDiagnostic,

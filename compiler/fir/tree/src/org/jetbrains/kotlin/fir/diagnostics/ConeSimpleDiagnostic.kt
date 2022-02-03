@@ -80,6 +80,7 @@ enum class DiagnosticKind {
 
     NoBuildersForCollectionLiteralFound,
     CantChooseBuilder,
+    CantUseMapLiteralForGetCall,
 
     Other,
 }

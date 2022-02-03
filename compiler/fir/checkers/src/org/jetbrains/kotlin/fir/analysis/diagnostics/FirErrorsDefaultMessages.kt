@@ -91,6 +91,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_INFER_PARA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_OVERRIDE_INVISIBLE_MEMBER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_WEAKEN_ACCESS_PRIVILEGE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANT_CHOOSE_BUILDER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANT_USE_MAP_LITERAL_FOR_GET_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CAN_BE_REPLACED_WITH_OPERATOR_ASSIGNMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CAN_BE_VAL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CAPTURED_MEMBER_VAL_INITIALIZATION
@@ -593,6 +594,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         // Collection literal
         map.put(NO_BUILDERS_FOR_COLLECTION_LITERAL, "Collection literal has no builders in the current scope")
         map.put(CANT_CHOOSE_BUILDER, "Cant choose builder")
+        map.put(CANT_USE_MAP_LITERAL_FOR_GET_CALL, "Cant use map style collection literal in get call")
         map.put(NO_BUILDER_FOR_COLLECTION_LITERAL_OF_TYPE, "Collection literal has no builder for {0} in the current scope", TO_STRING)
 
         // Super

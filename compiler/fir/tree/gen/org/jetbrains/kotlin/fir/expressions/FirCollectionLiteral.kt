@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.expressions
 
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.fir.FirElement
+import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.visitors.*
 
@@ -24,6 +25,7 @@ abstract class FirCollectionLiteral : FirExpression() {
     abstract val argumentType: FirTypeRef?
     abstract val keyArgumentType: FirTypeRef?
     abstract val valueArgumentType: FirTypeRef?
+    abstract val builders: List<FirNamedFunctionSymbol>
     abstract val expressions: List<FirCollectionLiteralEntry>
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitCollectionLiteral(this, data)
@@ -41,6 +43,8 @@ abstract class FirCollectionLiteral : FirExpression() {
     abstract fun replaceKeyArgumentType(newKeyArgumentType: FirTypeRef?)
 
     abstract fun replaceValueArgumentType(newValueArgumentType: FirTypeRef?)
+
+    abstract fun replaceBuilders(newBuilders: List<FirNamedFunctionSymbol>)
 
     abstract override fun <D> transformAnnotations(transformer: FirTransformer<D>, data: D): FirCollectionLiteral
 

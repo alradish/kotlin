@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.resolve.calls
 
 import org.jetbrains.kotlin.fir.FirModuleData
+import org.jetbrains.kotlin.fir.StandardTypes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
@@ -14,11 +15,18 @@ import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameter
 import org.jetbrains.kotlin.fir.expressions.CollectionLiteralKind
 import org.jetbrains.kotlin.fir.expressions.FirCollectionLiteral
 import org.jetbrains.kotlin.fir.expressions.FirExpression
+import org.jetbrains.kotlin.fir.expressions.builder.buildExpressionStub
+import org.jetbrains.kotlin.fir.resolve.defaultType
+import org.jetbrains.kotlin.fir.resolve.inference.csBuilder
 import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
+import org.jetbrains.kotlin.fir.visitors.TransformData
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.resolve.calls.inference.model.ArgumentConstraintPosition
+import org.jetbrains.kotlin.resolve.calls.inference.model.SimpleConstraintSystemConstraintPosition
 
 internal object CheckCollectionLiteralBuilderStage : CheckerStage() {
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
@@ -74,7 +82,7 @@ internal object CheckCollectionLiteralArgumentsStage : CheckerStage() {
         val parameterName = Name.identifier("synthetic")
         val syntheticParameter = buildSyntheticParameter(candidate.symbol.fir.moduleData, parameterName, argumentType)
         candidate.resolveExpressions(callInfo.valueExpressions, syntheticParameter, sink, context)
-   }
+    }
 
     private fun Candidate.resolveExpressions(
         expressions: List<FirExpression>,
@@ -82,6 +90,20 @@ internal object CheckCollectionLiteralArgumentsStage : CheckerStage() {
         sink: CheckerSink,
         context: ResolutionContext
     ) {
+//        if (expressions.isEmpty()) {
+//            resolveArgument(
+//                callInfo,
+//                buildExpressionStub {
+//                    typeRef = buildResolvedTypeRef {
+//                        type = StandardClassIds.Nothing.defaultType(emptyList())
+//                    }
+//                },
+//                parameter,
+//                isReceiver = false,
+//                sink = sink,
+//                context = context,
+//            )
+//        }
         for (argument in expressions) {
             resolveArgument(
                 callInfo,

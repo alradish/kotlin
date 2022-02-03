@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.fir.expressions.FirCollectionLiteralEntry
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.builder.FirExpressionBuilder
 import org.jetbrains.kotlin.fir.expressions.impl.FirCollectionLiteralImpl
+import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.types.impl.FirImplicitTypeRefImpl
 import org.jetbrains.kotlin.fir.visitors.*
@@ -34,6 +35,7 @@ class FirCollectionLiteralBuilder : FirAnnotationContainerBuilder, FirExpression
     var argumentType: FirTypeRef? = null
     var keyArgumentType: FirTypeRef? = null
     var valueArgumentType: FirTypeRef? = null
+    val builders: MutableList<FirNamedFunctionSymbol> = mutableListOf()
     val expressions: MutableList<FirCollectionLiteralEntry> = mutableListOf()
 
     override fun build(): FirCollectionLiteral {
@@ -45,6 +47,7 @@ class FirCollectionLiteralBuilder : FirAnnotationContainerBuilder, FirExpression
             argumentType,
             keyArgumentType,
             valueArgumentType,
+            builders,
             expressions,
         )
     }

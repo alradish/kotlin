@@ -107,6 +107,7 @@ object FirErrors {
     val NO_BUILDERS_FOR_COLLECTION_LITERAL by error0<PsiElement>()
     val CANT_CHOOSE_BUILDER by error0<PsiElement>()
     val NO_BUILDER_FOR_COLLECTION_LITERAL_OF_TYPE by error1<PsiElement, String>()
+    val CANT_USE_MAP_LITERAL_FOR_GET_CALL by error0<PsiElement>()
 
     // Meta-errors
     val UNSUPPORTED by error1<PsiElement, String>()

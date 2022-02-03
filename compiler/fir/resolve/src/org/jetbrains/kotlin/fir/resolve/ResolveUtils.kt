@@ -495,3 +495,8 @@ fun FirFunction.getAsForbiddenNamedArgumentsTarget(session: FirSession): Forbidd
 //  org.jetbrains.kotlin.fir.serialization.FirElementSerializer.functionProto
 //  org.jetbrains.kotlin.fir.serialization.FirElementSerializer.constructorProto
 fun FirFunction.getHasStableParameterNames(session: FirSession): Boolean = getAsForbiddenNamedArgumentsTarget(session) == null
+
+fun CollectionLiteralKind.toClassId() = when(this) {
+    CollectionLiteralKind.LIST_LITERAL -> StandardClassIds.List
+    CollectionLiteralKind.MAP_LITERAL -> StandardClassIds.Map
+}

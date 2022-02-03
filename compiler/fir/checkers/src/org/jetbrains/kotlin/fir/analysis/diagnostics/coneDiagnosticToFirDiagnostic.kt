@@ -412,6 +412,7 @@ private fun ConeSimpleDiagnostic.getFactory(source: KtSourceElement): KtDiagnost
         DiagnosticKind.EnumEntryAsType -> FirErrors.ENUM_ENTRY_AS_TYPE
         DiagnosticKind.NoBuildersForCollectionLiteralFound -> FirErrors.NO_BUILDERS_FOR_COLLECTION_LITERAL
         DiagnosticKind.CantChooseBuilder -> FirErrors.CANT_CHOOSE_BUILDER
+        DiagnosticKind.CantUseMapLiteralForGetCall -> FirErrors.CANT_USE_MAP_LITERAL_FOR_GET_CALL
         DiagnosticKind.NotASupertype -> FirErrors.NOT_A_SUPERTYPE
         DiagnosticKind.SuperNotAvailable -> FirErrors.SUPER_NOT_AVAILABLE
         DiagnosticKind.UnresolvedSupertype,

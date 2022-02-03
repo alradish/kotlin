@@ -45,6 +45,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val NO_BUILDER_FOR_COLLECTION_LITERAL_OF_TYPE by error<PsiElement> {
             parameter<String>("type")
         }
+        val CANT_USE_MAP_LITERAL_FOR_GET_CALL by error<PsiElement>()
     }
 
     val MetaErrors by object : DiagnosticGroup("Meta-errors") {

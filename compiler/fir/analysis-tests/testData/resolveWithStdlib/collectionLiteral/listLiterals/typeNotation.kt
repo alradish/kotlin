@@ -32,6 +32,7 @@ fun main() {
     val a = A [1, 2, 3]
     val b = mutableListOf<Int>()
     val c = b[0]
+    val cc = b[0, 1]
     b[0] = 1
     val d = B [1, 2, 3]
     val e = C [1, 2, 3]

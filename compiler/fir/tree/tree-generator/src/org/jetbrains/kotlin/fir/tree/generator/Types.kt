@@ -75,6 +75,7 @@ val classSymbolType = type("fir.symbols.impl", "FirClassSymbol")
 val classLikeSymbolType = type("fir.symbols.impl", "FirClassLikeSymbol<*>")
 val regularClassSymbolType = type("fir.symbols.impl", "FirRegularClassSymbol")
 val typeParameterSymbolType = type("fir.symbols.impl", "FirTypeParameterSymbol")
+val functionSymbolType = type("fir.symbols.impl", "FirNamedFunctionSymbol")
 val emptyArgumentListType = type("fir.expressions", "FirEmptyArgumentList")
 val firScopeProviderType = type("fir.scopes", "FirScopeProvider")
 

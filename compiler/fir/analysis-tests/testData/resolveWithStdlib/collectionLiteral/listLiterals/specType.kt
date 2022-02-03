@@ -12,5 +12,5 @@ fun foo(a: List<Int>) {}
 fun <T> foo(a: List<T>) {}
 
 fun main() {
-    foo([1.0])
+    foo([1])
 }

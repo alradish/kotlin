@@ -7,7 +7,7 @@ fun <T> List.Companion.buildList(size: Int, init: ListCollectionLiteralBuilder<L
 }
 
 fun <T> f(a: Iterable<T>) {}
-//fun <T> f(a: Collection<T>) {}
+fun <T> f(a: Collection<T>) {}
 fun <T> f(a: Set<T>) {}
 
 fun main() {
