@@ -496,8 +496,10 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
                 if (preprocessed is FirErrorExpression) {
                     return preprocessed
                 }
-                return collectionLiteralResolver.expandCollectionLiteral(collectionLiteral, expectedType)
+                val expandCollectionLiteral = collectionLiteralResolver.expandCollectionLiteral(collectionLiteral, expectedType)
+                val transformSingle = expandCollectionLiteral
                     .transformSingle(transformer, ResolutionMode.ContextDependent)
+                return transformSingle
             }
         }
     }

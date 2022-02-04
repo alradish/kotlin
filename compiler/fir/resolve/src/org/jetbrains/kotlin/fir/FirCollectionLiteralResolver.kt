@@ -41,7 +41,6 @@ import org.jetbrains.kotlin.resolve.calls.inference.addSubtypeConstraintIfCompat
 import org.jetbrains.kotlin.resolve.calls.inference.components.ConstraintSystemCompletionContext
 import org.jetbrains.kotlin.resolve.calls.inference.components.ConstraintSystemCompletionMode
 import org.jetbrains.kotlin.resolve.calls.inference.components.TypeVariableDirectionCalculator
-import org.jetbrains.kotlin.resolve.calls.inference.model.ExpectedTypeConstraintPosition
 import org.jetbrains.kotlin.resolve.calls.inference.model.NewConstraintSystemImpl
 import org.jetbrains.kotlin.resolve.calls.inference.model.SimpleConstraintSystemConstraintPosition
 import org.jetbrains.kotlin.resolve.calls.inference.model.VariableWithConstraints
@@ -80,12 +79,7 @@ class FirCollectionLiteralResolver(
             val c = inferenceComponents.createConstraintSystem()
             c.addOtherSystem(builder.system.currentStorage())
             if (collectionLiteral.expressions.isEmpty()) {
-//                c.addNothingConstraint(collectionLiteral, builder)
-                expectedType?.let {
-                    if (c.canDeduceArgumentTypeFromExpected(collectionLiteral, builder, expectedType)) {
-
-                    }
-                } ?: c.addNothingConstraint(collectionLiteral, builder)
+                c.addConstraintForArgumentType(collectionLiteral, builder, expectedType)
             }
             fixVariables(c, components.initialTypeOfCandidate(builder))
 
@@ -102,70 +96,87 @@ class FirCollectionLiteralResolver(
         return collectionLiteral
     }
 
-    private fun NewConstraintSystemImpl.canDeduceArgumentTypeFromExpected(
+    private fun NewConstraintSystemImpl.addConstraintForArgumentType(
         collectionLiteral: FirCollectionLiteral,
         candidate: Candidate,
-        expectedType: FirTypeRef
-    ): Boolean {
-        return when (expectedType) {
-            is FirImplicitTypeRef -> false
+        expectedType: FirTypeRef?
+    ) {
+        fun check(type: ConeKotlinType, initialType: ConeKotlinType) {
+            val typeVariable = candidate.substitutor.substituteOrSelf(type)
+            addSubtypeConstraintIfCompatible(
+                initialType,
+                (expectedType as FirResolvedTypeRef).type,
+                ConeExpectedTypeConstraintPosition(false)
+            )
+            fixVariables(this, initialType)
+//                        fixVariables(this, expectedType.type)
+            if (!currentStorage().fixedTypeVariables.containsKey(typeVariable.typeConstructor())) {
+                addNothingConstraint(typeVariable)
+            }
+        }
+        when (expectedType) {
+            is FirImplicitTypeRef, null -> addNothingConstraint(collectionLiteral, candidate)
             is FirResolvedTypeRef -> {
+                val initialType = components.initialTypeOfCandidate(candidate)
                 when (collectionLiteral.kind) {
                     CollectionLiteralKind.LIST_LITERAL -> {
                         val valueType = candidate.getValueTypeOfCollectionLiteral()
-                        val valueTypeVariable = candidate.substitutor.substituteOrSelf(valueType)
-                        val initialType = components.initialTypeOfCandidate(candidate)
-                        addSubtypeConstraintIfCompatible(
-                            initialType,
-                            expectedType.type,
-                            ConeExpectedTypeConstraintPosition(false)
-                        )
-                        fixVariables(this, initialType)
-//                        fixVariables(this, expectedType.type)
-                        currentStorage().fixedTypeVariables.containsKey(valueTypeVariable.typeConstructor())
+                        check(valueType, initialType)
                     }
-                    CollectionLiteralKind.MAP_LITERAL -> TODO()
+                    CollectionLiteralKind.MAP_LITERAL -> {
+                        val (keyType, valueType) = candidate.getKeyValueTypeOfCollectionLiteral()
+                        check(keyType, initialType)
+                        check(valueType, initialType)
+                    }
                 }
             }
             is FirTypeRefWithNullability -> TODO()
         }
     }
 
+    private fun ConstraintSystemBuilder.addNothingConstraint(typeVariable: ConeKotlinType): Boolean {
+        return addSubtypeConstraintIfCompatible(
+            StandardClassIds.Nothing.defaultType(emptyList()),
+            typeVariable,
+            SimpleConstraintSystemConstraintPosition
+        )
+    }
+
     private fun ConstraintSystemBuilder.addNothingConstraint(collectionLiteral: FirCollectionLiteral, candidate: Candidate): Boolean {
-        val nothingType = StandardClassIds.Nothing.defaultType(emptyList())
         return when (collectionLiteral.kind) {
-            CollectionLiteralKind.LIST_LITERAL -> addSubtypeConstraintIfCompatible(
-                nothingType,
-                candidate.substitutor.substituteOrSelf(candidate.getValueTypeOfCollectionLiteral()),
-                SimpleConstraintSystemConstraintPosition
+            CollectionLiteralKind.LIST_LITERAL -> addNothingConstraint(
+                candidate.substitutor.substituteOrSelf(candidate.getValueTypeOfCollectionLiteral())
             )
             CollectionLiteralKind.MAP_LITERAL -> {
-                var (key, value) = candidate.getKeyValueTypeOfCollectionLiteral()
-                key = candidate.substitutor.substituteOrSelf(key)
-                value = candidate.substitutor.substituteOrSelf(value)
-                addSubtypeConstraintIfCompatible(nothingType, key, SimpleConstraintSystemConstraintPosition)
-                        || addSubtypeConstraintIfCompatible(nothingType, value, SimpleConstraintSystemConstraintPosition)
+                val (key, value) = candidate.getKeyValueTypeOfCollectionLiteral()
+                addNothingConstraint(candidate.substitutor.substituteOrSelf(key))
+                        || addNothingConstraint(candidate.substitutor.substituteOrSelf(value))
             }
         }
     }
 
     private fun chooseCandidates(
         collectionLiteral: FirCollectionLiteral,
-        expectedType: ConeKotlinType,
+        expectedType: FirTypeRef,
         otherSystem: NewConstraintSystemImpl? = null
     ): List<Candidate> {
         val acceptable = mutableListOf<Candidate>()
+        val type = expectedType.toResolved(collectionLiteral).type
         for (builder in buildersCache.getOrDefault(collectionLiteral, mutableSetOf())) {
             otherSystem?.let {
                 builder.system.addOtherSystem(it.currentStorage())
             }
+            if (collectionLiteral.expressions.isEmpty() && expectedType is FirImplicitTypeRef) {
+                builder.system.addConstraintForArgumentType(collectionLiteral, builder, expectedType)
+            }
             val initialType = components.initialTypeOfCandidate(builder)
             if (builder.system.addSubtypeConstraintIfCompatible(
                     initialType,
-                    expectedType,
+                    type,
                     ConeExpectedTypeConstraintPosition(true)
                 )
             ) {
+                fixVariables(builder)
                 acceptable.add(builder)
             }
         }
@@ -184,8 +195,7 @@ class FirCollectionLiteralResolver(
         expectedType: FirTypeRef,
         additionalSystem: NewConstraintSystemImpl? = null
     ): FirExpression {
-        val type = expectedType.toResolved(collectionLiteral)
-        val candidates = chooseCandidates(collectionLiteral, type.type, additionalSystem)
+        val candidates = chooseCandidates(collectionLiteral, expectedType, additionalSystem)
 
         return when (candidates.size) {
             0 -> return buildErrorExpression(
@@ -252,11 +262,21 @@ class FirCollectionLiteralResolver(
                 return when (val type = param.returnTypeRef) {
                     is FirImplicitTypeRef -> TODO()
                     is FirResolvedTypeRef -> {
-                        val clType = checkTypeOfParameter(candidate, type) ?: return cantChooseBuilder(collectionLiteral).also {
-                            argumentMapping[it] = param
-                            argumentMapping.remove(collectionLiteral)
-                        }
-                        expandCollectionLiteral(collectionLiteral, clType.toFirResolvedTypeRef(), candidate.system)
+//                        for (builder in buildersCache.getOrDefault(collectionLiteral, mutableSetOf())) {
+//                            val initialType = components.initialTypeOfCandidate(builder)
+//                            candidate.system.addOtherSystem(builder.system.currentStorage())
+//                            if (candidate.system.addSubtypeConstraintIfCompatible(initialType, type.type, SimpleConstraintSystemConstraintPosition)) {
+//                                TODO()
+//                            } else {
+//                                continue
+//                            }
+//                        }
+//                        val clType = checkTypeOfParameter(candidate, type) ?: return cantChooseBuilder(collectionLiteral).also {
+//                            argumentMapping[it] = param
+//                            argumentMapping.remove(collectionLiteral)
+//                        }
+//                        expandCollectionLiteral(collectionLiteral, clType.toFirResolvedTypeRef(), candidate.system)
+                        expandCollectionLiteral(collectionLiteral, type.type.toFirResolvedTypeRef(), candidate.system)
                     }
                     is FirTypeRefWithNullability -> TODO()
                 }.transformSingle(
