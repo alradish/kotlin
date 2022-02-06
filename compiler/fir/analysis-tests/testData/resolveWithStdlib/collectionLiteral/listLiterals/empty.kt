@@ -28,9 +28,9 @@ fun <T> baz(a: List<List<T>>) {}
 
 
 fun f() {
-//    val a = <!CANT_CHOOSE_BUILDER!>[]<!>
-//    val b = List<String> [<!SYNTAX!><!>]
-    val bb = List<Int> [<!SYNTAX!><!>]
+    val a = []
+    val b = List<String> [<!SYNTAX!><!>]
+//    val bb = List<Int> [<!SYNTAX!><!>]
 //    val c: Set<Any> = []
 //    foo([])
 //    bar([])

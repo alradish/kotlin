@@ -5,23 +5,22 @@
 
 package org.jetbrains.kotlin.runner
 
-class A {
-    companion object
+import List.Companion.buildList
+import Set.Companion.buildList
+
+fun <T> Set.Companion.buildList(size: Int, init: ListCollectionLiteralBuilder<Set<T>, T>.() -> Unit = {}): Set<T> {
+    return TODO()
 }
 
-//fun <T> List.Companion.buildList(size: Int, conf: ListCollectionLiteralBuilder<List<T>, T>.() -> Unit = {}): List<T> {
-//    TODO()
-//}
-
-operator fun <T> A.Companion.get(a: T): List<T> {
-    return listOf(a)
+fun <T> List.Companion.buildList(size: Int, init: ListCollectionLiteralBuilder<List<T>, T>.() -> Unit = {}): List<T> {
+    return TODO()
 }
 
-operator fun <T> A.Companion.get(a: T, b: T, c: T): List<T> {
-    return listOf(a, b, c)
+fun List.Companion.buildList(size: Int, init: ListCollectionLiteralBuilder<List<Int>, Int>.() -> Unit = {}): List<Int> {
+    return TODO()
 }
 
 
 fun main() {
-    val a = A [1]
+    val a = List<Int> []
 }

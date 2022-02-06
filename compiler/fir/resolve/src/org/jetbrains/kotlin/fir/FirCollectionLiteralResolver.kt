@@ -166,8 +166,10 @@ class FirCollectionLiteralResolver(
             otherSystem?.let {
                 builder.system.addOtherSystem(it.currentStorage())
             }
-            if (collectionLiteral.expressions.isEmpty() && expectedType is FirImplicitTypeRef) {
-                builder.system.addConstraintForArgumentType(collectionLiteral, builder, expectedType)
+            if (collectionLiteral.expressions.isEmpty()) {
+                if (expectedType is FirImplicitTypeRef) {
+                    builder.system.addNothingConstraint(collectionLiteral, builder)
+                }
             }
             val initialType = components.initialTypeOfCandidate(builder)
             if (builder.system.addSubtypeConstraintIfCompatible(
@@ -176,7 +178,6 @@ class FirCollectionLiteralResolver(
                     ConeExpectedTypeConstraintPosition(true)
                 )
             ) {
-                fixVariables(builder)
                 acceptable.add(builder)
             }
         }
@@ -200,7 +201,7 @@ class FirCollectionLiteralResolver(
         return when (candidates.size) {
             0 -> return buildErrorExpression(
                 collectionLiteral.source,
-                ConeNoBuilderForCollectionLiteralOfType(expectedType.render())
+                ConeNoBuilderForCollectionLiteralOfType(expectedType.toResolved(collectionLiteral).type.render())
             )
             1 -> {
                 val candidate = candidates.single()

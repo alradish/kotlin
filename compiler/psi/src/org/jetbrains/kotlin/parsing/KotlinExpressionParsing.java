@@ -997,7 +997,7 @@ public class KotlinExpressionParsing extends AbstractKotlinParsing {
      *   ;
      */
     private void parseArrayAccess() {
-        parseAsCollectionLiteralExpression(INDICES, false, true,"Expecting an index element");
+        parseAsCollectionLiteralExpression(INDICES, true, true,"Expecting an index element");
     }
 
     /*
