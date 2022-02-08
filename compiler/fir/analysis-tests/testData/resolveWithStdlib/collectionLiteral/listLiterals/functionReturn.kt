@@ -20,6 +20,8 @@ class A {
 
 fun foo() = [1, 2, 3]
 
+fun bar(): List<String> = [1, 2]
+
 fun <T> bar(): Set<T> {
     return <!NO_BUILDER_FOR_COLLECTION_LITERAL_OF_TYPE!>[1, 2, 3]<!>
 }

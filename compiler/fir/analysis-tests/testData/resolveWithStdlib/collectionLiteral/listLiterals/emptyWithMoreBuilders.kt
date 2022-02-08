@@ -9,6 +9,10 @@ fun <T> List.Companion.buildList(size: Int, init: ListCollectionLiteralBuilder<L
     return TODO()
 }
 
+fun List.Companion.buildList(size: Int, init: ListCollectionLiteralBuilder<List<Int>, Int>.() -> Unit = {}): List<Int> {
+    return TODO()
+}
+
 fun foo(a: Any) {}
 fun foo(a: List<Int>) {}
 fun <T> bar(a: List<T>) {}

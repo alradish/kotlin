@@ -1,0 +1,24 @@
+FILE: itType.kt
+    package main
+
+    public final fun <T> R|kotlin/collections/List.Companion|.buildList(size: R|kotlin/Int|, conf: R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<T>, T>.() -> kotlin/Unit| = fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<T>, T>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+        ^ Unit
+    }
+    ): R|kotlin/collections/List<T>| {
+        R|kotlin/TODO|()
+    }
+    public final fun R|kotlin/collections/List.Companion|.buildList(size: R|kotlin/Int|, conf: R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/Int>, kotlin/Int>.() -> kotlin/Unit| = fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+        ^ Unit
+    }
+    ): R|kotlin/collections/List<kotlin/Int>| {
+        R|kotlin/TODO|()
+    }
+    public final fun f(a: R|kotlin/collections/List<kotlin/Number>|): R|kotlin/Unit| {
+    }
+    public final fun main(): R|kotlin/Unit| {
+        R|main/f|(Q|kotlin/collections/List|.R|main/buildList|<R|kotlin/Number|>(Int(2), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/Number>, kotlin/Number>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(1))
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Double(1.0))
+        }
+        ))
+    }

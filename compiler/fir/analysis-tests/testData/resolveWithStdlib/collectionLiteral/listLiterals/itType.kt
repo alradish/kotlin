@@ -8,10 +8,8 @@ fun List.Companion.buildList(size: Int, conf: ListCollectionLiteralBuilder<List<
     TODO()
 }
 
-fun foo(a: List<Int>) {}
-fun <T> foo(a: List<T>) {}
+fun f(a: List<Number>) {}
 
 fun main() {
-    foo([1])
-    foo([])
+    f([1, 1.0])
 }

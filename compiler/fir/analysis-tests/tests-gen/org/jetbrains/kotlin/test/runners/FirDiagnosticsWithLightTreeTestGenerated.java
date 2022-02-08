@@ -4669,6 +4669,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
                 }
 
                 @Test
+                @TestMetadata("emptyWithMoreBuilders.kt")
+                public void testEmptyWithMoreBuilders() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/emptyWithMoreBuilders.kt");
+                }
+
+                @Test
                 @TestMetadata("findAllBuilders.kt")
                 public void testFindAllBuilders() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/findAllBuilders.kt");
@@ -4717,6 +4723,18 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
                 }
 
                 @Test
+                @TestMetadata("inExpression.kt")
+                public void testInExpression() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/inExpression.kt");
+                }
+
+                @Test
+                @TestMetadata("itType.kt")
+                public void testItType() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/itType.kt");
+                }
+
+                @Test
                 @TestMetadata("methodOn.kt")
                 public void testMethodOn() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/methodOn.kt");
@@ -4738,6 +4756,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
                 @TestMetadata("specType.kt")
                 public void testSpecType() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/specType.kt");
+                }
+
+                @Test
+                @TestMetadata("twoArgumentsResolve.kt")
+                public void testTwoArgumentsResolve() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/twoArgumentsResolve.kt");
                 }
 
                 @Test

@@ -1,0 +1,50 @@
+FILE: emptyWithMoreBuilders.kt
+    public final fun <T> R|kotlin/collections/Set.Companion|.buildList(size: R|kotlin/Int|, init: R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/Set<T>, T>.() -> kotlin/Unit| = fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/Set<T>, T>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+        ^ Unit
+    }
+    ): R|kotlin/collections/Set<T>| {
+        ^buildList R|kotlin/TODO|()
+    }
+    public final fun <T> R|kotlin/collections/List.Companion|.buildList(size: R|kotlin/Int|, init: R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<T>, T>.() -> kotlin/Unit| = fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<T>, T>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+        ^ Unit
+    }
+    ): R|kotlin/collections/List<T>| {
+        ^buildList R|kotlin/TODO|()
+    }
+    public final fun R|kotlin/collections/List.Companion|.buildList(size: R|kotlin/Int|, init: R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/Int>, kotlin/Int>.() -> kotlin/Unit| = fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+        ^ Unit
+    }
+    ): R|kotlin/collections/List<kotlin/Int>| {
+        ^buildList R|kotlin/TODO|()
+    }
+    public final fun foo(a: R|kotlin/Any|): R|kotlin/Unit| {
+    }
+    public final fun foo(a: R|kotlin/collections/List<kotlin/Int>|): R|kotlin/Unit| {
+    }
+    public final fun <T> bar(a: R|kotlin/collections/List<T>|): R|kotlin/Unit| {
+    }
+    public final fun <T> baz(a: R|kotlin/collections/List<kotlin/collections/List<T>>|): R|kotlin/Unit| {
+    }
+    public final fun f(): R|kotlin/Unit| {
+        lval a: R|kotlin/collections/List<kotlin/Int>| = Q|kotlin/collections/List|.R|/buildList|(Int(0), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+        }
+        )
+        lval b: R|kotlin/collections/List<kotlin/String>| = Q|kotlin/collections/List|.R|/buildList|<R|kotlin/String|>(Int(0), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/String>, kotlin/String>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+        }
+        )
+        lval bb: R|kotlin/collections/List<kotlin/Int>| = Q|kotlin/collections/List|.R|/buildList|(Int(0), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+        }
+        )
+        lval c: R|kotlin/collections/Set<kotlin/Any>| = Q|kotlin/collections/Set|.R|/buildList|<R|kotlin/Any|>(Int(0), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/Set<kotlin/Any>, kotlin/Any>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+        }
+        )
+        R|/foo|(Q|kotlin/collections/List|.R|/buildList|(Int(0), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+        }
+        ))
+        R|/bar|<R|kotlin/Int|>(Q|kotlin/collections/List|.R|/buildList|(Int(0), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+        }
+        ))
+        <CS errors: /baz>#<R|ERROR CLASS: Cannot infer argument for type parameter T|>(Q|kotlin/collections/List|.R|/buildList|<R|T|>(Int(0), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<T>, T>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+        }
+        ))
+    }

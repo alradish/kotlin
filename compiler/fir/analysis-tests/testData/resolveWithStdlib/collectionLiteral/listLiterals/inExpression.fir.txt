@@ -1,0 +1,35 @@
+FILE: inExpression.kt
+    package main
+
+    public final fun <T> R|kotlin/collections/List.Companion|.buildList(size: R|kotlin/Int|, conf: R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<T>, T>.() -> kotlin/Unit| = fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<T>, T>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+        ^ Unit
+    }
+    ): R|kotlin/collections/List<T>| {
+        R|kotlin/TODO|()
+    }
+    public final fun main(): R|kotlin/Unit| {
+        lval a: R|kotlin/collections/List<kotlin/Int>| = Q|kotlin/collections/List|.R|main/buildList|<R|kotlin/Int|>(Int(2), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(1))
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(2))
+        }
+        )
+        lval b: R|kotlin/collections/List<kotlin/Int>| = R|<local>/a|.R|kotlin/collections/plus|<R|kotlin/Int|>(Q|kotlin/collections/List|.R|main/buildList|<R|kotlin/Int|>(Int(2), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(3))
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(4))
+        }
+        ))
+        lval c: R|kotlin/collections/List<kotlin/Int>| = Q|kotlin/collections/List|.R|main/buildList|<R|kotlin/Int|>(Int(2), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(3))
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(4))
+        }
+        ).R|kotlin/collections/plus|<R|kotlin/Int|>(R|<local>/a|)
+        lval d: R|kotlin/collections/List<kotlin/Int>| = when () {
+            Boolean(true) ->  {
+                CollectionLiteral R|kotlin/collections/List<kotlin/Int>| [Int(1), Int(2), ]
+            }
+            else ->  {
+                CollectionLiteral R|kotlin/collections/List<kotlin/Int>| [Int(2), Int(3), ]
+            }
+        }
+
+    }
