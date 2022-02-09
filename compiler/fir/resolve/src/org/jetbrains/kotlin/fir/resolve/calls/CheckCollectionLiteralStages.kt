@@ -36,10 +36,9 @@ internal object CheckCollectionLiteralBuilderStage : CheckerStage() {
         val builder = (candidate.symbol.fir as? FirFunction) ?: return sink.reportDiagnostic(InapplicableCandidate)
         val returnTypeClassId = (builder.returnTypeRef as? FirResolvedTypeRef)?.type?.classId ?: return // TODO report Diag
         val receiverClassId = (builder.receiverTypeRef as? FirResolvedTypeRef)?.type?.classId ?: return // TODO report diag
-        val classIdIsSame = if (receiverClassId.shortClassName == Name.identifier("Companion")) {
-            receiverClassId.relativeClassName.parent().shortName() == returnTypeClassId.shortClassName
-        } else {
-            TODO("Not companion")
+        val classIdIsSame = when (receiverClassId.shortClassName.identifierOrNullIfSpecial) {
+            "Companion" -> receiverClassId.relativeClassName.parent().shortName() == returnTypeClassId.shortClassName
+            else -> return sink.reportDiagnostic(InapplicableCandidate)
         }
         if (!classIdIsSame) {
             return sink.reportDiagnostic(InapplicableCandidate)

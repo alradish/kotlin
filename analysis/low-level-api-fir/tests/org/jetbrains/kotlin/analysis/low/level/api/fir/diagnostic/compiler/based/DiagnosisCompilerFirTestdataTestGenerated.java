@@ -4669,6 +4669,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
                 }
 
                 @Test
+                @TestMetadata("emptyBuilderInPackages.kt")
+                public void testEmptyBuilderInPackages() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/emptyBuilderInPackages.kt");
+                }
+
+                @Test
                 @TestMetadata("emptyWithMoreBuilders.kt")
                 public void testEmptyWithMoreBuilders() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/emptyWithMoreBuilders.kt");
@@ -4768,6 +4774,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
                 @TestMetadata("typeNotation.kt")
                 public void testTypeNotation() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/typeNotation.kt");
+                }
+
+                @Test
+                @TestMetadata("typeNotationWithTypeVariables.kt")
+                public void testTypeNotationWithTypeVariables() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/typeNotationWithTypeVariables.kt");
                 }
 
                 @Test

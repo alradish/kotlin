@@ -1,0 +1,53 @@
+FILE: typeNotationWithTypeVariables.kt
+    package main
+
+    public final fun <T> R|kotlin/collections/Set.Companion|.buildList(size: R|kotlin/Int|, init: R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/Set<T>, T>.() -> kotlin/Unit| = fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/Set<T>, T>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+        ^ Unit
+    }
+    ): R|kotlin/collections/Set<T>| {
+        ^buildList R|kotlin/TODO|()
+    }
+    public final fun R|kotlin/collections/Set.Companion|.buildList(size: R|kotlin/Int|, init: R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/Set<kotlin/Int>, kotlin/Int>.() -> kotlin/Unit| = fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/Set<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+        ^ Unit
+    }
+    ): R|kotlin/collections/Set<kotlin/Int>| {
+        ^buildList R|kotlin/TODO|()
+    }
+    public final operator fun <T> R|kotlin/collections/List.Companion|.get(a: R|T|, b: R|T|, c: R|T|): R|kotlin/collections/List<T>| {
+        ^get R|kotlin/collections/listOf|<R|T|>(vararg(R|<local>/a|, R|<local>/b|, R|<local>/c|))
+    }
+    public final fun <T> R|kotlin/collections/List.Companion|.buildList(size: R|kotlin/Int|, init: R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<T>, T>.() -> kotlin/Unit| = fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<T>, T>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+        ^ Unit
+    }
+    ): R|kotlin/collections/List<T>| {
+        ^buildList R|kotlin/TODO|()
+    }
+    public final fun main(): R|kotlin/Unit| {
+        lval a: R|kotlin/collections/List<kotlin/Int>| = Q|kotlin/collections/List|.R|main/get|<R|kotlin/Int|>(Int(1), Int(2), Int(3))
+        lval aa: R|kotlin/collections/List<kotlin/Int>| = Q|kotlin/collections/List|.R|main/buildList|<R|kotlin/Int|>(Int(4), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(1))
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(2))
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(3))
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(4))
+        }
+        )
+        lval b: R|kotlin/collections/List<kotlin/String>| = Q|kotlin/collections/List|.R|main/get|<R|kotlin/String|>(Int(1), Int(2), Int(3))
+        lval bb: <ERROR TYPE REF: Collection literal has no builder for kotlin/collections/List<kotlin/String> in the current scope> = ERROR_EXPR(Collection literal has no builder for kotlin/collections/List<kotlin/String> in the current scope)
+        lval c: R|kotlin/collections/List<kotlin/Short>| = Q|kotlin/collections/List|.R|main/buildList|<R|kotlin/Short|>(Int(0), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/Short>, kotlin/Short>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+        }
+        )
+        lval d: R|kotlin/collections/Set<kotlin/String>| = Q|kotlin/collections/Set|.R|main/buildList|<R|kotlin/String|>(Int(1), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/Set<kotlin/String>, kotlin/String>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(String(1))
+        }
+        )
+        lval e: R|kotlin/collections/Set<kotlin/Int>| = Q|kotlin/collections/Set|.R|main/buildList|(Int(1), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/Set<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(1))
+        }
+        )
+        lval f: R|kotlin/collections/Set<kotlin/Int>| = Q|kotlin/collections/Set|.R|main/buildList|(Int(0), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/Set<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+        }
+        )
+        lval g: R|kotlin/collections/Set<kotlin/String>| = Q|kotlin/collections/Set|.R|main/buildList|<R|kotlin/String|>(Int(0), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/Set<kotlin/String>, kotlin/String>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+        }
+        )
+    }

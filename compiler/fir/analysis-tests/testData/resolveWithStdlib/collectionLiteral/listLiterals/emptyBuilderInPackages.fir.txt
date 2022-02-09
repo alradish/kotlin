@@ -1,0 +1,44 @@
+FILE: myList.kt
+    package myList
+
+    public final class MyList<T> : R|kotlin/collections/Iterable<T>| {
+        public constructor<T>(): R|myList/MyList<T>| {
+            super<R|kotlin/Any|>()
+        }
+
+        public final companion object Companion : R|kotlin/Any| {
+            private constructor(): R|myList/MyList.Companion| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final fun <T> buildList(size: R|kotlin/Int|, conf: R|kotlin/collections/ListCollectionLiteralBuilder<myList/MyList<T>, T>.() -> kotlin/Unit| = fun R|kotlin/collections/ListCollectionLiteralBuilder<myList/MyList<T>, T>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+                ^ Unit
+            }
+            ): R|myList/MyList<T>| {
+                ^buildList R|kotlin/TODO|()
+            }
+
+        }
+
+        public final override operator fun iterator(): R|kotlin/collections/Iterator<T>| {
+            ^iterator R|kotlin/TODO|()
+        }
+
+    }
+FILE: utils.kt
+    package utils
+
+    public final fun R|myList/MyList.Companion|.buildList(size: R|kotlin/Int|, init: R|kotlin/collections/ListCollectionLiteralBuilder<myList/MyList<kotlin/Int>, kotlin/Int>.() -> kotlin/Unit| = fun R|kotlin/collections/ListCollectionLiteralBuilder<myList/MyList<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+        ^ Unit
+    }
+    ): R|myList/MyList<kotlin/Int>| {
+        ^buildList R|kotlin/TODO|()
+    }
+FILE: main.kt
+    package main
+
+    public final fun f(): R|kotlin/Unit| {
+        lval bbb: R|myList/MyList<kotlin/Int>| = Q|myList/MyList|.R?C|myList/MyList.Companion.buildList|(Int(0), <L> = buildList@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+        }
+        )
+    }

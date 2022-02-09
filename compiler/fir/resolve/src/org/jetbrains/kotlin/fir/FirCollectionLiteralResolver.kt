@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolve
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
 import org.jetbrains.kotlin.fir.scopes.impl.toConeType
 import org.jetbrains.kotlin.fir.symbols.impl.FirAnonymousFunctionSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildImplicitTypeRef
@@ -333,6 +334,16 @@ class FirCollectionLiteralResolver(
                 }
             }
         }
+//        val callableSymbol = candidate.symbol as FirCallableSymbol
+//        val extensionReceiver = buildResolvedQualifier {
+//            packageFqName = callableSymbol.resolvedReceiverTypeRef!!.type.classId!!.packageFqName
+//            relativeClassFqName = callableSymbol.resolvedReceiverTypeRef!!.type.classId!!.relativeClassName
+//            symbol
+//        }
+//        val dispatchReceiver = buildResolvedQualifier {
+//            packageFqName = callableSymbol.dispatchReceiverType!!.type.classId!!.packageFqName
+//            relativeClassFqName = callableSymbol.dispatchReceiverType!!.type.classId!!.relativeClassName
+//        }
         val explicitReceiver = buildPropertyAccessExpression {
             calleeReference = buildSimpleNamedReference {
                 val fir = (candidate.symbol as FirNamedFunctionSymbol).fir
@@ -343,6 +354,8 @@ class FirCollectionLiteralResolver(
         }
         return buildFunctionCall {
             this.explicitReceiver = explicitReceiver
+//            this.extensionReceiver = extensionReceiver
+//            this.dispatchReceiver = dispatchReceiver
             calleeReference = buildSimpleNamedReference {
                 name = when (collectionLiteral.kind) {
                     CollectionLiteralKind.LIST_LITERAL -> OperatorNameConventions.BUILD_LIST_CL
