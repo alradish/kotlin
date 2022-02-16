@@ -1,0 +1,25 @@
+FILE: getErrors.kt
+    package main
+
+    public final class Test<out T> : R|kotlin/Any| {
+        public constructor<out T>(a: R|kotlin/collections/List<T>|): R|main/Test<T>| {
+            super<R|kotlin/Any|>()
+        }
+
+        public final companion object Companion : R|kotlin/Any| {
+            private constructor(): R|main/Test.Companion| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final operator fun <T> get(a: R|kotlin/Int|): R|main/Test<T>| {
+                ^get R|main/Test.Test|<R|T|>(R|kotlin/collections/listOf|<R|T|>())
+            }
+
+        }
+
+    }
+    public final fun main(): R|kotlin/Unit| {
+        lval a: <ERROR TYPE REF: Collection literal has no builders in the current scope> = ERROR_EXPR(Collection literal has no builders in the current scope)
+        lval aa: R|main/Test<kotlin/String>| = Q|main/Test|.R|main/Test.Companion.get|<R|kotlin/String|>(Int(1))
+        lval b: <ERROR TYPE REF: Collection literal has no builders in the current scope> = ERROR_EXPR(Collection literal has no builders in the current scope)
+    }

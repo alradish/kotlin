@@ -4729,6 +4729,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
                 }
 
                 @Test
+                @TestMetadata("getErrors.kt")
+                public void testGetErrors() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/getErrors.kt");
+                }
+
+                @Test
                 @TestMetadata("inExpression.kt")
                 public void testInExpression() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/inExpression.kt");
@@ -4756,6 +4762,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
                 @TestMetadata("overloadResolution.kt")
                 public void testOverloadResolution() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/overloadResolution.kt");
+                }
+
+                @Test
+                @TestMetadata("shadowed.kt")
+                public void testShadowed() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/collectionLiteral/listLiterals/shadowed.kt");
                 }
 
                 @Test

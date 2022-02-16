@@ -22,12 +22,12 @@ import org.jetbrains.kotlin.fir.resolve.inference.*
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeExpectedTypeConstraintPosition
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeFixVariableConstraintPosition
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
+import org.jetbrains.kotlin.fir.resolve.transformers.StoreNameReference
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
 import org.jetbrains.kotlin.fir.scopes.impl.toConeType
 import org.jetbrains.kotlin.fir.symbols.impl.FirAnonymousFunctionSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildImplicitTypeRef
@@ -334,16 +334,6 @@ class FirCollectionLiteralResolver(
                 }
             }
         }
-//        val callableSymbol = candidate.symbol as FirCallableSymbol
-//        val extensionReceiver = buildResolvedQualifier {
-//            packageFqName = callableSymbol.resolvedReceiverTypeRef!!.type.classId!!.packageFqName
-//            relativeClassFqName = callableSymbol.resolvedReceiverTypeRef!!.type.classId!!.relativeClassName
-//            symbol
-//        }
-//        val dispatchReceiver = buildResolvedQualifier {
-//            packageFqName = callableSymbol.dispatchReceiverType!!.type.classId!!.packageFqName
-//            relativeClassFqName = callableSymbol.dispatchReceiverType!!.type.classId!!.relativeClassName
-//        }
         val explicitReceiver = buildPropertyAccessExpression {
             calleeReference = buildSimpleNamedReference {
                 val fir = (candidate.symbol as FirNamedFunctionSymbol).fir
@@ -352,21 +342,22 @@ class FirCollectionLiteralResolver(
                             ?: error("Cant find name for explicit receiver")
             }
         }
-        return buildFunctionCall {
+        val name = when (collectionLiteral.kind) {
+            CollectionLiteralKind.LIST_LITERAL -> OperatorNameConventions.BUILD_LIST_CL
+            CollectionLiteralKind.MAP_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
+        }
+
+        val nameReference = FirNamedReferenceWithCandidate(collectionLiteral.source, name, candidate)
+        val functionCall = buildFunctionCall {
             this.explicitReceiver = explicitReceiver
-//            this.extensionReceiver = extensionReceiver
-//            this.dispatchReceiver = dispatchReceiver
             calleeReference = buildSimpleNamedReference {
-                name = when (collectionLiteral.kind) {
-                    CollectionLiteralKind.LIST_LITERAL -> OperatorNameConventions.BUILD_LIST_CL
-                    CollectionLiteralKind.MAP_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
-                }
+                this.name = name
             }
             val function = candidate.symbol.fir as FirSimpleFunction
             typeArguments.addAll(function.typeParameters.map {
                 buildTypeProjectionWithVariance {
                     typeRef = buildResolvedTypeRef {
-                        type = candidate.substitutor.substituteOrSelf(it.toConeType()).alternativeType
+                        type = candidate.substitutor.substituteOrSelf(it.toConeType())
                     }
                     variance = Variance.INVARIANT
                 }
@@ -376,6 +367,37 @@ class FirCollectionLiteralResolver(
                 lambda
             )
         }
+        candidate.preprocessLambdaArgument(
+            candidate.csBuilder,
+            lambda.expression as FirAnonymousFunctionExpression,
+            null, null,
+            transformer.resolutionContext,
+            null
+        )
+        functionCall.transformExplicitReceiver(transformer, ResolutionMode.ContextIndependent)
+
+        @Suppress("UNUSED_VARIABLE") val resultExpression = functionCall.transformCalleeReference(StoreNameReference, nameReference)
+        val resultCandidate = (nameReference as? FirNamedReferenceWithCandidate)?.candidate
+
+        val resolvedReceiver = functionCall.explicitReceiver
+        if (resultCandidate != null && resolvedReceiver is FirResolvedQualifier) {
+            resolvedReceiver.replaceResolvedToCompanionObject(resultCandidate.isFromCompanionObjectTypeScope)
+        }
+
+        val resultFunctionCall = functionCall.copyAsImplicitInvokeCall {
+//            this.explicitReceiver = candidate.callInfo.explicitReceiver
+            this.dispatchReceiver = candidate.dispatchReceiverExpression()
+            this.extensionReceiver = candidate.extensionReceiverExpression()
+//            this.argumentList = candidate.callInfo.argumentList
+        }
+//        val resultFunctionCall = resultExpression
+
+        val typeRef = components.typeFromCallee(resultFunctionCall)
+        if (typeRef.type is ConeKotlinErrorType) {
+            resultFunctionCall.resultType = typeRef
+        }
+
+        return resultFunctionCall
     }
 
     private fun fixVariable(

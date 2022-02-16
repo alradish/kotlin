@@ -413,6 +413,7 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
         }
     }
 
+
     private fun FirFunctionCall.isSuccessful(): Boolean {
         return when (val reference = calleeReference) {
             is FirResolvedNamedReference -> true
@@ -421,7 +422,7 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
         }
     }
 
-    private fun resolveGetCall(collectionLiteral: FirCollectionLiteral): FirExpression {
+    private fun resolveGetCall(collectionLiteral: FirCollectionLiteral, data: ResolutionMode): FirExpression {
         val arrayExpression = collectionLiteral.receiverExpression ?: error("Cant resolve get call without receiver")
         return if (collectionLiteral.kind == CollectionLiteralKind.LIST_LITERAL) {
             val getCall = buildGetCall(
@@ -435,7 +436,7 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
             val resolvedGetCall = dataFlowAnalyzer.withIgnoreFunctionCalls {
 //                callResolver.withNoArgumentsTransform {
                 context.withInferenceSession(inferenceSession) {
-                    getCall.transformSingle(this, ResolutionMode.ContextDependent)
+                    getCall.transformSingle(this, data)
                 }
 //                }
             }
@@ -484,11 +485,11 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
 
         // Step 2 если ресивер объект, то резолвить как get call
         val receiverExpression = collectionLiteral.receiverExpression
-        val getCall = receiverExpression?.let { resolveGetCall(collectionLiteral) }
+        val getCall = receiverExpression?.let { resolveGetCall(collectionLiteral, data) }
 
         when {
             getCall != null && receiverExpression !is FirResolvedQualifier -> return getCall
-            getCall is FirFunctionCall && getCall.isSuccessful() -> return getCall
+            getCall is FirFunctionCall && ((getCall.calleeReference as? FirNamedReferenceWithCandidate)?.isError == false || (getCall.calleeReference is FirResolvedNamedReference)) -> return getCall
             else -> {
                 val expectedType = calculateExpectedType(collectionLiteral, data)
                 val preprocessed = collectionLiteralResolver.preprocessCollectionLiteral(collectionLiteral, expectedType)

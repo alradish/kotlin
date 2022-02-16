@@ -1,0 +1,43 @@
+FILE: MyList.kt
+    package shadowed
+
+    public final class MyList<T> : R|kotlin/Any| {
+        public constructor<T>(): R|shadowed/MyList<T>| {
+            super<R|kotlin/Any|>()
+        }
+
+        public final companion object Companion : R|kotlin/Any| {
+            private constructor(): R|shadowed/MyList.Companion| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final fun <T> buildList(size: R|kotlin/Int|, conf: R|kotlin/collections/ListCollectionLiteralBuilder<shadowed/MyList<T>, T>.() -> kotlin/Unit| = fun R|kotlin/collections/ListCollectionLiteralBuilder<shadowed/MyList<T>, T>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+                ^ Unit
+            }
+            ): R|shadowed/MyList<T>| {
+                ^buildList R|kotlin/TODO|()
+            }
+
+        }
+
+    }
+FILE: utils.kt
+    package shadowed
+
+    public final fun R|shadowed/MyList.Companion|.buildList(size: R|kotlin/Int|, init: R|kotlin/collections/ListCollectionLiteralBuilder<shadowed/MyList<kotlin/Int>, kotlin/Int>.() -> kotlin/Unit| = fun R|kotlin/collections/ListCollectionLiteralBuilder<shadowed/MyList<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+        ^ Unit
+    }
+    ): R|shadowed/MyList<kotlin/Int>| {
+        ^buildList R|kotlin/TODO|()
+    }
+FILE: main.kt
+    package shadowed
+
+    public final fun f(): R|kotlin/Unit| {
+        lval b: R|shadowed/MyList<TypeVariable(T)>| = Q|shadowed/MyList|.R?C|shadowed/MyList.Companion.buildList|(Int(3), <L> = buildList@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+            add#(IntegerLiteral(1))
+            add#(IntegerLiteral(2))
+            add#(IntegerLiteral(3))
+        }
+        )
+    }
