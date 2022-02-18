@@ -59,7 +59,7 @@ class FirTowerResolver(
                 invokeResolveTowerExtension.enqueueResolveTasksForQualifier(info, receiver)
             }
             null -> {
-                if (info.callKind is CallKind.CollectionLiteral) {
+                if (info.callKind is CallKind.CollectionLiteral || info.callKind is CallKind.NewCollectionLiteral) {
                     manager.enqueueResolverTask { mainTask.runResolverForAnyCompanionReceiver(info) }
                 } else {
                     manager.enqueueResolverTask { mainTask.runResolverForNoReceiver(info) }

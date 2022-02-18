@@ -203,12 +203,54 @@ class FirCallResolver(
         return result.bestCandidates()
     }
 
+    fun collectCandidatesForCollectionLiteral(
+        collectionLiteral: FirCollectionLiteral,
+        builderCall: FirFunctionCall,
+    ): List<Candidate> {
+        val argumentList = builderCall.argumentList
+        val typeArguments = builderCall.typeArguments.orEmpty()
+
+        val info = CallInfo(
+            builderCall,
+            CallKind.NewCollectionLiteral,
+            when (collectionLiteral.kind) {
+                CollectionLiteralKind.LIST_LITERAL -> OperatorNameConventions.BUILD_LIST_CL
+                CollectionLiteralKind.MAP_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
+            },
+            null,
+            argumentList,
+            isImplicitInvoke = false,
+            typeArguments,
+            session,
+            components.file,
+            transformer.components.containingDeclarations,
+            keyExpressions = when (collectionLiteral.kind) {
+                CollectionLiteralKind.LIST_LITERAL -> emptyList()
+                CollectionLiteralKind.MAP_LITERAL -> collectionLiteral.expressions.map { (it as FirCollectionLiteralEntryPair).key }
+            },
+            valueExpressions = when (collectionLiteral.kind) {
+                CollectionLiteralKind.LIST_LITERAL -> collectionLiteral.expressions.map { (it as FirCollectionLiteralEntrySingle).expression }
+                CollectionLiteralKind.MAP_LITERAL -> collectionLiteral.expressions.map { (it as FirCollectionLiteralEntryPair).value }
+            }
+        )
+        towerResolver.reset()
+        val result = towerResolver.runResolver(
+            info,
+            transformer.resolutionContext,
+            CustomCandidateCollector(components, components.resolutionStageRunner)
+        )
+        val bestCandidates = result.bestCandidates()
+
+//        return ResolutionResult(info, result.currentApplicability, bestCandidates)
+        return bestCandidates
+    }
 
     private fun <T : FirQualifiedAccess> collectCandidates(
         qualifiedAccess: T,
         name: Name,
         forceCallKind: CallKind? = null,
-        origin: FirFunctionCallOrigin = FirFunctionCallOrigin.Regular
+        origin: FirFunctionCallOrigin = FirFunctionCallOrigin.Regular,
+        customCollector: Boolean = false
     ): ResolutionResult {
         val explicitReceiver = qualifiedAccess.explicitReceiver
         val argumentList = (qualifiedAccess as? FirFunctionCall)?.argumentList ?: FirEmptyArgumentList
@@ -228,7 +270,15 @@ class FirCallResolver(
             origin = origin
         )
         towerResolver.reset()
-        val result = towerResolver.runResolver(info, transformer.resolutionContext)
+        val result = if (customCollector) {
+            towerResolver.runResolver(
+                info,
+                transformer.resolutionContext,
+                CustomCandidateCollector(components, components.resolutionStageRunner)
+            )
+        } else {
+            towerResolver.runResolver(info, transformer.resolutionContext)
+        }
         val bestCandidates = result.bestCandidates()
 
         fun chooseMostSpecific(): Set<Candidate> {

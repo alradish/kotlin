@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameter
 import org.jetbrains.kotlin.fir.expressions.CollectionLiteralKind
 import org.jetbrains.kotlin.fir.expressions.FirCollectionLiteral
 import org.jetbrains.kotlin.fir.expressions.FirExpression
+import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.builder.buildExpressionStub
 import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.resolve.inference.csBuilder
@@ -27,10 +28,12 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.calls.inference.model.ArgumentConstraintPosition
 import org.jetbrains.kotlin.resolve.calls.inference.model.SimpleConstraintSystemConstraintPosition
+import org.jetbrains.kotlin.util.OperatorNameConventions
+import kotlin.math.sin
 
 internal object CheckCollectionLiteralBuilderStage : CheckerStage() {
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
-        require(callInfo.callKind is CallKind.CollectionLiteral)
+        require(callInfo.callKind is CallKind.CollectionLiteral || callInfo.callKind is CallKind.NewCollectionLiteral)
         // TODO проверить что билдер выполняет все условия. Например: тип возвращаемого значения совпадает с классом на котором он объявлен
 
         val builder = (candidate.symbol.fir as? FirFunction) ?: return sink.reportDiagnostic(InapplicableCandidate)
@@ -48,12 +51,18 @@ internal object CheckCollectionLiteralBuilderStage : CheckerStage() {
 
 internal object CheckCollectionLiteralArgumentsStage : CheckerStage() {
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
-        require(callInfo.callKind is CallKind.CollectionLiteral)
+        require(callInfo.callKind is CallKind.CollectionLiteral || callInfo.callKind is CallKind.NewCollectionLiteral)
         candidate.symbol.ensureResolved(FirResolvePhase.STATUS)
 
-        when ((callInfo.callSite as FirCollectionLiteral).kind) {
-            CollectionLiteralKind.LIST_LITERAL -> processSeqArguments(candidate, callInfo, sink, context)
-            CollectionLiteralKind.MAP_LITERAL -> processDictArguments(candidate, callInfo, sink, context)
+        when (val call = callInfo.callSite) {
+            is FirFunctionCall -> when (call.calleeReference.name) {
+                OperatorNameConventions.BUILD_LIST_CL -> processSeqArguments(candidate, callInfo, sink, context)
+                OperatorNameConventions.BUILD_MAP_CL -> processDictArguments(candidate, callInfo, sink, context)
+            }
+            is FirCollectionLiteral -> when (call.kind) {
+                CollectionLiteralKind.LIST_LITERAL -> processSeqArguments(candidate, callInfo, sink, context)
+                CollectionLiteralKind.MAP_LITERAL -> processDictArguments(candidate, callInfo, sink, context)
+            }
         }
     }
 

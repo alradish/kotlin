@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir
 
+import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.fir.builder.buildLabel
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
@@ -59,10 +60,13 @@ class FirCollectionLiteralResolver(
     private val session: FirSession get() = components.session
     private inline val inferenceComponents: InferenceComponents get() = session.inferenceComponents
 
-    private val buildersCache: MutableMap<FirCollectionLiteral, MutableSet<Candidate>> = mutableMapOf()
+    private val buildersCache: MutableMap<FirCollectionLiteral, Pair<FirFunctionCall?, Set<Candidate>>> = mutableMapOf()
 
     fun preprocessCollectionLiteral(collectionLiteral: FirCollectionLiteral, expectedType: FirTypeRef?): FirExpression {
-        val builders = components.callResolver.collectAvailableBuildersForCollectionLiteral(collectionLiteral)
+//        val builders = components.callResolver.collectAvailableBuildersForCollectionLiteral(collectionLiteral).distinct()
+        val functionCall = buildFunctionCall(collectionLiteral.expressions, collectionLiteral.kind, collectionLiteral.source)
+        functionCall.argumentList.transformArguments(transformer, ResolutionMode.ContextDependent)
+        val builders = components.callResolver.collectCandidatesForCollectionLiteral(collectionLiteral, functionCall).distinct()
 
         if (builders.isEmpty()) {
             return buildErrorExpression(
@@ -74,7 +78,8 @@ class FirCollectionLiteralResolver(
             )
         }
 
-        buildersCache.getOrPut(collectionLiteral, ::mutableSetOf).addAll(builders)
+        buildersCache[collectionLiteral] = Pair(functionCall, builders.toSet())
+//        buildersCache.getOrPut(collectionLiteral, ::mutableSetOf).addAll(builders)
 
         val types = builders.map { builder ->
             val c = inferenceComponents.createConstraintSystem()
@@ -163,7 +168,7 @@ class FirCollectionLiteralResolver(
     ): List<Candidate> {
         val acceptable = mutableListOf<Candidate>()
         val type = expectedType.toResolved(collectionLiteral).type
-        for (builder in buildersCache.getOrDefault(collectionLiteral, mutableSetOf())) {
+        for (builder in buildersCache.getOrDefault(collectionLiteral, Pair(null, emptySet())).second) {
             otherSystem?.let {
                 builder.system.addOtherSystem(it.currentStorage())
             }
@@ -217,13 +222,22 @@ class FirCollectionLiteralResolver(
             )
             1 -> {
                 val candidate = candidates.single()
-                fixVariables(candidate)
-                otherSystem?.addSubtypeConstraint(
-                    components.initialTypeOfCandidate(candidate),
-                    expectedType.toResolved(collectionLiteral).type,
-                    ConeExpectedTypeConstraintPosition(true)
-                )
-                expandWithCandidate(collectionLiteral, candidate)
+//                fixVariables(candidate)
+                otherSystem?.apply {
+                    addOtherSystem(candidate.system.currentStorage())
+                    addSubtypeConstraint(
+                        components.initialTypeOfCandidate(candidate),
+                        expectedType.toResolved(collectionLiteral).type,
+                        ConeExpectedTypeConstraintPosition(true)
+                    )
+                }
+//                otherSystem?.addSubtypeConstraint(
+//                    components.initialTypeOfCandidate(candidate),
+//                    expectedType.toResolved(collectionLiteral).type,
+//                    ConeExpectedTypeConstraintPosition(true)
+//                )
+                val new = newExpandWithCandidate(collectionLiteral, candidate)
+                new
             }
             else -> cantChooseBuilder(collectionLiteral)
         }
@@ -294,6 +308,44 @@ class FirCollectionLiteralResolver(
             }
         }
         return functionCall.transformSingle(replacer, Unit)
+    }
+
+    fun newExpandWithCandidate(collectionLiteral: FirCollectionLiteral, candidate: Candidate): FirExpression {
+        var functionCall = buildersCache[collectionLiteral]?.first ?: error("Can't find function for $collectionLiteral")
+        val explicitReceiver = buildPropertyAccessExpression {
+            calleeReference = buildSimpleNamedReference {
+                val fir = (candidate.symbol as FirNamedFunctionSymbol).fir
+                name = fir.receiverTypeRef?.let { it.firClassLike(session)?.classId?.relativeClassName?.parent()?.shortName() }
+                    ?: fir.dispatchReceiverType?.classId?.relativeClassName?.parent()?.shortName()
+                            ?: error("Cant find name for explicit receiver")
+            }
+        }
+        val name = functionCall.calleeReference.name
+        val nameReference = FirNamedReferenceWithCandidate(collectionLiteral.source, name, candidate)
+
+
+        functionCall = functionCall.copy(
+            explicitReceiver = explicitReceiver,
+            dispatchReceiver = candidate.dispatchReceiverExpression(),
+            extensionReceiver = candidate.extensionReceiverExpression()
+        )
+
+        functionCall.transformExplicitReceiver(transformer, ResolutionMode.ContextIndependent)
+
+        val resultFunctionCall = functionCall.transformCalleeReference(StoreNameReference, nameReference)
+        val resultCandidate = (nameReference as? FirNamedReferenceWithCandidate)?.candidate
+
+        val resolvedReceiver = functionCall.explicitReceiver
+        if (resultCandidate != null && resolvedReceiver is FirResolvedQualifier) {
+            resolvedReceiver.replaceResolvedToCompanionObject(resultCandidate.isFromCompanionObjectTypeScope)
+        }
+
+        val typeRef = components.typeFromCallee(resultFunctionCall)
+        if (typeRef.type is ConeKotlinErrorType) {
+            resultFunctionCall.resultType = typeRef
+        }
+
+        return resultFunctionCall
     }
 
     fun expandWithCandidate(collectionLiteral: FirCollectionLiteral, candidate: Candidate): FirExpression {
@@ -376,7 +428,7 @@ class FirCollectionLiteralResolver(
         )
         functionCall.transformExplicitReceiver(transformer, ResolutionMode.ContextIndependent)
 
-        @Suppress("UNUSED_VARIABLE") val resultExpression = functionCall.transformCalleeReference(StoreNameReference, nameReference)
+        val resultExpression = functionCall.transformCalleeReference(StoreNameReference, nameReference)
         val resultCandidate = (nameReference as? FirNamedReferenceWithCandidate)?.candidate
 
         val resolvedReceiver = functionCall.explicitReceiver
@@ -384,13 +436,13 @@ class FirCollectionLiteralResolver(
             resolvedReceiver.replaceResolvedToCompanionObject(resultCandidate.isFromCompanionObjectTypeScope)
         }
 
-        val resultFunctionCall = functionCall.copyAsImplicitInvokeCall {
-//            this.explicitReceiver = candidate.callInfo.explicitReceiver
-            this.dispatchReceiver = candidate.dispatchReceiverExpression()
-            this.extensionReceiver = candidate.extensionReceiverExpression()
-//            this.argumentList = candidate.callInfo.argumentList
-        }
-//        val resultFunctionCall = resultExpression
+//        val resultFunctionCall = functionCall.copyAsImplicitInvokeCall {
+////            this.explicitReceiver = candidate.callInfo.explicitReceiver
+//            this.dispatchReceiver = candidate.dispatchReceiverExpression()
+//            this.extensionReceiver = candidate.extensionReceiverExpression()
+////            this.argumentList = candidate.callInfo.argumentList
+//        }
+        val resultFunctionCall = resultExpression
 
         val typeRef = components.typeFromCallee(resultFunctionCall)
         if (typeRef.type is ConeKotlinErrorType) {
@@ -459,10 +511,67 @@ class FirCollectionLiteralResolver(
         is FirTypeRefWithNullability -> TODO()
     }
 
-    private val ConeKotlinType.alternativeType: ConeKotlinType
-        get() = if (this is ConeIntersectionType) {
-            this.alternativeType ?: this
-        } else {
-            this
+    private fun buildFunctionCall(arguments: List<FirCollectionLiteralEntry>, kind: CollectionLiteralKind, source: KtSourceElement? = null): FirFunctionCall {
+        val adds = arguments.map {
+            buildFunctionCall {
+                calleeReference = buildSimpleNamedReference { name = Name.identifier("add") }
+                argumentList = when (kind) {
+                    CollectionLiteralKind.LIST_LITERAL -> buildUnaryArgumentList(
+                        (it as FirCollectionLiteralEntrySingle).expression
+                    )
+                    CollectionLiteralKind.MAP_LITERAL -> (it as FirCollectionLiteralEntryPair).let { entry ->
+                        buildBinaryArgumentList(entry.key, entry.value)
+                    }
+                }
+            }
         }
+        val lambda = buildLambdaArgumentExpression {
+            expression = buildAnonymousFunctionExpression {
+                anonymousFunction = buildAnonymousFunction {
+                    origin = FirDeclarationOrigin.Synthetic
+                    moduleData = session.moduleData
+                    hasExplicitParameterList = false
+                    body = buildBlock {
+                        statements.addAll(adds)
+                    }
+                    returnTypeRef = buildImplicitTypeRef()
+                    receiverTypeRef = buildImplicitTypeRef()
+                    symbol = FirAnonymousFunctionSymbol()
+                    isLambda = true
+                    label = buildLabel {
+                        // TODO check for name of candidate
+                        name = when (kind) {
+                            CollectionLiteralKind.LIST_LITERAL -> OperatorNameConventions.BUILD_LIST_CL
+                            CollectionLiteralKind.MAP_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
+                        }.identifier
+                    }
+
+                }
+            }
+        }
+        val name = when (kind) {
+            CollectionLiteralKind.LIST_LITERAL -> OperatorNameConventions.BUILD_LIST_CL
+            CollectionLiteralKind.MAP_LITERAL -> OperatorNameConventions.BUILD_MAP_CL
+        }
+
+        val functionCall = buildFunctionCall {
+            calleeReference = buildSimpleNamedReference {
+                this.name = name
+            }
+//            val function = candidate.symbol.fir as FirSimpleFunction
+//            typeArguments.addAll(function.typeParameters.map {
+//                buildTypeProjectionWithVariance {
+//                    typeRef = buildResolvedTypeRef {
+//                        type = candidate.substitutor.substituteOrSelf(it.toConeType())
+//                    }
+//                    variance = Variance.INVARIANT
+//                }
+//            })
+            argumentList = buildBinaryArgumentList(
+                buildConstExpression(source, ConstantValueKind.Int, arguments.size),
+                lambda
+            )
+        }
+        return functionCall
+    }
 }

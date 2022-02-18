@@ -17,14 +17,14 @@ fun <T> List.Companion.buildList(size: Int, init: ListCollectionLiteralBuilder<L
 }
 
 fun main() {
-//    val a = List<Int> [1, 2, 3]
-//    val aa = List<Int> [1, 2, 3, 4]
+    val a = List<Int> [1, 2, 3]
+    val aa = List<Int> [1, 2, 3, 4]
     val b = <!NO_BUILDER_FOR_COLLECTION_LITERAL_OF_TYPE!>List<String><!> [1, 2, 3]
-//    val bb = <!NO_BUILDER_FOR_COLLECTION_LITERAL_OF_TYPE!>List<String><!> [1, 2, 3, 4]
-//    val c = List<Short> []
-//
-//    val d = Set<String> ["1"]
-//    val e = Set<Int> [1]
-//    val f = Set<Int> []
-//    val g = Set<String> []
+    val bb = <!NO_BUILDER_FOR_COLLECTION_LITERAL_OF_TYPE!>List<String><!> [1, 2, 3, 4]
+    val c = List<Short> []
+
+    val d = Set<String> ["1"]
+    val e = Set<Int> [1]
+    val f = Set<Int> []
+    val g = Set<String> []
 }

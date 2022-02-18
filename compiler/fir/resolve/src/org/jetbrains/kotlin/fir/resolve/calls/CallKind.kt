@@ -96,6 +96,30 @@ sealed class CallKind(vararg resolutionSequence: ResolutionStage) {
         CheckCollectionLiteralArgumentsStage
     )
 
+    object NewCollectionLiteral : CallKind(
+        CheckVisibility,
+        DiscriminateSynthetics,
+
+        CheckCollectionLiteralBuilderStage,
+
+        MapArguments,
+        CheckExplicitReceiverConsistency,
+        MapTypeArguments,
+        CreateFreshTypeVariableSubstitutorStage,
+        CollectTypeVariableUsagesInfo,
+
+        CheckCollectionLiteralArgumentsStage,
+
+        CheckDispatchReceiver,
+        CheckExtensionReceiver,
+        CheckDslScopeViolation,
+        CheckArguments,
+        CheckCallModifiers,
+        EagerResolveOfCallableReferences,
+        CheckLowPriorityInOverloadResolution,
+        PostponedVariablesInitializerResolutionStage,
+    )
+
     internal class CustomForIde(vararg resolutionSequence: ResolutionStage) : CallKind(*resolutionSequence)
 
     val resolutionSequence: List<ResolutionStage> = resolutionSequence.toList()

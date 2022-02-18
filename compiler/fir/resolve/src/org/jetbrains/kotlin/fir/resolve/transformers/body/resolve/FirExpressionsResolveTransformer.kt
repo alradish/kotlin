@@ -498,6 +498,12 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
                     return preprocessed
                 }
                 val expandCollectionLiteral = collectionLiteralResolver.expandCollectionLiteral(collectionLiteral, expectedType)
+                if (expandCollectionLiteral is FirFunctionCall) {
+                    dataFlowAnalyzer.enterFunctionCall(expandCollectionLiteral)
+                    val (completedCall, callCompleted) = callCompleter.completeCall(expandCollectionLiteral, data)
+                    dataFlowAnalyzer.exitFunctionCall(completedCall, callCompleted)
+                    return completedCall
+                }
                 val transformSingle = expandCollectionLiteral
                     .transformSingle(transformer, ResolutionMode.ContextDependent)
                 return transformSingle
