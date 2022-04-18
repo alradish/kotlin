@@ -2,7 +2,7 @@ FILE: main.kt
     package main
 
     public final fun main(): R|kotlin/Unit| {
-        lval a: R|mylist/MyList<kotlin/Int>| = Q|mylist/MyList|.R|mylist/MyList.Companion.buildMap|<R|kotlin/Int|>(Int(3), <L> = buildMap@fun R|kotlin/collections/MapCollectionLiteralBuilder<mylist/MyList<kotlin/Int>, kotlin/Int, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+        lval a: R|mylist/MyList<kotlin/Int>| = Q|mylist/MyList.Companion|.R|mylist/MyList.Companion.buildMap|<R|kotlin/Int|>(Int(3), <L> = buildMap@fun R|kotlin/collections/MapCollectionLiteralBuilder<mylist/MyList<kotlin/Int>, kotlin/Int, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
             this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/MapCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(1), Int(1))
             this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/MapCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(2), Int(2))
             this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/MapCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(3), Int(3))

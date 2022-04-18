@@ -20,6 +20,6 @@ FILE: getErrors.kt
     }
     public final fun main(): R|kotlin/Unit| {
         lval a: <ERROR TYPE REF: Collection literal has no builders in the current scope> = ERROR_EXPR(Collection literal has no builders in the current scope)
-        lval aa: R|main/Test<kotlin/String>| = Q|main/Test|.R|main/Test.Companion.get|<R|kotlin/String|>(Int(1))
+        lval aa: R|main/Test<kotlin/String>| = Q|main/Test.Companion|.R|main/Test.Companion.get|<R|kotlin/String|>(Int(1))
         lval b: <ERROR TYPE REF: Collection literal has no builders in the current scope> = ERROR_EXPR(Collection literal has no builders in the current scope)
     }

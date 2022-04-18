@@ -23,7 +23,7 @@ FILE: typeNotationWithTypeVariables.kt
         ^buildList R|kotlin/TODO|()
     }
     public final fun main(): R|kotlin/Unit| {
-        lval a: R|kotlin/collections/List<kotlin/Int>| = Q|kotlin/collections/List|.R|main/get|<R|kotlin/Int|>(Int(1), Int(2), Int(3))
+        lval a: R|kotlin/collections/List<kotlin/Int>| = Q|kotlin/collections/List.Companion|.R|main/get|<R|kotlin/Int|>(Int(1), Int(2), Int(3))
         lval aa: R|kotlin/collections/List<kotlin/Int>| = Q|kotlin/collections/List|.R|main/buildList|<R|kotlin/Int|>(Int(4), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
             this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(1))
             this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(2))

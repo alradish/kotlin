@@ -1,8 +1,8 @@
 FILE: myList.kt
     package myList
 
-    public final class MyList<T> : R|kotlin/collections/Iterable<T>| {
-        public constructor<T>(): R|myList/MyList<T>| {
+    public final class MyList<out T> : R|kotlin/collections/Iterable<T>| {
+        public constructor<out T>(): R|myList/MyList<T>| {
             super<R|kotlin/Any|>()
         }
 
@@ -38,7 +38,7 @@ FILE: main.kt
     package main
 
     public final fun f(): R|kotlin/Unit| {
-        lval bbb: R|myList/MyList<kotlin/Int>| = Q|myList/MyList|.R?C|myList/MyList.Companion.buildList|(Int(0), <L> = buildList@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+        lval bbb: R|myList/MyList<kotlin/Int>| = Q|myList/MyList|.R|utils/buildList|(Int(0), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<myList/MyList<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
         }
         )
     }

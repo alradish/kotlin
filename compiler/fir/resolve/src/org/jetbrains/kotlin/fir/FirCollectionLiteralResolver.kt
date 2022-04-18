@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.resolve.calls.inference.model.VariableWithConstraint
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.model.KotlinTypeMarker
+import org.jetbrains.kotlin.types.model.defaultType
 import org.jetbrains.kotlin.types.model.safeSubstitute
 import org.jetbrains.kotlin.types.model.typeConstructor
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -84,6 +85,7 @@ class FirCollectionLiteralResolver(
         val types = builders.map { builder ->
             val c = inferenceComponents.createConstraintSystem()
             c.addOtherSystem(builder.system.currentStorage())
+            c.addOtherSystem(builder.clSystem.currentStorage())
             if (collectionLiteral.expressions.isEmpty()) {
                 c.addConstraintForArgumentType(collectionLiteral, builder, expectedType)
             }
@@ -182,7 +184,10 @@ class FirCollectionLiteralResolver(
                     ConeExpectedTypeConstraintPosition(true)
                 )
             ) {
-                acceptable.add(builder)
+                moveTypeVariables(builder, collectionLiteral.kind)
+                if (!builder.system.hasContradiction) {
+                    acceptable.add(builder)
+                }
             }
         }
 
@@ -192,6 +197,36 @@ class FirCollectionLiteralResolver(
 
         val min = acceptable.minOf { it.system.notFixedTypeVariables.size }
         return acceptable.filter { it.system.notFixedTypeVariables.size == min }
+    }
+
+    private fun moveTypeVariables(builder: Candidate, kind: CollectionLiteralKind) {
+        fixVariables(builder.clSystem, components.initialTypeOfCandidate(builder))
+        val substitutor = builder.substitutor
+
+        fun moveTypeVariable(type: ConeKotlinType) {
+            val fixedTypeVariables = builder.clSystem.fixedTypeVariables
+            type.forEachType {
+                val substituted = substitutor.substituteOrSelf(it)
+                val typeConstructor = substituted.typeConstructor(builder.clSystem)
+                if (fixedTypeVariables.containsKey(typeConstructor)) {
+                    val typeVariable = builder.system.allTypeVariables[typeConstructor]!!
+                    builder.system.addEqualityConstraint(
+                        typeVariable.defaultType(builder.system),
+                        fixedTypeVariables[typeConstructor]!!,
+                        ConeFixVariableConstraintPosition(typeVariable)
+                    )
+                }
+            }
+        }
+
+        when(kind) {
+            CollectionLiteralKind.LIST_LITERAL -> moveTypeVariable(builder.getValueTypeOfCollectionLiteral())
+            CollectionLiteralKind.MAP_LITERAL -> {
+                val (key, value) = builder.getKeyValueTypeOfCollectionLiteral()
+                moveTypeVariable(key)
+                moveTypeVariable(value)
+            }
+        }
     }
 
     fun chooseAndFixBuilders(

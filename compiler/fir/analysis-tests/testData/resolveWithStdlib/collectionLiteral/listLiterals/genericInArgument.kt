@@ -17,7 +17,7 @@ fun <T> Double.Companion.buildList(size: Int, init: ListCollectionLiteralBuilder
 }
 
 fun f(set: Set<Int>) {}
-fun <T> b(): T {
+fun <B> b(): B {
     return TODO()
 }
 

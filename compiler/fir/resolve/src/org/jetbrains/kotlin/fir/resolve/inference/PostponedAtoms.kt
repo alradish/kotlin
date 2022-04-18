@@ -8,12 +8,11 @@ package org.jetbrains.kotlin.fir.resolve.inference
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousFunction
-import org.jetbrains.kotlin.fir.expressions.FirAnonymousFunctionExpression
-import org.jetbrains.kotlin.fir.expressions.FirCallableReferenceAccess
-import org.jetbrains.kotlin.fir.expressions.FirStatement
+import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.references.FirNamedReference
 import org.jetbrains.kotlin.fir.resolve.DoubleColonLHS
 import org.jetbrains.kotlin.fir.resolve.calls.Candidate
+import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.resolve.calls.model.LambdaWithTypeVariableAsExpectedTypeMarker
 import org.jetbrains.kotlin.resolve.calls.model.PostponedCallableReferenceMarker
@@ -33,6 +32,41 @@ sealed class PostponedResolvedAtom : PostponedResolvedAtomMarker {
     override var analyzed: Boolean = false
     abstract override val expectedType: ConeKotlinType?
 }
+
+//  ------------- Collection Literals -------------
+
+//class ResolvedCollectionLiteralAtom(
+//    override val atom: FirCollectionLiteral,
+//    override val expectedType: ConeKotlinType,
+//    candidateOfOuterCall: Candidate?
+//) : PostponedResolvedAtom() {
+//    init {
+//        candidateOfOuterCall?.let {
+//            it.postponedAtoms += this
+//        }
+//    }
+//
+//    override val inputTypes: Collection<ConeKotlinType> = emptyList()
+//    override val outputType: ConeKotlinType = atom.resultType.coneType
+//
+//    val keys: Collection<FirExpression> = when (atom.kind) {
+//        CollectionLiteralKind.LIST_LITERAL -> emptyList()
+//        CollectionLiteralKind.MAP_LITERAL -> atom.expressions
+//            .filterIsInstance<FirCollectionLiteralEntryPair>()
+//            .map { it.key }
+//    }
+//
+//    val values: Collection<FirExpression> = when(atom.kind) {
+//        CollectionLiteralKind.LIST_LITERAL -> atom.expressions
+//            .filterIsInstance<FirCollectionLiteralEntrySingle>()
+//            .map { it.expression }
+//        CollectionLiteralKind.MAP_LITERAL -> atom.expressions
+//            .filterIsInstance<FirCollectionLiteralEntryPair>()
+//            .map { it.value }
+//    }
+//
+//    val expressions: Collection<FirExpression> = keys + values
+//}
 
 //  ------------- Lambdas -------------
 

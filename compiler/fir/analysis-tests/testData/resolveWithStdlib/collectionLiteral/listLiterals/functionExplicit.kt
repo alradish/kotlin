@@ -17,8 +17,9 @@ fun <T> Double.Companion.buildList(size: Int, init: ListCollectionLiteralBuilder
 
 fun f(set: Set<Int>) {}
 fun b(a: Int) {}
-
+fun z(l: Int.() -> Int) {}
 fun main() {
+//    z({ 2*this })
     f([1, 2, 3])
-    b([1, 2, 3])
+//    b([1, 2, 3])
 }

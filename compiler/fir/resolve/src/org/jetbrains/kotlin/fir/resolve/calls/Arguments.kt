@@ -6,10 +6,7 @@
 package org.jetbrains.kotlin.fir.resolve.calls
 
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.FirFunction
-import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
-import org.jetbrains.kotlin.fir.declarations.FirTypedDeclaration
-import org.jetbrains.kotlin.fir.declarations.FirValueParameter
+import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.lookupTracker
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
@@ -434,13 +431,17 @@ internal fun Candidate.resolveArgument(
     parameter: FirValueParameter?,
     isReceiver: Boolean,
     sink: CheckerSink,
-    context: ResolutionContext
+    context: ResolutionContext,
+    inCollectionLiteral: Boolean = false
 ) {
     argument.resultType.ensureResolvedTypeDeclaration(context.session)
     val expectedType =
         prepareExpectedType(context.session, context.bodyResolveComponents.scopeSession, callInfo, argument, parameter, context)
     resolveArgumentExpression(
-        this.system.getBuilder(),
+        if (inCollectionLiteral)
+            this.clSystem.getBuilder()
+        else
+            this.system.getBuilder(),
         argument,
         expectedType,
         parameter?.returnTypeRef,
@@ -628,17 +629,22 @@ private fun ConeKotlinType.hasSupertypeWithGivenClassId(classId: ClassId, contex
     }
 }
 
-private fun findTypeArguments(candidate: Candidate): Array<out ConeTypeProjection> {
-    val function = candidate.symbol.fir as FirSimpleFunction
-    require(function.valueParameters.size == 2)
-    val initLambdaParameter = function.valueParameters.last()
+private fun findTypeArguments(declaration: FirDeclaration): Array<out ConeTypeProjection> {
+    require(declaration is FirSimpleFunction)
+    require(declaration.valueParameters.size == 2)
+    val initLambdaParameter = declaration.valueParameters.last()
     val lambdaType = initLambdaParameter.returnTypeRef as FirResolvedTypeRef
     require(lambdaType.type.typeArguments.size == 2)
     val builderTypeArgument = lambdaType.type.typeArguments.first()
     return (builderTypeArgument as ConeClassLikeType).typeArguments
 }
 
-fun Candidate.getKeyValueTypeOfCollectionLiteral(): Pair<ConeKotlinType, ConeKotlinType> {
+private fun findTypeArguments(candidate: Candidate): Array<out ConeTypeProjection> {
+    val function = candidate.symbol.fir as FirSimpleFunction
+    return findTypeArguments(function)
+}
+
+fun FirDeclaration.getKeyValueTypeOfCollectionLiteral(): Pair<ConeKotlinType, ConeKotlinType> {
     val typeArguments = findTypeArguments(this)
 //    val resType = typeArguments[0]
     val keyType = typeArguments[1] as ConeKotlinType
@@ -646,10 +652,18 @@ fun Candidate.getKeyValueTypeOfCollectionLiteral(): Pair<ConeKotlinType, ConeKot
     return keyType to valueType
 }
 
-fun Candidate.getValueTypeOfCollectionLiteral(): ConeKotlinType {
+fun Candidate.getKeyValueTypeOfCollectionLiteral(): Pair<ConeKotlinType, ConeKotlinType> {
+    return symbol.fir.getKeyValueTypeOfCollectionLiteral()
+}
+
+fun FirDeclaration.getValueTypeOfColletionLiteral(): ConeKotlinType {
     val typeArguments = findTypeArguments(this)
-//    val resType = typeArguments.first()
+    //    val resType = typeArguments.first()
     val argumentType = typeArguments.last()
 //    require(resType == (function.returnTypeRef as FirResolvedTypeRef).type)
     return argumentType as ConeKotlinType
+}
+
+fun Candidate.getValueTypeOfCollectionLiteral(): ConeKotlinType {
+    return symbol.fir.getValueTypeOfColletionLiteral()
 }

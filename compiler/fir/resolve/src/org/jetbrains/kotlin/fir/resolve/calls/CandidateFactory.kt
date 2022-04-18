@@ -25,7 +25,8 @@ import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 
 class CandidateFactory private constructor(
     val context: ResolutionContext,
-    private val baseSystem: ConstraintStorage
+    private val baseSystem: ConstraintStorage,
+    private val clBaseSystem: ConstraintStorage
 ) {
 
     companion object {
@@ -37,9 +38,22 @@ class CandidateFactory private constructor(
             system.addOtherSystem(context.bodyResolveContext.inferenceSession.currentConstraintSystem)
             return system.asReadOnlyStorage()
         }
+
+        private fun buildClBaseSystem(context: ResolutionContext, callInfo: CallInfo): ConstraintStorage {
+            val system = context.inferenceComponents.createConstraintSystem()
+            (callInfo.valueExpressions + callInfo.keyExpressions).forEach {
+                system.addSubsystemFromExpression(it)
+            }
+            system.addOtherSystem(context.bodyResolveContext.inferenceSession.currentConstraintSystem)
+            return system.asReadOnlyStorage()
+        }
     }
 
-    constructor(context: ResolutionContext, callInfo: CallInfo) : this(context, buildBaseSystem(context, callInfo))
+    constructor(context: ResolutionContext, callInfo: CallInfo) : this(
+        context,
+        buildBaseSystem(context, callInfo),
+        buildClBaseSystem(context, callInfo)
+    )
 
     fun createCandidate(
         callInfo: CallInfo,
@@ -53,7 +67,7 @@ class CandidateFactory private constructor(
     ): Candidate {
         val result = Candidate(
             symbol, dispatchReceiverValue, extensionReceiverValue,
-            explicitReceiverKind, context.inferenceComponents.constraintSystemFactory, baseSystem,
+            explicitReceiverKind, context.inferenceComponents.constraintSystemFactory, baseSystem, clBaseSystem,
             builtInExtensionFunctionReceiverValue?.receiverExpression?.let {
                 callInfo.withReceiverAsArgument(it)
             } ?: callInfo,
@@ -112,6 +126,7 @@ class CandidateFactory private constructor(
             explicitReceiverKind = ExplicitReceiverKind.NO_EXPLICIT_RECEIVER,
             context.inferenceComponents.constraintSystemFactory,
             baseSystem,
+            clBaseSystem,
             callInfo,
             originScope = null,
         )

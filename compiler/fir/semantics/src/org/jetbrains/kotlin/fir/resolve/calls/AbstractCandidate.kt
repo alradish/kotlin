@@ -18,5 +18,6 @@ abstract class AbstractCandidate {
     abstract val callInfo: AbstractCallInfo
     abstract val diagnostics: List<ResolutionDiagnostic>
     abstract val system: NewConstraintSystemImpl
+    abstract val clSystem: NewConstraintSystemImpl
     abstract val applicability: CandidateApplicability
 }

@@ -59,7 +59,7 @@ FILE: typeNotation.kt
         ^buildList R|kotlin/TODO|()
     }
     public final fun main(): R|kotlin/Unit| {
-        lval a: R|kotlin/collections/List<kotlin/Int>| = Q|main/A|.R|main/get|<R|kotlin/Int|>(Int(1), Int(2), Int(3))
+        lval a: R|kotlin/collections/List<kotlin/Int>| = Q|main/A.Companion|.R|main/get|<R|kotlin/Int|>(Int(1), Int(2), Int(3))
         lval b: R|kotlin/collections/MutableList<kotlin/Int>| = R|kotlin/collections/mutableListOf|<R|kotlin/Int|>()
         lval c: R|kotlin/Int| = R|<local>/b|.R|SubstitutionOverride<kotlin/collections/MutableList.get: R|kotlin/Int|>|(Int(0))
         lval cc: R|kotlin/Int| = R|<local>/b|.R?C|kotlin/collections/MutableList.get|(IntegerLiteral(0), IntegerLiteral(1))
@@ -70,7 +70,7 @@ FILE: typeNotation.kt
             this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(3))
         }
         )
-        lval e: R|kotlin/collections/List<kotlin/Int>| = Q|main/C|.R|main/get|<R|kotlin/Int|>(Int(1), Int(2), Int(3))
+        lval e: R|kotlin/collections/List<kotlin/Int>| = Q|main/C.Companion|.R|main/get|<R|kotlin/Int|>(Int(1), Int(2), Int(3))
         lval f: R|main/C| = Q|main/C|.R|main/buildList|<R|kotlin/Int|>(Int(4), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<main/C, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
             this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(1))
             this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(2))

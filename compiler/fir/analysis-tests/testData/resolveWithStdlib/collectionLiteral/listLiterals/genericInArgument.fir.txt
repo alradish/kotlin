@@ -27,7 +27,7 @@ FILE: genericInArgument.kt
     }
     public final fun f(set: R|kotlin/collections/Set<kotlin/Int>|): R|kotlin/Unit| {
     }
-    public final fun <T> b(): R|T| {
+    public final fun <B> b(): R|B| {
         ^b R|kotlin/TODO|()
     }
     public final fun main(): R|kotlin/Unit| {

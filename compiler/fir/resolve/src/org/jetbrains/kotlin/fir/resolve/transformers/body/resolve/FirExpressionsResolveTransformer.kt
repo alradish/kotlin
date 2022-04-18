@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.TransformData
 import org.jetbrains.kotlin.fir.visitors.transformSingle
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.calls.inference.buildAbstractResultingSubstitutor
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
@@ -372,9 +373,9 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
         val (completeInference, callCompleted) =
             try {
                 val initialExplicitReceiver = functionCall.explicitReceiver
-                val resultExpression = callResolver.resolveCallAndSelectCandidate(functionCall).let {
-                    collectionLiteralResolver.expandCollectionLiteralsInCall(it)
-                }
+//                val resultExpression = callResolver.resolveCallAndSelectCandidate(functionCall).let {
+                val resultExpression = callResolver.resolveCallAndSelectCandidate(functionCall)
+//                    collectionLiteralResolver.expandCollectionLiteralsInCall(it)
                 val resultExplicitReceiver = resultExpression.explicitReceiver
                 if (initialExplicitReceiver !== resultExplicitReceiver && resultExplicitReceiver is FirQualifiedAccess) {
                     // name.invoke() case
@@ -405,7 +406,22 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
                 this.source = source!!.fakeElement(KtFakeSourceElementKind.ArrayAccessNameReference)
                 this.name = OperatorNameConventions.GET
             }
-            this.explicitReceiver = arrayExpression
+            if (arrayExpression is FirResolvedQualifier) {
+                this.explicitReceiver = buildPropertyAccessExpression {
+                    this.calleeReference = buildSimpleNamedReference {
+                        this.name = SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT
+                    }
+                    this.explicitReceiver = buildPropertyAccessExpression {
+                        this.calleeReference = buildSimpleNamedReference {
+                            this.name = arrayExpression.relativeClassFqName!!.shortName()
+                        }
+                        this.typeArguments.addAll(arrayExpression.typeArguments)
+                    }
+                }
+            } else {
+                this.explicitReceiver = arrayExpression
+            }
+
             this.argumentList = buildArgumentList {
                 arguments.addAll(expressions)
             }
@@ -489,7 +505,10 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
 
         when {
             getCall != null && receiverExpression !is FirResolvedQualifier -> return getCall
-            getCall is FirFunctionCall && ((getCall.calleeReference as? FirNamedReferenceWithCandidate)?.isError == false || (getCall.calleeReference is FirResolvedNamedReference)) -> return getCall
+            getCall is FirFunctionCall
+                    && !(receiverExpression is FirResolvedQualifier && !receiverExpression.typeArguments.isEmpty())
+                    && getCall.calleeReference !is FirErrorReferenceWithCandidate
+                    && ((getCall.calleeReference as? FirNamedReferenceWithCandidate)?.isError == false || (getCall.calleeReference is FirResolvedNamedReference)) -> return getCall
             else -> {
                 val expectedType = calculateExpectedType(collectionLiteral, data)
                 val preprocessed = collectionLiteralResolver.preprocessCollectionLiteral(collectionLiteral, expectedType)

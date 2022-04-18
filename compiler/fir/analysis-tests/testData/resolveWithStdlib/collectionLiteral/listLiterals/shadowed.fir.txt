@@ -34,10 +34,10 @@ FILE: main.kt
     package shadowed
 
     public final fun f(): R|kotlin/Unit| {
-        lval b: R|shadowed/MyList<TypeVariable(T)>| = Q|shadowed/MyList|.R?C|shadowed/MyList.Companion.buildList|(Int(3), <L> = buildList@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
-            add#(IntegerLiteral(1))
-            add#(IntegerLiteral(2))
-            add#(IntegerLiteral(3))
+        lval b: R|shadowed/MyList<kotlin/Int>| = Q|shadowed/MyList|.R|shadowed/buildList|(Int(3), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<shadowed/MyList<kotlin/Int>, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(1))
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(2))
+            this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(3))
         }
         )
     }

@@ -22,6 +22,6 @@ fun f() {
     val c: Set<Any> = []
     foo([])
     bar([])
-    baz([])
+    <!NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER, NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>baz<!>([])
 }
 

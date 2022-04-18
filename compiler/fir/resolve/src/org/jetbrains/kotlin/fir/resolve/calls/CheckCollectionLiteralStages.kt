@@ -7,10 +7,7 @@ package org.jetbrains.kotlin.fir.resolve.calls
 
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.StandardTypes
-import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
-import org.jetbrains.kotlin.fir.declarations.FirFunction
-import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
-import org.jetbrains.kotlin.fir.declarations.FirValueParameter
+import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameter
 import org.jetbrains.kotlin.fir.expressions.CollectionLiteralKind
 import org.jetbrains.kotlin.fir.expressions.FirCollectionLiteral
@@ -19,6 +16,7 @@ import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.builder.buildExpressionStub
 import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.resolve.inference.csBuilder
+import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
@@ -49,6 +47,43 @@ internal object CheckCollectionLiteralBuilderStage : CheckerStage() {
     }
 }
 
+internal object RegisterValueTypeVariableStage : CheckerStage() {
+    @Suppress("UNUSED_VARIABLE")
+    override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
+        val declaration = candidate.symbol.fir
+        require(declaration is FirSimpleFunction)
+        candidate.symbol.ensureResolved(FirResolvePhase.STATUS)
+        when (declaration.name) {
+            OperatorNameConventions.BUILD_LIST_CL -> registerVariables(candidate, candidate.getValueTypeOfCollectionLiteral())
+            OperatorNameConventions.BUILD_MAP_CL -> {
+                val (key, value) = candidate.getKeyValueTypeOfCollectionLiteral()
+                registerVariables(candidate, key)
+                registerVariables(candidate, value)
+            }
+        }
+
+        if (candidate.clSystem.hasContradiction) {
+            sink.yieldDiagnostic(InapplicableCandidate) //TODO: auto report it
+            return
+        }
+    }
+
+    private fun registerVariables(candidate: Candidate, type: ConeKotlinType) {
+        val csClBuilder = candidate.clSystem.getBuilder()
+        val res = mutableListOf<ConeKotlinType>()
+        type.forEachType {
+            res.add(candidate.substitutor.substituteOrSelf(it))
+        }
+
+        for (variable in candidate.freshVariables) {
+            if (variable.defaultType in res) {
+                csClBuilder.registerVariable(variable)
+            }
+        }
+    }
+
+}
+
 internal object CheckCollectionLiteralArgumentsStage : CheckerStage() {
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
         require(callInfo.callKind is CallKind.CollectionLiteral || callInfo.callKind is CallKind.NewCollectionLiteral)
@@ -59,7 +94,7 @@ internal object CheckCollectionLiteralArgumentsStage : CheckerStage() {
                 OperatorNameConventions.BUILD_LIST_CL -> processSeqArguments(candidate, callInfo, sink, context)
                 OperatorNameConventions.BUILD_MAP_CL -> processDictArguments(candidate, callInfo, sink, context)
             }
-            is FirCollectionLiteral -> when (call.kind) {
+            is FirCollectionLiteral -> when (call.kind) { // TODO remove
                 CollectionLiteralKind.LIST_LITERAL -> processSeqArguments(candidate, callInfo, sink, context)
                 CollectionLiteralKind.MAP_LITERAL -> processDictArguments(candidate, callInfo, sink, context)
             }
@@ -120,6 +155,7 @@ internal object CheckCollectionLiteralArgumentsStage : CheckerStage() {
                 isReceiver = false,
                 sink = sink,
                 context = context,
+                inCollectionLiteral = true
             )
         }
     }

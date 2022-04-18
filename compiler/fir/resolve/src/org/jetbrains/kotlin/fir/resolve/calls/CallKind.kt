@@ -108,6 +108,7 @@ sealed class CallKind(vararg resolutionSequence: ResolutionStage) {
         CreateFreshTypeVariableSubstitutorStage,
         CollectTypeVariableUsagesInfo,
 
+        RegisterValueTypeVariableStage,
         CheckCollectionLiteralArgumentsStage,
 
         CheckDispatchReceiver,

@@ -38,7 +38,7 @@ FILE: empty.kt
         R|/bar|<R|kotlin/Nothing|>(Q|kotlin/collections/List|.R|/buildList|<R|kotlin/Nothing|>(Int(0), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<kotlin/Nothing>, kotlin/Nothing>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
         }
         ))
-        <CS errors: /baz>#<R|ERROR CLASS: Cannot infer argument for type parameter T|>(Q|kotlin/collections/List|.R|/buildList|<R|T|>(Int(0), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<T>, T>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+        <CS errors: /baz>#<R|ERROR CLASS: Cannot infer argument for type parameter T|>(Q|kotlin/collections/List|.R|/buildList|<R|ERROR CLASS: Cannot infer argument for type parameter T|>(Int(0), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<kotlin/collections/List<ERROR CLASS: Cannot infer argument for type parameter T>, ERROR CLASS: Cannot infer argument for type parameter T>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
         }
         ))
     }

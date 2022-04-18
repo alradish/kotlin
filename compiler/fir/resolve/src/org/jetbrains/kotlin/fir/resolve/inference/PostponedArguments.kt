@@ -9,10 +9,8 @@ import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousFunction
 import org.jetbrains.kotlin.fir.expressions.FirAnonymousFunctionExpression
 import org.jetbrains.kotlin.fir.expressions.FirCallableReferenceAccess
-import org.jetbrains.kotlin.fir.resolve.calls.ArgumentTypeMismatch
-import org.jetbrains.kotlin.fir.resolve.calls.Candidate
-import org.jetbrains.kotlin.fir.resolve.calls.CheckerSink
-import org.jetbrains.kotlin.fir.resolve.calls.ResolutionContext
+import org.jetbrains.kotlin.fir.expressions.FirCollectionLiteral
+import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.createFunctionalType
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeArgumentConstraintPosition
 import org.jetbrains.kotlin.fir.types.*
@@ -127,3 +125,29 @@ private fun extractLambdaInfo(
         coerceFirstParameterToExtensionReceiver = false
     )
 }
+
+//fun Candidate.preprocessCollectionLiteralArgument(
+//    csBuilder: ConstraintSystemBuilder,
+//    argument: FirCollectionLiteral,
+//    expectedType: ConeKotlinType?,
+////    expectedTypeRef: FirTypeRef?,
+//    context: ResolutionContext,
+//    sink: CheckerSink,
+////    duringCompletion: Boolean = false,
+////    returnTypeVariable: ConeTypeVariableForLambdaReturnType? = null
+//): PostponedResolvedAtom {
+//    resolvePlainExpressionArgument(
+//        csBuilder,
+//        argument,
+//        expectedType,
+//        sink,
+//        context,
+//        false,
+//        false
+//    )
+//    return ResolvedCollectionLiteralAtom(
+//        argument,
+//        expectedType ?: TODO("Default type"),
+//        this
+//    )
+//}

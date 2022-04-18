@@ -407,6 +407,10 @@ class FirCallCompletionResultsWriterTransformer(
             .transformExtensionReceiver(StoreReceiver, subCandidate.extensionReceiverExpression())
     }
 
+    override fun transformCollectionLiteral(collectionLiteral: FirCollectionLiteral, data: ExpectedArgumentType?): FirStatement {
+        TODO("")
+    }
+
     override fun transformVariableAssignment(
         variableAssignment: FirVariableAssignment,
         data: ExpectedArgumentType?,

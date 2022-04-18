@@ -31,6 +31,7 @@ class Candidate(
     override val explicitReceiverKind: ExplicitReceiverKind,
     val constraintSystemFactory: InferenceComponents.ConstraintSystemFactory,
     private val baseSystem: ConstraintStorage,
+    private val clBaseSystem: ConstraintStorage, // TODO Сделать необязательным полем?
     override val callInfo: CallInfo,
     val originScope: FirScope?,
     val isFromCompanionObjectTypeScope: Boolean = false
@@ -41,6 +42,14 @@ class Candidate(
         val system = constraintSystemFactory.createConstraintSystem()
         system.addOtherSystem(baseSystem)
         systemInitialized = true
+        system
+    }
+
+    var clSystemInitialized: Boolean = false
+    override val clSystem: NewConstraintSystemImpl by lazy(LazyThreadSafetyMode.NONE) {
+        val system = constraintSystemFactory.createConstraintSystem()
+        system.addOtherSystem(clBaseSystem)
+        clSystemInitialized = true
         system
     }
 

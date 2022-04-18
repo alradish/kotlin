@@ -44,7 +44,7 @@ FILE: findAllBuilders.kt
             this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(3))
         }
         )
-        lval c: R|A| = Q|A|.R|/A.Companion.buildList|<R|kotlin/Int|>(Int(3), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<A, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+        lval c: R|A| = Q|A.Companion|.R|/A.Companion.buildList|<R|kotlin/Int|>(Int(3), <L> = buildList@fun R|kotlin/collections/ListCollectionLiteralBuilder<A, kotlin/Int>|.<anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
             this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(1))
             this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(2))
             this@R|special/anonymous|.R|SubstitutionOverride<kotlin/collections/ListCollectionLiteralBuilder.add: R|kotlin/Unit|>|(Int(3))
